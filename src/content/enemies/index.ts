@@ -1,0 +1,40 @@
+import type { EnemyDef } from '../schema';
+
+export const enemies: EnemyDef[] = [
+  { id: 'enemy.cave_bat', name: '洞窟血蝠', hp: 34, atk: 11, def: 1, spd: 14, hit: 10, res: 6, row: 'front' },
+  { id: 'enemy.wild_wolf', name: '山中妖狼', hp: 55, atk: 13, def: 3, spd: 12, hit: 8, res: 4, row: 'front' },
+  {
+    id: 'enemy.puppet_guard',
+    name: '守洞傀儡',
+    hp: 80,
+    atk: 14,
+    def: 6,
+    spd: 7,
+    hit: 5,
+    res: 4,
+    row: 'front',
+  },
+  {
+    id: 'enemy.puppet_archer',
+    name: '弩機傀儡',
+    hp: 45,
+    atk: 15,
+    def: 2,
+    spd: 9,
+    hit: 12,
+    res: 3,
+    row: 'back',
+  },
+  {
+    id: 'enemy.stone_golem',
+    name: '鎮府石傀',
+    hp: 230,
+    atk: 19,
+    def: 8,
+    spd: 8,
+    hit: 8,
+    res: 6,
+    row: 'front',
+    skill: { name: '裂石重擊', multiplierPct: 170, cooldown: 3 },
+  },
+];

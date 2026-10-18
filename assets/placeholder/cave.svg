@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="360" viewBox="0 0 800 360">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9e3d3"/><stop offset="1" stop-color="#b9c9bd"/></linearGradient></defs>
+<rect width="800" height="360" fill="url(#g)"/>
+<path d="M0 360 L0 72 Q400 -36 800 72 L800 360Z" fill="#3a3a36"/><ellipse cx="400" cy="270" rx="144" ry="115.2" fill="#141414"/>
+<rect x="8" y="8" width="150" height="28" rx="4" fill="#8b1e1e" opacity=".85"/>
+<text x="16" y="28" font-size="15" fill="#fff" font-family="sans-serif">臨時素材</text>
+<text x="400" y="346" font-size="26" fill="#1f2e2b" text-anchor="middle" font-family="serif">荒廢洞府</text>
+</svg>
