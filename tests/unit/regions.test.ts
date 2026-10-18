@@ -265,7 +265,7 @@ describe('四種傳承開局', () => {
   it('御獸的靈獸隨主人出戰，不佔隊伍名額', () => {
     let s = edit(developed(), (x) => {
       x.lineage = 'lineage.beast';
-      x.beasts = [{ id: 'beast1', speciesId: 'beast.cloud_ape', name: '雲紋靈猿', ownerId: 'c0' }];
+      x.beasts = [{ id: 'beast1', speciesId: 'beast.cloud_ape', name: '雲紋靈猿', ownerId: 'c0', stage: 'young', growth: 0, task: 'follow' }];
       x.protagonist.realm = { major: 'qi', stage: 6 };
     });
     s = run(s, { type: 'startExploration', realmId: 'secret.abandoned_cave', teamIds: ['c0'], rows: { c0: 'front' } });

@@ -8,8 +8,10 @@ import { initialRegions } from '../systems/regions/regions';
 import { refreshBoard } from '../systems/commissions/commissions';
 import { emptyMarket, rollMarket } from '../systems/economy/market';
 import type { Beast, GameState, Skills } from '../types';
+import { emptyPositions } from '../systems/talent/positions';
+import { initialSects } from '../systems/world/sects';
 
-export const STATE_VERSION = 4;
+export const STATE_VERSION = 5;
 
 export interface NewGameOptions {
   sectName: string;
@@ -35,7 +37,8 @@ export function newGame(content: ContentPack, opts: NewGameOptions): GameState {
   for (const [k, v] of Object.entries(lineage.start.skills)) skills[k as keyof Skills] += v ?? 0;
   const beasts: Beast[] = [];
   const species = lineage.start.beast ? content.beasts.get(lineage.start.beast) : undefined;
-  if (species) beasts.push({ id: 'beast1', speciesId: species.id, name: species.name, ownerId: 'c0' });
+  if (species)
+    beasts.push({ id: 'beast1', speciesId: species.id, name: species.name, ownerId: 'c0', stage: 'young', growth: 0, task: 'follow' });
   const state: GameState = {
     version: STATE_VERSION,
     sectName,
@@ -58,6 +61,9 @@ export function newGame(content: ContentPack, opts: NewGameOptions): GameState {
       schedule: 'cultivate',
       takePill: false,
       seat: MAIN_REGION,
+      specialty: null,
+      insight: 0,
+      equipment: null,
       seclusion: null,
     },
     disciples: [],
@@ -98,6 +104,16 @@ export function newGame(content: ContentPack, opts: NewGameOptions): GameState {
     tutorial: { skipped: false, viewedLedger: false, done: [] },
     trade: { soldLingshi: 0, boughtFood: 0 },
     strategy: { useHealPill: true, useTalismans: true, focusLowest: true },
+    positions: emptyPositions(),
+    armory: [],
+    items: [],
+    branches: [],
+    dispatches: [],
+    sects: initialSects(content),
+    intel: [],
+    tournament: null,
+    auction: null,
+    veins: [],
     stats: { commands: 0, monthsAdvanced: 0, explorations: 0 },
   };
   rollMarket(state);

@@ -109,7 +109,8 @@ export function resolveFurnaces(
       lines.push(`${worker.name}製作${recipe.name}失敗，材料損耗。`);
     }
     const skill = info.skill;
-    if (worker.skills[skill] < 20 && r.chance(balance.craft.skillGainChanceBp)) {
+    const gainBp = balance.craft.skillGainChanceBp * (worker.specialty === skill ? balance.specialty.gainMultiplier : 1);
+    if (worker.skills[skill] < 20 && r.chance(gainBp)) {
       worker.skills[skill] += 1;
       lines.push(`${worker.name}的${SKILL_LABEL[skill] ?? ''}技藝提升至 ${worker.skills[skill]}。`);
     }

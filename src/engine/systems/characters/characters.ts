@@ -3,7 +3,7 @@ import { MAIN_REGION } from '../../../content/registry';
 import { givenFemale, givenMale, surnames } from '../../../content/names';
 import { newId } from '../../ids';
 import { rng } from '../../rng';
-import type { Candidate, Character, Element, GameState, Realm, RootGrade, SpiritRoot } from '../../types';
+import type { Candidate, Character, Element, GameState, Realm, RootGrade, Skills, SpiritRoot } from '../../types';
 
 export const ROOT_GRADE_NAMES: Record<RootGrade, string> = {
   low: '下品',
@@ -26,7 +26,8 @@ const QI_STAGE_NAMES = ['一', '二', '三', '四', '五', '六', '七', '八', 
 
 export function realmName(realm: Realm): string {
   if (realm.major === 'qi') return `煉氣${QI_STAGE_NAMES[realm.stage - 1] ?? realm.stage}層`;
-  return `築基${FOUNDATION_STAGE_NAMES[realm.stage - 1] ?? realm.stage}`;
+  const major = realm.major === 'core' ? '金丹' : '築基';
+  return `${major}${FOUNDATION_STAGE_NAMES[realm.stage - 1] ?? realm.stage}`;
 }
 
 export function rootName(root: SpiritRoot): string {
@@ -36,12 +37,15 @@ export function rootName(root: SpiritRoot): string {
 /** 目前小階段升到下一階段所需修為。 */
 export function xpToNext(realm: Realm): number {
   if (realm.major === 'qi') return realm.stage * balance.qiXpPerStage;
+  if (realm.major === 'core') return balance.coreXpPerStage;
   return balance.foundationXpPerStage;
 }
 
-/** 戰鬥與能力計算用的綜合等級。 */
+/** 戰鬥與能力計算用的綜合等級：煉氣 1–9、築基 12–21、金丹 25–37。 */
 export function powerLevel(realm: Realm): number {
-  return realm.major === 'qi' ? realm.stage : 9 + realm.stage * 3;
+  if (realm.major === 'qi') return realm.stage;
+  if (realm.major === 'foundation') return 9 + realm.stage * 3;
+  return 21 + realm.stage * 4;
 }
 
 /** 是否已達築基門檻（煉氣九層且修為滿）。 */
@@ -49,9 +53,14 @@ export function readyForFoundation(c: Character): boolean {
   return c.realm.major === 'qi' && c.realm.stage === 9 && c.xp >= xpToNext(c.realm);
 }
 
-/** 本階段已到 P0 上限（築基圓滿且修為滿），金丹於 P1 開放。 */
-export function atP0Cap(c: Character): boolean {
+/** 是否已達結丹門檻（築基圓滿且修為滿）。 */
+export function readyForCore(c: Character): boolean {
   return c.realm.major === 'foundation' && c.realm.stage === 4 && c.xp >= xpToNext(c.realm);
+}
+
+/** 已到 P1 上限（金丹圓滿且修為滿），元嬰於 P2 開放。 */
+export function atP1Cap(c: Character): boolean {
+  return c.realm.major === 'core' && c.realm.stage === 4 && c.xp >= xpToNext(c.realm);
 }
 
 export function allCharacters(state: GameState): Character[] {
@@ -95,6 +104,9 @@ export function rollCandidate(state: GameState, bonusBp: number): Candidate {
     beast: r.range(0, 3),
     affairs: r.range(0, 3),
   };
+  // 專長（企畫書 §9）：資質普通的弟子也可能是某項技藝的關鍵人才
+  const specialty = r.pick(SPECIALTIES);
+  skills[specialty] += r.range(balance.specialty.bonusMin, balance.specialty.bonusMax);
   const gradeCost: Record<RootGrade, number> = { low: 20, mid: 40, high: 70, heaven: 120 };
   return {
     id: newId(state, 'cand'),
@@ -103,9 +115,12 @@ export function rollCandidate(state: GameState, bonusBp: number): Candidate {
     ageMonths: r.range(14, 22) * 12,
     root,
     skills,
-    cost: gradeCost[root.grade] + skills.alchemy * 2 + skills.combat * 2,
+    specialty,
+    cost: gradeCost[root.grade] + skills.alchemy * 2 + skills.combat * 2 + skills[specialty],
   };
 }
+
+const SPECIALTIES: (keyof Skills)[] = ['alchemy', 'farming', 'combat', 'forging', 'talisman', 'beast', 'affairs'];
 
 export function characterFromCandidate(state: GameState, cand: Candidate, stage: number): Character {
   return {
@@ -124,6 +139,9 @@ export function characterFromCandidate(state: GameState, cand: Candidate, stage:
     schedule: 'cultivate',
     takePill: false,
     seat: MAIN_REGION,
+    specialty: cand.specialty ?? null,
+    insight: 0,
+    equipment: null,
   };
 }
 
@@ -135,8 +153,10 @@ export function isInjured(c: Character): boolean {
 export function qiDemandOf(state: GameState, regionId: string = MAIN_REGION): number {
   const p = state.protagonist;
   let demand = 0;
-  if (p.seat === regionId) demand += p.schedule === 'seclusion' ? balance.qiDemand.protagonistSeclusion : balance.qiDemand.protagonist;
-  demand += state.disciples.filter((d) => d.seat === regionId).length * balance.qiDemand.inner;
+  const core = (c: Character) => (c.realm.major === 'core' ? balance.qiDemand.coreExtra : 0);
+  if (p.seat === regionId)
+    demand += (p.schedule === 'seclusion' ? balance.qiDemand.protagonistSeclusion : balance.qiDemand.protagonist) + core(p);
+  for (const d of state.disciples) if (d.seat === regionId) demand += balance.qiDemand.inner + core(d);
   if (regionId === MAIN_REGION) demand += Math.ceil(outerCultivating(state) / balance.qiDemand.outerPerUnit);
   return demand;
 }

@@ -9,10 +9,17 @@ import { allCharacters } from '../characters/characters';
 import { refreshBoard } from '../commissions/commissions';
 import { rollMarket } from '../economy/market';
 import { tickOuter } from '../characters/outer';
-import { addXp, breakthroughOdds, monthlyXp, resolveBreakthrough, tickBody } from '../cultivation/cultivation';
+import { addXp, breakthroughOdds, monthlyXp, resolveBreakthrough, tickBody, tickTraining } from '../cultivation/cultivation';
 import { planMonth } from '../economy/flows';
 import { maybeRecruitment } from '../events/recruitment';
 import { progressRegions } from '../regions/regions';
+import { tickInsight } from '../talent/techniques';
+import { tickPositions } from '../talent/positions';
+import { tickBeasts } from '../beasts/beasts';
+import { resolveDispatches } from '../exploration/dispatch';
+import { tickSects } from '../world/sects';
+import { maybeStartAuction, resolveAuction } from '../world/auction';
+import { closeTournament, maybeOpenTournament } from '../world/tournament';
 
 const REPORT_KEEP = 36;
 
@@ -80,6 +87,10 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
     const xp = monthlyXp(state, content, c, pill);
     addXp(c, xp.total, lines);
   }
+  tickInsight(state, content, allCharacters(state), lines);
+  tickTraining(state, content, lines);
+  tickPositions(state, lines);
+  tickBeasts(state, content, plan.fedBeasts, lines);
   tickBody(state, lines);
   tickOuter(state, plan.foodShortfall, lines);
 
@@ -90,6 +101,7 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
     lines.push('探索帶回的物資已入庫。');
     state.pendingLoot = {};
   }
+  resolveDispatches(state, content, produced, lines);
   state.exploration = null;
   state.exploredThisMonth = false;
   for (const c of allCharacters(state)) if (c.schedule === 'explore') c.schedule = c.injuryMonths > 0 ? 'heal' : 'cultivate';
@@ -100,13 +112,18 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
   state.outer.labor = 0;
   rollMarket(state);
 
-  // 6. 電腦宗門：P0 尚未開放
+  // 6. 電腦宗門行動（影響下個月的坊市行情）、靈脈開標、大比截止
+  tickSects(state, content);
+  resolveAuction(state, content, lines);
+  closeTournament(state, lines);
 
   // 7. 推進日期、產生事件、寫入月報
   const settled = { ...state.date };
   state.date = nextMonth(state.date);
   maybeRecruitment(state, content, lines);
   refreshBoard(state, content);
+  maybeOpenTournament(state, lines);
+  maybeStartAuction(state, lines);
   if (state.market.rumor) lines.push(`坊市消息：${state.market.rumor}`);
 
   for (const id of RESOURCE_IDS) {

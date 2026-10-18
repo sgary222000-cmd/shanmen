@@ -7,6 +7,10 @@ import { regions } from './regions';
 import { beastSpecies } from './beasts';
 import { commissions } from './commissions';
 import { abandonedCave } from './secret-realms/abandoned-cave';
+import { ancientRuins, beastValley, undergroundMine } from './secret-realms/p1-realms';
+import { techniques } from './techniques';
+import { equipment } from './equipment';
+import { sects } from './sects';
 import {
   beastSpeciesSchema,
   buildingSchema,
@@ -16,6 +20,12 @@ import {
   lineageSchema,
   recipeSchema,
   secretRealmSchema,
+  techniqueSchema,
+  equipmentSchema,
+  sectSchema,
+  type TechniqueDef,
+  type EquipmentDef,
+  type SectDef,
   type BuildingDef,
   type CommissionDef,
   type EnemyDef,
@@ -35,6 +45,9 @@ export interface ContentPack {
   regions: Map<string, RegionDef>;
   beasts: Map<string, BeastSpeciesDef>;
   commissions: Map<string, CommissionDef>;
+  techniques: Map<string, TechniqueDef>;
+  equipment: Map<string, EquipmentDef>;
+  sects: Map<string, SectDef>;
 }
 
 export interface RawContent {
@@ -46,6 +59,9 @@ export interface RawContent {
   regions: unknown[];
   beasts: unknown[];
   commissions: unknown[];
+  techniques: unknown[];
+  equipment: unknown[];
+  sects: unknown[];
 }
 
 export const MAIN_REGION = 'region.main';
@@ -70,7 +86,11 @@ export function buildContent(raw: RawContent): ContentPack {
     regions: index('區域', z.array(regionSchema).parse(raw.regions)),
     beasts: index('靈獸', z.array(beastSpeciesSchema).parse(raw.beasts)),
     commissions: index('委託', z.array(commissionSchema).parse(raw.commissions)),
+    techniques: index('功法', z.array(techniqueSchema).parse(raw.techniques)),
+    equipment: index('法器', z.array(equipmentSchema).parse(raw.equipment)),
+    sects: index('宗門', z.array(sectSchema).parse(raw.sects)),
   };
+  if (!pack.equipment.has('equip.common')) throw new Error('缺少制式法器 equip.common');
   if (!pack.regions.has(MAIN_REGION)) throw new Error(`缺少主峰區域：${MAIN_REGION}`);
   for (const region of pack.regions.values()) {
     if (region.allows !== 'any') {
@@ -86,6 +106,10 @@ export function buildContent(raw: RawContent): ContentPack {
     }
     for (const r of l.start.recipes) if (!pack.recipes.has(r)) throw new Error(`傳承引用不存在的配方：${l.id} → ${r}`);
     if (l.start.beast && !pack.beasts.has(l.start.beast)) throw new Error(`傳承引用不存在的靈獸：${l.id} → ${l.start.beast}`);
+    if (pack.techniques.get(l.technique)?.lineage !== l.id) throw new Error(`傳承的主修功法不存在或不屬於它：${l.id} → ${l.technique}`);
+  }
+  for (const s of pack.sects.values()) {
+    if (!pack.lineages.has(s.lineage)) throw new Error(`宗門引用不存在的傳承：${s.id} → ${s.lineage}`);
   }
 
   for (const realm of pack.secretRealms.values()) {
@@ -106,6 +130,11 @@ export function buildContent(raw: RawContent): ContentPack {
     for (const recipe of realm.firstClear.recipes) {
       if (!pack.recipes.has(recipe)) throw new Error(`引用不存在的配方：${realm.id} → ${recipe}`);
     }
+    for (const e of realm.firstClear.equipment) {
+      if (!pack.equipment.has(e) || e === 'equip.common') throw new Error(`秘境引用不存在的獨特法器：${realm.id} → ${e}`);
+    }
+    const open = realm.firstClear.openRegion;
+    if (open && !pack.regions.has(open)) throw new Error(`秘境引用不存在的區域：${realm.id} → ${open}`);
   }
   for (const b of pack.buildings.values()) {
     for (const r of b.onlyRegions ?? []) {
@@ -113,6 +142,7 @@ export function buildContent(raw: RawContent): ContentPack {
       const allows = pack.regions.get(r)?.allows;
       if (allows !== 'any' && !allows?.includes(b.id)) throw new Error(`建築限定的區域不允許蓋它：${b.id} → ${r}`);
     }
+    if (b.exclusive && !pack.lineages.has(b.exclusive.lineage)) throw new Error(`建築引用不存在的傳承：${b.id} → ${b.exclusive.lineage}`);
     b.levels.forEach((lv, i) => {
       if (lv.level !== i + 1) throw new Error(`建築等級需從 1 連續編號：${b.id}`);
     });
@@ -134,10 +164,13 @@ export const rawContent: RawContent = {
   recipes,
   enemies,
   lineages,
-  secretRealms: [abandonedCave],
+  secretRealms: [abandonedCave, undergroundMine, beastValley, ancientRuins],
   regions,
   beasts: beastSpecies,
   commissions,
+  techniques,
+  equipment,
+  sects,
 };
 
 export const content: ContentPack = buildContent(rawContent);

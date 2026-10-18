@@ -1,6 +1,14 @@
 import type { ContentPack } from '../../content/registry';
 import { RuleError } from '../errors';
-import type { GameState, MonthReport, OuterDisciples, ResourceId, Row, ScheduleKind, Station } from '../types';
+import type { BeastTask, GameState, MonthReport, OuterDisciples, PositionId, ResourceId, Row, ScheduleKind, Station } from '../types';
+import { setPosition } from '../systems/talent/positions';
+import { equipItem } from '../systems/talent/equipment';
+import { buyScripture, openBranch } from '../systems/talent/branches';
+import { hatchBeast, setBeast } from '../systems/beasts/beasts';
+import { startDispatch } from '../systems/exploration/dispatch';
+import { giftSect, sectTrade } from '../systems/world/sects';
+import { enterTournament } from '../systems/world/tournament';
+import { bidAuction } from '../systems/world/auction';
 import { setFurnace } from '../systems/alchemy/alchemy';
 import { cancelConstruction, demolish, FIELD, hallLevel, startConstruction, startUpgrade } from '../systems/buildings/buildings';
 import { startOpenRegion } from '../systems/regions/regions';
@@ -55,6 +63,17 @@ export type Command =
   | { type: 'buyRecipe'; recipeId: string }
   | { type: 'acceptCommission'; commissionId: string; workers?: number; teamIds?: string[]; rows?: Record<string, Row> }
   | { type: 'setStrategy'; useHealPill: boolean; focusLowest: boolean; useTalismans?: boolean }
+  | { type: 'setPosition'; position: PositionId; characterId: string | null }
+  | { type: 'equip'; characterId: string; itemId: string | null }
+  | { type: 'openBranch'; lineageId: string; hostId: string }
+  | { type: 'buyScripture'; lineageId: string }
+  | { type: 'hatchBeast' }
+  | { type: 'setBeast'; beastId: string; ownerId: string | null; task: BeastTask }
+  | { type: 'dispatch'; realmId: string; teamIds: string[] }
+  | { type: 'giftSect'; sectId: string; lingshi: number }
+  | { type: 'sectTrade'; sectId: string; lots: number }
+  | { type: 'enterTournament'; teamIds: string[] }
+  | { type: 'bidAuction'; amount: number }
   | { type: 'markLedgerViewed' }
   | { type: 'skipTutorial' }
   | { type: 'advanceMonth'; expectMonth: number };
@@ -166,6 +185,39 @@ export function applyCommand(state: GameState, content: ContentPack, cmd: Comman
           useTalismans: cmd.useTalismans ?? next.strategy.useTalismans,
           focusLowest: cmd.focusLowest,
         };
+        break;
+      case 'setPosition':
+        message = setPosition(next, cmd.position, cmd.characterId);
+        break;
+      case 'equip':
+        message = equipItem(next, content, cmd.characterId, cmd.itemId);
+        break;
+      case 'openBranch':
+        message = openBranch(next, content, cmd.lineageId, cmd.hostId);
+        break;
+      case 'buyScripture':
+        message = buyScripture(next, content, cmd.lineageId);
+        break;
+      case 'hatchBeast':
+        message = hatchBeast(next, content);
+        break;
+      case 'setBeast':
+        message = setBeast(next, cmd.beastId, cmd.ownerId, cmd.task);
+        break;
+      case 'dispatch':
+        message = startDispatch(next, content, cmd.realmId, cmd.teamIds);
+        break;
+      case 'giftSect':
+        message = giftSect(next, content, cmd.sectId, cmd.lingshi);
+        break;
+      case 'sectTrade':
+        message = sectTrade(next, content, cmd.sectId, cmd.lots);
+        break;
+      case 'enterTournament':
+        message = enterTournament(next, content, cmd.teamIds);
+        break;
+      case 'bidAuction':
+        message = bidAuction(next, cmd.amount);
         break;
       case 'markLedgerViewed':
         next.tutorial.viewedLedger = true;

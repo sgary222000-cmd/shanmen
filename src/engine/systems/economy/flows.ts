@@ -19,6 +19,9 @@ import {
 } from '../buildings/buildings';
 import { productionBonusPct } from '../regions/regions';
 import { allCharacters } from '../characters/characters';
+import { craftPositionBp, stewardPct } from '../talent/positions';
+import { beastFood, beastGather } from '../beasts/beasts';
+import { monthIndex } from '../../date';
 
 // 每月收支計畫。預覽與實際結算共用同一份計算，確保「預覽等於結算」。
 // 規則：所有消耗只從「月初庫存」扣除（第 2 步），產出在第 3 步入庫，下個月才能使用。
@@ -50,8 +53,10 @@ export interface MonthPlan {
   pillTakers: string[];
   /** 本月服用培元丹的人物（pillTakers 的子集） */
   peiyuanTakers: string[];
-  /** 本月有築基丹可突破的人物 */
+  /** 本月有築基丹（或結丹靈液）可突破的人物 */
   breakthroughReady: string[];
+  /** 本月吃飽的靈獸 */
+  fedBeasts: string[];
   furnaces: FurnacePlan[];
   /** 給玩家看的說明 */
   notes: string[];
@@ -114,6 +119,11 @@ export function craftOdds(
   if (lineage && lineageBp) {
     bp += lineageBp;
     parts.push(`${lineage.name}傳承 +${lineageBp / 100}%`);
+  }
+  const posBp = craftPositionBp(state, station);
+  if (posBp) {
+    bp += posBp;
+    parts.push(`${station === 'alchemy' ? '煉丹' : '煉器'}執事 +${posBp / 100}%`);
   }
   return { bp: Math.min(balance.craft.maxBp, bp), parts };
 }
@@ -190,6 +200,14 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
   const foodShortfall = need - eaten;
   if (foodShortfall > 0) notes.push(`糧食不足 ${foodShortfall} 份，外門弟子將挨餓。`);
 
+  // 1b. 靈獸食量（人先吃，剩下的才餵靈獸；沒吃飽的靈獸不成長、不採集）
+  const fedBeasts: string[] = [];
+  for (const b of state.beasts) {
+    const need = beastFood(content, b);
+    if (take(pool, consumption, { food: need })) fedBeasts.push(b.id);
+    else notes.push(`糧食不足，${b.name}本月沒吃飽。`);
+  }
+
   // 2. 建築維護（依建築順序）
   const unpaidBuildings: string[] = [];
   for (const b of state.buildings) {
@@ -209,8 +227,9 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
   const breakthroughReady: string[] = [];
   for (const c of allCharacters(state)) {
     if (c.schedule !== 'breakthrough') continue;
-    if (take(pool, consumption, { pill_foundation: 1 })) breakthroughReady.push(c.id);
-    else notes.push(`${c.name}缺少築基丹，本月無法突破。`);
+    const pill = c.realm.major === 'qi' ? 'pill_foundation' : 'pill_core';
+    if (take(pool, consumption, { [pill]: 1 })) breakthroughReady.push(c.id);
+    else notes.push(`${c.name}缺少${pill === 'pill_core' ? '結丹靈液' : '築基丹'}，本月無法突破。`);
   }
 
   // 4. 修煉用丹藥：煉氣服聚氣丹；築基優先服培元丹，沒有時改服聚氣丹
@@ -265,13 +284,14 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
   // 產出（確定部分）：外門工人依 fillOrder 填入各座建築（糧食田優先，其次加成高者）
   const production: Partial<Resources> = {};
   const jobs = state.outer.jobs;
+  const steward = stewardPct(state);
   const assign = (defId: string, workers: number, perWorker: (b: Building) => { id: keyof Resources; n: number }) => {
     let left = workers;
     for (const site of fillOrder(state, content, defId, operating)) {
       const n = Math.min(left, effectsOf(content, site.b)?.workerSlots ?? 0);
       left -= n;
       const out = perWorker(site.b);
-      const amount = Math.floor((n * out.n * site.pct) / 100);
+      const amount = Math.floor((n * out.n * (site.pct + steward)) / 100);
       if (amount) production[out.id] = (production[out.id] ?? 0) + amount;
     }
   };
@@ -284,6 +304,11 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
   assign(GARDEN, jobs.garden, (b) => ({ id: 'spirit_herb', n: effectsOf(content, b)?.spiritHerbPerWorker ?? 0 }));
   assign(MINE, jobs.mine, (b) => ({ id: 'ore', n: effectsOf(content, b)?.orePerWorker ?? 0 }));
   if (jobs.errand) production.lingshi = jobs.errand * balance.outer.errandLingshi;
+  // 靈獸採集與靈脈收入
+  for (const b of state.beasts) if (fedBeasts.includes(b.id)) addInto(production, beastGather(state, content, b));
+  const now = monthIndex(state.date);
+  const veinOre = state.veins.filter((v) => v.until >= now).reduce((n, v) => n + v.orePerMonth, 0);
+  if (veinOre) production.ore = (production.ore ?? 0) + veinOre;
   for (const id of RESOURCE_IDS) if (production[id] === 0) delete production[id];
 
   return {
@@ -296,6 +321,7 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
     pillTakers,
     peiyuanTakers,
     breakthroughReady,
+    fedBeasts,
     furnaces,
     notes,
   };
@@ -306,7 +332,7 @@ export function monthsUntilEmpty(state: GameState, plan: MonthPlan, id: keyof Re
   const net = (plan.production[id] ?? 0) + (plan.expected[id] ?? 0) - (plan.consumption[id] ?? 0);
   if (net >= 0) return null;
   // 需求可能大於可扣除量；以實際需求估算
-  const demand = id === 'food' ? plan.foodNeed : plan.consumption[id] ?? 0;
+  const demand = id === 'food' ? Math.max(plan.foodNeed, plan.consumption.food ?? 0) : plan.consumption[id] ?? 0;
   const income = (plan.production[id] ?? 0) + (plan.expected[id] ?? 0);
   const burn = demand - income;
   if (burn <= 0) return null;

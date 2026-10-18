@@ -8,7 +8,11 @@ import { rng } from '../../rng';
 import type { BattleRecord, Character, ExplorationRun, GameState, Row } from '../../types';
 import { findCharacter, isInjured } from '../characters/characters';
 import { releaseFurnace } from '../alchemy/alchemy';
-import { runBattle, unitFromBeast, unitFromCharacter, unitFromEnemy, type Unit } from '../combat/combat';
+import { ITEM_NAMES } from '../talent/items';
+import { runBattle, unitFromEnemy } from '../combat/combat';
+import { allyUnit, applyFormation, characterMaxHp, companions, healPctFor } from '../combat/party';
+
+export { companions } from '../combat/party';
 
 // 秘境探索在「安排階段」當場進行：進入時佔用隊員本月行程，
 // 取得的物資先放在探索紀錄，結束後轉入 pendingLoot，於月結算第 5 步入庫。
@@ -30,6 +34,7 @@ export function canJoinExpedition(state: GameState, c: Character): string | unde
   if (c.role === 'protagonist' && state.protagonist.seclusion) return `${c.name}閉關中，需先中斷閉關`;
   if (c.schedule === 'breakthrough') return `${c.name}本月安排突破`;
   if (c.schedule === 'explore') return `${c.name}本月已探索過`;
+  if (c.schedule === 'dispatch') return `${c.name}正在秘境派遣中`;
   return undefined;
 }
 
@@ -56,15 +61,13 @@ export function startExploration(
   ensure(canAfford(state.resources, realm.supplies), `補給不足（需要 ${formatResources(realm.supplies)}）`);
   spend(state.resources, realm.supplies);
 
-  const lineage = content.lineages.get(state.lineage);
-  ensure(lineage, '傳承資料錯誤');
   const hp: Record<string, number> = {};
   const fixedRows: Record<string, Row> = {};
   for (const c of members) {
     releaseFurnace(state, c.id);
     c.schedule = 'explore';
     fixedRows[c.id] = rows[c.id] ?? 'front';
-    hp[c.id] = unitFromCharacter(c, fixedRows[c.id] ?? 'front', lineage).hp;
+    hp[c.id] = allyUnit(state, content, c, fixedRows[c.id] ?? 'front').hp;
   }
   for (const u of companions(state, content, teamIds, hp)) hp[u.key] = u.hp;
   state.exploration = {
@@ -84,23 +87,6 @@ export function startExploration(
   state.exploredThisMonth = true;
 }
 
-/** 隊員帶著的靈獸（不佔隊伍名額）。hp 給定時使用探索中的目前生命。 */
-export function companions(state: GameState, content: ContentPack, teamIds: string[], hp?: Record<string, number>): Unit[] {
-  const lineage = content.lineages.get(state.lineage);
-  if (!lineage) return [];
-  const out: Unit[] = [];
-  for (const beast of state.beasts) {
-    if (!teamIds.includes(beast.ownerId)) continue;
-    const owner = findCharacter(state, beast.ownerId);
-    const species = content.beasts.get(beast.speciesId);
-    if (!owner || !species) continue;
-    if (hp && (hp[owner.id] ?? 0) <= 0) continue; // 主人倒下，靈獸護主撤離
-    const u = unitFromBeast(beast, species, owner, lineage, hp?.[beast.id]);
-    if (u.hp > 0) out.push(u);
-  }
-  return out;
-}
-
 /** 撤退時保留物資的比例：秘境規定與傳承加成取較高者。 */
 export function retreatPct(state: GameState, content: ContentPack, realm: SecretRealmDef): number {
   return Math.max(realm.retreatLootPct, content.lineages.get(state.lineage)?.bonuses.retreatLootPct ?? 0);
@@ -117,14 +103,13 @@ function aliveTeam(run: ExplorationRun): string[] {
 function fight(state: GameState, content: ContentPack, realm: SecretRealmDef, node: RealmNodeDef): BattleRecord {
   const run = state.exploration;
   ensure(run, '沒有進行中的探索');
-  const lineage = content.lineages.get(state.lineage);
-  ensure(lineage, '傳承資料錯誤');
   const allies = aliveTeam(run).map((id) => {
     const c = findCharacter(state, id);
     ensure(c, '找不到隊員');
-    return unitFromCharacter(c, run.rows[id] ?? 'front', lineage, run.hp[id]);
+    return allyUnit(state, content, c, run.rows[id] ?? 'front', run.hp[id]);
   });
   allies.push(...companions(state, content, aliveTeam(run), run.hp));
+  const formation = applyFormation(state, content, allies);
   const enemies = (node.enemies ?? []).map((eid, i) => {
     const def = content.enemies.get(eid);
     ensure(def, `敵人資料錯誤：${eid}`);
@@ -137,8 +122,10 @@ function fight(state: GameState, content: ContentPack, realm: SecretRealmDef, no
     strategy: state.strategy,
     healPills: state.resources.pill_heal,
     talismans: { fire: state.resources.talisman_fire, guard: state.resources.talisman_guard },
+    healPct: healPctFor(state, content),
     randInt: (n) => r.int(n),
   });
+  if (formation) outcome.highlights.unshift(formation);
   state.resources.pill_heal -= outcome.pillsUsed;
   state.resources.talisman_fire -= outcome.talismansUsed.fire;
   state.resources.talisman_guard -= outcome.talismansUsed.guard;
@@ -199,11 +186,10 @@ export function chooseEvent(state: GameState, content: ContentPack, choiceId: st
   run.choices[node.id] = choice.id;
   run.log.push(`${choice.label}：${choice.result}`);
   if (choice.hpLossPct) {
-    const lineage = content.lineages.get(state.lineage);
     for (const id of aliveTeam(run)) {
       const c = findCharacter(state, id);
-      if (!c || !lineage) continue;
-      const maxHp = unitFromCharacter(c, 'front', lineage, 0).maxHp;
+      if (!c) continue;
+      const maxHp = characterMaxHp(state, content, c);
       run.hp[id] = Math.max(1, (run.hp[id] ?? 0) - Math.floor((maxHp * choice.hpLossPct) / 100));
     }
   }
@@ -221,7 +207,6 @@ function finishRun(state: GameState, content: ContentPack, status: 'completed' |
   const run = state.exploration;
   ensure(run, '沒有進行中的探索');
   const realm = realmDef(content, run.realmId);
-  const lineage = content.lineages.get(state.lineage);
   run.status = status;
 
   let kept = run.loot;
@@ -241,6 +226,26 @@ function finishRun(state: GameState, content: ContentPack, status: 'completed' |
       for (const recipe of realm.firstClear.recipes) {
         run.log.push(`習得丹方「${content.recipes.get(recipe)?.name ?? recipe}」。`);
       }
+      for (const item of realm.firstClear.items) {
+        if (!state.items.includes(item)) state.items.push(item);
+        run.log.push(`取得「${ITEM_NAMES[item] ?? item}」。`);
+      }
+      for (const e of realm.firstClear.equipment) {
+        state.armory.push(e);
+        run.log.push(`取得法器「${content.equipment.get(e)?.name ?? e}」（可在弟子頁裝備）。`);
+      }
+      const open = realm.firstClear.openRegion;
+      if (open && state.regions[open]?.status !== 'open') {
+        state.regions[open] = { status: 'open', construction: null };
+        run.log.push(`${content.regions.get(open)?.name ?? open}已經打通，可以建設。`);
+      }
+      if (realm.firstClear.insight) {
+        for (const id of aliveTeam(run)) {
+          const c = findCharacter(state, id);
+          if (c) c.insight = Math.min(balance.technique.maxInsight, c.insight + realm.firstClear.insight);
+        }
+        run.log.push(`倖存隊員功法領悟 +${realm.firstClear.insight}。`);
+      }
     }
   }
   addInto(state.pendingLoot, kept);
@@ -250,8 +255,8 @@ function finishRun(state: GameState, content: ContentPack, status: 'completed' |
   // 傷勢：倒下者重傷，生命低於一半者輕傷
   for (const id of run.teamIds) {
     const c = findCharacter(state, id);
-    if (!c || !lineage) continue;
-    const maxHp = unitFromCharacter(c, 'front', lineage, 0).maxHp;
+    if (!c) continue;
+    const maxHp = characterMaxHp(state, content, c);
     const hp = run.hp[id] ?? 0;
     c.health = Math.max(1, Math.floor((hp * 100) / maxHp));
     if (hp <= 0) {

@@ -7,6 +7,8 @@ import { refreshBoard } from '../engine/systems/commissions/commissions';
 import { emptyMarket, rollMarket } from '../engine/systems/economy/market';
 import { RESOURCE_IDS } from '../engine/resources';
 import { seedState } from '../engine/rng';
+import { emptyPositions } from '../engine/systems/talent/positions';
+import { initialSects } from '../engine/systems/world/sects';
 
 type World = Record<string, unknown>;
 
@@ -78,6 +80,37 @@ export const migrations: Record<number, (w: World) => World> = {
     rollMarket(next);
     refreshBoard(next, content);
     return next as unknown as World;
+  },
+  // v4 → v5（P1 批次 C、D、E）：專長、功法領悟、法器欄、職位、靈獸成長與安排、傳承分支、
+  // 秘境派遣、電腦宗門、大比、靈脈競標。舊的靈獸視為幼年、隨主人出戰；新亂數流由 world 流衍生。
+  4: (w) => {
+    const person = (c: Record<string, unknown>) => ({ specialty: null, insight: 0, equipment: null, ...c });
+    const rngs = w.rng as Record<string, [number, number, number, number]>;
+    const world = rngs.world ?? [1, 2, 3, 4];
+    const resources = Object.fromEntries(RESOURCE_IDS.map((id) => [id, (w.resources as Record<string, number>)[id] ?? 0]));
+    return {
+      ...w,
+      version: 5,
+      resources,
+      protagonist: person(w.protagonist as Record<string, unknown>),
+      disciples: (w.disciples as Record<string, unknown>[]).map(person),
+      beasts: (w.beasts as Record<string, unknown>[]).map((b) => ({ stage: 'young', growth: 0, task: 'follow', ...b })),
+      positions: emptyPositions(),
+      armory: [],
+      items: [],
+      branches: [],
+      dispatches: [],
+      sects: initialSects(content),
+      intel: [],
+      tournament: null,
+      auction: null,
+      veins: [],
+      rng: {
+        ...rngs,
+        beast: seedState((world[2] ^ 0x62656173) >>> 0),
+        sects: seedState((world[3] ^ 0x73656374) >>> 0),
+      },
+    };
   },
 };
 

@@ -94,4 +94,14 @@ export const recipes: RecipeDef[] = [
     station: 'talisman',
     marketPrice: 80,
   },
+  {
+    id: 'recipe.core_liquid',
+    name: '結丹靈液',
+    description: '築基圓滿凝結金丹時服用的靈液。丹方由「古修遺跡」首次通關取得。',
+    inputs: { spirit_herb: 10, ore: 5, lingshi: 80 },
+    outputs: { pill_core: 1 },
+    baseSuccessBp: 4500,
+    knownAtStart: false,
+    station: 'alchemy',
+  },
 ];
