@@ -5,7 +5,8 @@ import { RESOURCE_IDS, RESOURCE_NAMES } from '../../engine/resources';
 import { furnaceCount } from '../../engine/systems/buildings/buildings';
 import { allCharacters } from '../../engine/systems/characters/characters';
 import { jobCapacity, OUTER_JOB_NAMES } from '../../engine/systems/characters/outer';
-import { alchemySuccessBp } from '../../engine/systems/economy/flows';
+import { alchemyOdds } from '../../engine/systems/economy/flows';
+import { furnaceRoom } from '../../engine/systems/buildings/buildings';
 import { priceText, SELLABLE, sellCap, type Sellable } from '../../engine/systems/economy/trade';
 import { ResList } from '../components/Res';
 import { content, useGame, useUi } from '../store';
@@ -144,7 +145,10 @@ function Furnaces() {
         };
         return (
           <div key={i} className="row" style={{ marginBottom: '.5rem' }}>
-            <b>丹爐 {i + 1}</b>
+            <b>
+              丹爐 {i + 1}
+              <span className="muted small">（{content.regions.get(furnaceRoom(game, content, i)?.region ?? '')?.name}）</span>
+            </b>
             掌爐：
             <select value={f.alchemistId ?? ''} data-testid={`furnace-${i}-alchemist`} onChange={(e) => set({ alchemistId: e.target.value || null })}>
               <option value="">（無）</option>
@@ -171,7 +175,8 @@ function Furnaces() {
             </label>
             {f.recipeId && f.alchemistId && (
               <span className="small">
-                成丹率 {alchemySuccessBp(game, content, f.recipeId, f.alchemistId) / 100}%・材料{' '}
+                成丹率 {alchemyOdds(game, content, f.recipeId, f.alchemistId, i).bp / 100}%
+                <span className="muted">（{alchemyOdds(game, content, f.recipeId, f.alchemistId, i).parts.join('・')}）</span>・材料{' '}
                 <ResList value={content.recipes.get(f.recipeId)?.inputs ?? {}} />
                 {fp && !fp.runs && <span className="neg">（{fp.reason}）</span>}
               </span>
@@ -210,7 +215,7 @@ function Trade() {
           賣出
         </button>
         <span className="muted small">
-          本月收購額度 {sellCap(game) - game.trade.soldLingshi} / {sellCap(game)} 靈石
+          本月收購額度 {sellCap(game, content) - game.trade.soldLingshi} / {sellCap(game, content)} 靈石
         </span>
       </div>
       <div className="row" style={{ marginTop: '.4rem' }}>

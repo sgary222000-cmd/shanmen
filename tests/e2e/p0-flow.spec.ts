@@ -52,12 +52,12 @@ test('P0 完整流程可玩完並在重新載入後恢復', async ({ page }) => 
   await nav(page, 'protagonist');
   await page.getByTestId('seclusion-c0').click();
   await nav(page, 'build');
-  await page.getByTestId('build-building.hall').click();
+  await page.getByTestId('upgrade-b1').click();
 
   // 3. 推進月份：大殿兩個月完工
   await advance(page, 2);
   await nav(page, 'build');
-  await expect(page.getByTestId('building-building.hall')).toContainText('1 級');
+  await expect(page.getByTestId('bld-b1')).toContainText('1 級');
 
   // 4. 建造生產建築並分工
   await page.getByTestId('build-building.field').click();
@@ -83,16 +83,16 @@ test('P0 完整流程可玩完並在重新載入後恢復', async ({ page }) => 
   // 7. 升級建築：累積材料後把大殿升到 2 級
   await nav(page, 'build');
   for (let i = 0; i < 30; i++) {
-    const btn = page.getByTestId('build-building.hall');
+    const btn = page.getByTestId('upgrade-b1');
     if (await btn.isEnabled()) break;
     await advance(page, 1);
     await nav(page, 'build');
   }
-  await page.getByTestId('build-building.hall').click();
-  await expect(page.getByTestId('building-building.hall')).toContainText('施工中');
+  await page.getByTestId('upgrade-b1').click();
+  await expect(page.getByTestId('bld-b1')).toContainText('施工中');
   await advance(page, 3);
   await nav(page, 'build');
-  await expect(page.getByTestId('building-building.hall')).toContainText('2 級');
+  await expect(page.getByTestId('bld-b1')).toContainText('2 級');
   await shot(page, '04-建設');
 
   // 8. 探索與戰鬥：先中斷閉關，帶內門弟子進入荒廢洞府
@@ -165,12 +165,12 @@ test('匯入存檔後煉丹與築基突破可在介面操作', async ({ page }) 
   const hall = s.buildings.find((b) => b.defId === 'building.hall');
   if (hall) Object.assign(hall, { level: 2, status: 'active' });
   s.buildings.push(
-    { id: 'b90', defId: 'building.alchemy', level: 1, status: 'active', construction: null },
-    { id: 'b91', defId: 'building.array', level: 1, status: 'active', construction: null },
+    { id: 'b90', defId: 'building.alchemy', region: 'region.main', level: 1, status: 'active', construction: null },
+    { id: 'b91', defId: 'building.array', region: 'region.main', level: 1, status: 'active', construction: null },
   );
   s.protagonist.realm = { major: 'qi', stage: 9 };
   s.protagonist.xp = 540;
-  s.disciples.push({ ...structuredClone(s.protagonist), id: 'c7', name: '南宮婉', gender: 'female', role: 'inner', realm: { major: 'qi', stage: 2 }, xp: 0, skills: { alchemy: 4, farming: 1, combat: 2 } } as never);
+  s.disciples.push({ ...structuredClone(s.protagonist), id: 'c7', name: '南宮婉', gender: 'female', role: 'inner', realm: { major: 'qi', stage: 2 }, xp: 0, skills: { ...s.protagonist.skills, alchemy: 4, farming: 1, combat: 2 } } as never);
   // 檔名用英文，避免部分環境上傳含中文路徑的檔案失敗
   const file = join(mkdtempSync(join(tmpdir(), 'shanmen-')), 'progress-save.json');
   writeFileSync(file, JSON.stringify(toEnvelope(s, '2026-10-18T00:00:00.000Z')));

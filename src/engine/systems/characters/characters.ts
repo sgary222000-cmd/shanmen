@@ -1,4 +1,5 @@
 import { balance } from '../../../content/balance';
+import { MAIN_REGION } from '../../../content/registry';
 import { givenFemale, givenMale, surnames } from '../../../content/names';
 import { newId } from '../../ids';
 import { rng } from '../../rng';
@@ -85,7 +86,15 @@ export function rollCandidate(state: GameState, bonusBp: number): Candidate {
   const r = rng(state, 'recruit');
   const gender = r.chance(5000) ? 'male' : 'female';
   const root = rollRoot(state, bonusBp);
-  const skills = { alchemy: r.range(0, 5), farming: r.range(0, 5), combat: r.range(1, 6) };
+  const skills = {
+    alchemy: r.range(0, 5),
+    farming: r.range(0, 5),
+    combat: r.range(1, 6),
+    forging: r.range(0, 3),
+    talisman: r.range(0, 3),
+    beast: r.range(0, 3),
+    affairs: r.range(0, 3),
+  };
   const gradeCost: Record<RootGrade, number> = { low: 20, mid: 40, high: 70, heaven: 120 };
   return {
     id: newId(state, 'cand'),
@@ -114,6 +123,7 @@ export function characterFromCandidate(state: GameState, cand: Candidate, stage:
     skills: { ...cand.skills },
     schedule: 'cultivate',
     takePill: false,
+    seat: MAIN_REGION,
   };
 }
 
@@ -121,12 +131,13 @@ export function isInjured(c: Character): boolean {
   return c.injuryMonths > 0;
 }
 
-export function qiDemandOf(state: GameState): number {
+/** 某區域的靈氣需求：在此修煉的人物；修煉中的外門一律在主峰。 */
+export function qiDemandOf(state: GameState, regionId: string = MAIN_REGION): number {
   const p = state.protagonist;
-  let demand = p.schedule === 'seclusion' ? balance.qiDemand.protagonistSeclusion : balance.qiDemand.protagonist;
-  demand += state.disciples.length * balance.qiDemand.inner;
-  const cultivatingOuter = outerCultivating(state);
-  demand += Math.ceil(cultivatingOuter / balance.qiDemand.outerPerUnit);
+  let demand = 0;
+  if (p.seat === regionId) demand += p.schedule === 'seclusion' ? balance.qiDemand.protagonistSeclusion : balance.qiDemand.protagonist;
+  demand += state.disciples.filter((d) => d.seat === regionId).length * balance.qiDemand.inner;
+  if (regionId === MAIN_REGION) demand += Math.ceil(outerCultivating(state) / balance.qiDemand.outerPerUnit);
   return demand;
 }
 

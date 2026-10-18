@@ -39,9 +39,13 @@ export interface SpiritRoot {
 }
 
 export interface Skills {
-  alchemy: number; // 0–20
-  farming: number;
-  combat: number;
+  alchemy: number; // 煉丹 0–20
+  farming: number; // 耕作
+  combat: number; // 戰鬥
+  forging: number; // 煉器（P1）
+  talisman: number; // 符陣（P1）
+  beast: number; // 御獸（P1）
+  affairs: number; // 庶務（P1）
 }
 
 /** 主角行程與具名弟子的本月工作。 */
@@ -84,6 +88,8 @@ export interface Character {
   schedule: ScheduleKind;
   /** 本月是否服用聚氣丹 */
   takePill: boolean;
+  /** 修煉地點（區域 ID），佔用該區域的靈氣 */
+  seat: string;
 }
 
 export interface Protagonist extends Character {
@@ -110,6 +116,8 @@ export type BuildingStatus = 'active' | 'constructing' | 'disabled' | 'ruined';
 export interface Building {
   id: string;
   defId: string;
+  /** 所在區域 ID */
+  region: string;
   /** 已完成的等級；殘破建築為 0 */
   level: number;
   status: BuildingStatus;
@@ -119,6 +127,23 @@ export interface Building {
   crop?: 'food' | 'herb';
   /** 本月因維護不足停用 */
   disabledReason?: string;
+}
+
+export type RegionStatus = 'locked' | 'opening' | 'open';
+
+export interface RegionState {
+  status: RegionStatus;
+  /** 開路施工中：剩餘月數與已付費用 */
+  construction: { remainingMonths: number; paid: Partial<Resources> } | null;
+}
+
+/** 靈獸（P1 批次 A 只有御獸開局的一隻；完整靈獸系統於批次 C）。 */
+export interface Beast {
+  id: string;
+  speciesId: string;
+  name: string;
+  /** 主人人物 ID；出戰時隨主人上場，不佔隊伍名額 */
+  ownerId: string;
 }
 
 export interface Furnace {
@@ -225,6 +250,9 @@ export interface GameState {
   disciples: Character[];
   outer: OuterDisciples;
   buildings: Building[];
+  /** 各區域的開放狀態 */
+  regions: Record<string, RegionState>;
+  beasts: Beast[];
   furnaces: Furnace[];
   /** 已學會的配方 */
   recipes: string[];

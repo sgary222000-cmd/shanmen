@@ -3,8 +3,8 @@ import { applyCommand, monthIndex, newGame, type Command, type GameState } from 
 
 export { content };
 
-export function fresh(seed = 1): GameState {
-  return newGame(content, { sectName: '青雲宗', protagonistName: '林長風', gender: 'male', lineage: 'lineage.sword', seed });
+export function fresh(seed = 1, lineage = 'lineage.sword'): GameState {
+  return newGame(content, { sectName: '青雲宗', protagonistName: '林長風', gender: 'male', lineage, seed });
 }
 
 /** 執行指令，失敗時讓測試失敗。 */
@@ -48,7 +48,7 @@ export function developed(seed = 1): GameState {
     }
     let n = 100;
     for (const defId of ['building.field', 'building.quarry', 'building.lumber', 'building.alchemy', 'building.array']) {
-      s.buildings.push({ id: `b${n++}`, defId, level: 1, status: 'active', construction: null, ...(defId === 'building.field' ? { crop: 'food' as const } : {}) });
+      s.buildings.push({ id: `b${n++}`, defId, region: 'region.main', level: 1, status: 'active', construction: null, ...(defId === 'building.field' ? { crop: 'food' as const } : {}) });
     }
     s.disciples.push({
       id: 'c50',
@@ -62,9 +62,10 @@ export function developed(seed = 1): GameState {
       health: 100,
       injuryMonths: 0,
       loyalty: 70,
-      skills: { alchemy: 3, farming: 1, combat: 3 },
+      skills: { alchemy: 3, farming: 1, combat: 3, forging: 0, talisman: 0, beast: 0, affairs: 0 },
       schedule: 'cultivate',
       takePill: false,
+      seat: 'region.main',
     });
   });
 }

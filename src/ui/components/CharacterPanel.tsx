@@ -1,9 +1,26 @@
 import { useState } from 'react';
 import { formatAge, planMonth, type Character, type ScheduleKind } from '../../engine';
 import { realmName, rootName, xpToNext } from '../../engine/systems/characters/characters';
-import { LOCKED_SCHEDULES, SCHEDULE_NAMES, seclusionInterruptCost, selectableSchedules } from '../../engine/systems/characters/schedule';
+import { LOCKED_SCHEDULES, SCHEDULE_NAMES, seatOptions, seclusionInterruptCost, selectableSchedules } from '../../engine/systems/characters/schedule';
 import { breakthroughOdds, monthlyXp } from '../../engine/systems/cultivation/cultivation';
 import { content, useGame, useUi } from '../store';
+
+const SKILL_NAMES = {
+  alchemy: '煉丹',
+  farming: '耕作',
+  combat: '戰鬥',
+  forging: '煉器',
+  talisman: '符陣',
+  beast: '御獸',
+  affairs: '庶務',
+} as const;
+
+export function skillText(c: Character): string {
+  return (Object.keys(SKILL_NAMES) as (keyof typeof SKILL_NAMES)[])
+    .filter((k) => k === 'alchemy' || k === 'farming' || k === 'combat' || c.skills[k] > 0)
+    .map((k) => `${SKILL_NAMES[k]} ${c.skills[k]}`)
+    .join('／');
+}
 
 export function XpBar({ c }: { c: Character }) {
   const need = xpToNext(c.realm);
@@ -37,9 +54,33 @@ export function CharacterPanel({ c }: { c: Character }) {
         {c.injuryMonths > 0 && <span className="tag neg">受傷 {c.injuryMonths} 個月</span>}
       </h3>
       <p className="small muted">
-        {formatAge(c.ageMonths)}・{rootName(c.root)}・健康 {c.health}・忠誠 {c.loyalty}・煉丹 {c.skills.alchemy}／耕作 {c.skills.farming}／戰鬥{' '}
-        {c.skills.combat}
+        {formatAge(c.ageMonths)}・{rootName(c.root)}・健康 {c.health}・忠誠 {c.loyalty}・{skillText(c)}
       </p>
+      {game.beasts
+        .filter((b) => b.ownerId === c.id)
+        .map((b) => (
+          <p key={b.id} className="small">
+            靈獸：<b>{b.name}</b>（{content.beasts.get(b.speciesId)?.description}）
+          </p>
+        ))}
+      {seatOptions(game, content).length > 1 && (
+        <label className="small row">
+          修煉地點：
+          <select
+            value={c.seat}
+            data-testid={`seat-${c.id}`}
+            disabled={!!seclusion}
+            onChange={(e) => dispatch({ type: 'setSeat', characterId: c.id, regionId: e.target.value })}
+          >
+            {seatOptions(game, content).map((id) => (
+              <option key={id} value={id}>
+                {content.regions.get(id)?.name}
+              </option>
+            ))}
+          </select>
+          {seclusion && <span className="muted">閉關中不能搬移</span>}
+        </label>
+      )}
       <XpBar c={c} />
       <p className="small">
         本月行程：<b>{SCHEDULE_NAMES[c.schedule]}</b>

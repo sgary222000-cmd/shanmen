@@ -24,9 +24,18 @@ const character = z.object({
   health: int.min(0).max(100),
   injuryMonths: nonneg,
   loyalty: int.min(0).max(100),
-  skills: z.object({ alchemy: nonneg, farming: nonneg, combat: nonneg }),
+  skills: z.object({
+    alchemy: nonneg,
+    farming: nonneg,
+    combat: nonneg,
+    forging: nonneg,
+    talisman: nonneg,
+    beast: nonneg,
+    affairs: nonneg,
+  }),
   schedule,
   takePill: z.boolean(),
+  seat: z.string(),
 });
 
 /** 世界狀態的主要欄位驗證（未列出的欄位保留原樣）。 */
@@ -49,7 +58,15 @@ export const worldSchema = z
       training: int.min(0).max(100),
       hungerMonths: nonneg,
     }),
-    buildings: z.array(z.object({ id: z.string(), defId: z.string(), level: nonneg, status: z.string() }).passthrough()),
+    buildings: z.array(z.object({ id: z.string(), defId: z.string(), region: z.string(), level: nonneg, status: z.string() }).passthrough()),
+    regions: z.record(
+      z.string(),
+      z.object({
+        status: z.enum(['locked', 'opening', 'open']),
+        construction: z.object({ remainingMonths: int, paid: z.record(z.string(), nonneg) }).nullable(),
+      }),
+    ),
+    beasts: z.array(z.object({ id: z.string(), speciesId: z.string(), name: z.string(), ownerId: z.string() })),
     furnaces: z.array(z.object({ alchemistId: z.string().nullable(), recipeId: z.string().nullable(), repeat: z.boolean() })),
     recipes: z.array(z.string()),
     claimedRewards: z.array(z.string()),

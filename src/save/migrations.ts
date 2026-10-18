@@ -12,6 +12,34 @@ export const migrations: Record<number, (w: World) => World> = {
     trade: { soldLingshi: 0, boughtFood: 0 },
     strategy: { useHealPill: true, focusLowest: true },
   }),
+  // v2 → v3（P1 批次 A）：區域、建築所在區域、修煉地點、技藝擴充、靈獸。
+  // P0 的建築全部算在主峰，照常運作；傳承保留原本的劍修。
+  2: (w) => {
+    const skills = (c: Record<string, unknown>) => ({
+      forging: 0,
+      talisman: 0,
+      beast: 0,
+      affairs: 0,
+      ...(c.skills as Record<string, number>),
+    });
+    const person = (c: Record<string, unknown>) => ({ ...c, skills: skills(c), seat: c.seat ?? 'region.main' });
+    return {
+      ...w,
+      version: 3,
+      protagonist: person(w.protagonist as Record<string, unknown>),
+      disciples: (w.disciples as Record<string, unknown>[]).map(person),
+      buildings: (w.buildings as Record<string, unknown>[]).map((b) => ({ ...b, region: b.region ?? 'region.main' })),
+      regions: {
+        'region.main': { status: 'open', construction: null },
+        'region.outer': { status: 'open', construction: null },
+        'region.valley': { status: 'locked', construction: null },
+        'region.fire': { status: 'locked', construction: null },
+        'region.back': { status: 'locked', construction: null },
+        'region.gate': { status: 'locked', construction: null },
+      },
+      beasts: [],
+    };
+  },
 };
 
 export function migrate(world: World, from: number, to: number): World {

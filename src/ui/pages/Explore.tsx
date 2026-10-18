@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { BattleRecord, Row } from '../../engine';
 import { allCharacters, realmName } from '../../engine/systems/characters/characters';
-import { canJoinExpedition } from '../../engine/systems/exploration/exploration';
+import { canJoinExpedition, retreatPct } from '../../engine/systems/exploration/exploration';
 import { Art } from '../components/Art';
 import { ResList } from '../components/Res';
 import { content, useGame, useUi } from '../store';
@@ -108,7 +108,7 @@ function ActiveRun() {
           ・回春丹 {game.resources.pill_heal}
         </div>
         <p className="small">
-          目前收穫：<ResList value={run.loot} />（撤退保留 {realm.retreatLootPct}%，戰敗全部失去）
+          目前收穫：<ResList value={run.loot} />（撤退保留 {retreatPct(game, content, realm)}%，戰敗全部失去）
         </p>
         {!finished && (
           <div className="row">

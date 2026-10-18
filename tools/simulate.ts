@@ -6,12 +6,13 @@ import { realmName } from '../src/engine/systems/characters/characters';
 import { botTurn, type BotLog } from './bot';
 
 // 無畫面模擬器：自動玩 N 年，檢查不變條件並輸出平衡指標。
-// 用法：npm run simulate -- [年數] [種子]
+// 用法：npm run simulate -- [年數] [種子] [傳承，例如 lineage.alchemy]
 
 const years = Number(process.argv[2] ?? 100);
 const seed = Number(process.argv[3] ?? 12345);
+const lineage = process.argv[4]?.startsWith('lineage.') ? process.argv[4] : 'lineage.sword';
 
-let state = newGame(content, { sectName: '青雲宗', protagonistName: '測試', gender: 'male', lineage: 'lineage.sword', seed });
+let state = newGame(content, { sectName: '青雲宗', protagonistName: '測試', gender: 'male', lineage, seed });
 const log: BotLog[] = [];
 const milestones: Record<string, string> = {};
 const mark = (key: string) => {
@@ -43,9 +44,10 @@ for (let i = 0; i < years * 12; i++) {
   if (p.realm.major === 'qi' && p.realm.stage >= 5) mark('主角煉氣五層');
   if (p.realm.major === 'qi' && p.realm.stage >= 9) mark('主角煉氣九層');
   if (p.realm.major === 'foundation') mark('主角築基');
+  for (const [id, r] of Object.entries(state.regions)) if (r.status === 'open' && content.regions.get(id)?.unlock) mark(`開放${content.regions.get(id)?.name}`);
 }
 
-console.log(`=== 模擬 ${years} 年（種子 ${seed}）===`);
+console.log(`=== 模擬 ${years} 年（種子 ${seed}、${content.lineages.get(lineage)?.name}）===`);
 console.log(`結束時間：${formatDate(state.date)}；主角 ${realmName(state.protagonist.realm)}`);
 console.log(`內門：${state.disciples.map((d) => `${d.name} ${realmName(d.realm)}`).join('、') || '無'}`);
 console.log(`外門：${state.outer.count} 人，滿意度 ${state.outer.satisfaction}`);

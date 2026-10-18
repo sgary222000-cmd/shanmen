@@ -1,6 +1,6 @@
 import type { BuildingDef } from '../schema';
 
-// P0 建築：七種，依大殿等級逐步開放。所有數值為暫定值（見 docs/暫定數值與決策.md）。
+// 建築：七種，依大殿等級逐步開放。P1 起靈田、採石場、靈木場可蓋多座（受區域槽位限制），煉丹房最多兩座，聚靈陣每區一座。所有數值為暫定值（見 docs/暫定數值與決策.md）。
 
 export const buildings: BuildingDef[] = [
   {
@@ -8,6 +8,7 @@ export const buildings: BuildingDef[] = [
     name: '宗門大殿',
     description: '宗門中樞。修復後可招收弟子並開放更多建設；等級決定其他建築的上限。',
     unlockHall: 0,
+    maxTotal: 1,
     art: 'final/hall.webp',
     artRuined: 'final/hall-ruined.webp',
     levels: [
@@ -36,6 +37,7 @@ export const buildings: BuildingDef[] = [
     name: '弟子居所',
     description: '外門弟子起居之處，決定外門人數上限。',
     unlockHall: 0,
+    maxTotal: 1,
     art: 'final/dorm.webp',
     levels: [
       {
@@ -144,6 +146,7 @@ export const buildings: BuildingDef[] = [
     name: '煉丹房',
     description: '以藥草與靈石煉製丹藥，由主角或內門弟子掌爐。煉丹是宗門通用功能，不限傳承。',
     unlockHall: 2,
+    maxTotal: 2,
     art: 'final/alchemy.webp',
     levels: [
       {
@@ -169,8 +172,9 @@ export const buildings: BuildingDef[] = [
   {
     id: 'building.array',
     name: '聚靈陣',
-    description: '匯聚天地靈氣，提高主峰靈氣容量。修煉效率與築基都需要足夠靈氣。',
+    description: '匯聚天地靈氣，提高所在區域的靈氣容量。修煉效率與築基都需要足夠靈氣。',
     unlockHall: 2,
+    perRegion: 1,
     art: 'final/array.webp',
     levels: [
       {
@@ -180,7 +184,7 @@ export const buildings: BuildingDef[] = [
         maintenance: { lingshi: 10 },
         requiresHall: 2,
         effects: { qiCapacity: 10 },
-        summary: '主峰靈氣容量 +10。',
+        summary: '所在區域靈氣容量 +10。',
       },
       {
         level: 2,
@@ -189,7 +193,7 @@ export const buildings: BuildingDef[] = [
         maintenance: { lingshi: 15 },
         requiresHall: 2,
         effects: { qiCapacity: 25 },
-        summary: '主峰靈氣容量 +25；築基成功率 +10%。',
+        summary: '所在區域靈氣容量 +25；在此區突破成功率 +10%。',
       },
     ],
   },

@@ -10,6 +10,7 @@ import { tickOuter } from '../characters/outer';
 import { addXp, breakthroughOdds, monthlyXp, resolveBreakthrough, tickBody } from '../cultivation/cultivation';
 import { planMonth } from '../economy/flows';
 import { maybeRecruitment } from '../events/recruitment';
+import { progressRegions } from '../regions/regions';
 
 const REPORT_KEEP = 36;
 
@@ -63,6 +64,7 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
   gain(state.resources, plan.production);
   resolveFurnaces(state, content, plan.furnaces, produced, lines);
   progressConstruction(state, content, lines);
+  progressRegions(state, content, lines);
 
   // 4. 修煉、突破、療傷、年齡、外門
   for (const c of allCharacters(state)) {

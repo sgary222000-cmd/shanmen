@@ -4,6 +4,8 @@ import { ensure } from '../../errors';
 import type { Character, GameState, ScheduleKind } from '../../types';
 import { releaseFurnace } from '../alchemy/alchemy';
 import { breakthroughOdds } from '../cultivation/cultivation';
+import { qiCapacity } from '../buildings/buildings';
+import { isRegionOpen } from '../regions/regions';
 import { findCharacter } from './characters';
 
 export const SCHEDULE_NAMES: Record<ScheduleKind, string> = {
@@ -75,4 +77,22 @@ export function setTakePill(state: GameState, characterId: string, value: boolea
   const c = findCharacter(state, characterId);
   ensure(c, '找不到這個人物');
   c.takePill = value;
+}
+
+/** 可以修煉的區域：已開放且有靈氣。 */
+export function seatOptions(state: GameState, content: ContentPack): string[] {
+  return [...content.regions.values()]
+    .filter((r) => isRegionOpen(state, r.id) && qiCapacity(state, content, r.id) > 0)
+    .map((r) => r.id);
+}
+
+/** 變更修煉地點。閉關中不能搬移。 */
+export function setSeat(state: GameState, content: ContentPack, characterId: string, regionId: string): void {
+  const c = findCharacter(state, characterId);
+  ensure(c, '找不到這個人物');
+  const region = content.regions.get(regionId);
+  ensure(region, '沒有這個區域');
+  ensure(seatOptions(state, content).includes(regionId), `${region.name}尚未開放或沒有靈氣，不能在此修煉`);
+  if (c.role === 'protagonist') ensure(!state.protagonist.seclusion, '主角閉關中，請先中斷閉關');
+  c.seat = regionId;
 }

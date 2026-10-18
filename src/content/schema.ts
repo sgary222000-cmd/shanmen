@@ -46,6 +46,10 @@ export const buildingSchema = z.object({
   /** 出現在建設清單所需的大殿等級 */
   unlockHall: z.number().int().nonnegative(),
   levels: z.array(buildingLevelSchema).min(1),
+  /** 全宗門最多幾座；未填表示只受槽位限制 */
+  maxTotal: z.number().int().positive().optional(),
+  /** 每個區域最多幾座 */
+  perRegion: z.number().int().positive().optional(),
   art: z.string(),
   /** 0 級（殘破）時改用的圖 */
   artRuined: z.string().optional(),
@@ -119,12 +123,76 @@ export const secretRealmSchema = z.object({
   art: z.string(),
 });
 
+const skillKeys = ['alchemy', 'farming', 'combat', 'forging', 'talisman', 'beast', 'affairs'] as const;
+export const SKILL_KEYS = skillKeys;
+
+/** 依建築種類加成產量（百分比） */
+const productionPct = z.record(z.string().regex(/^building\.[a-z_]+$/), z.number().int());
+
 export const lineageSchema = z.object({
   id: z.string().regex(/^lineage\.[a-z_]+$/),
   name: z.string(),
   feature: z.string(),
   available: z.boolean(),
+  /** 開局畫面列出的具體差異 */
+  traits: z.array(z.string()),
   skill: z.object({ name: z.string(), multiplierPct: z.number().int(), mpCost: z.number().int(), piercePct: z.number().int() }),
+  /** 主角靈根屬性 */
+  elements: z.array(z.enum(['metal', 'wood', 'water', 'fire', 'earth'])).min(1),
+  bonuses: z.object({
+    /** 我方戰鬥攻擊 / 防禦加成（百分比） */
+    combatAtkPct: z.number().int().default(0),
+    combatDefPct: z.number().int().default(0),
+    /** 秘境撤退時保留物資的百分比下限 */
+    retreatLootPct: z.number().int().min(0).max(100).default(0),
+    alchemyBonusBp: z.number().int().default(0),
+    productionPct: productionPct.default({}),
+    /** 聚靈陣提供的靈氣加成（百分比） */
+    arrayQiPct: z.number().int().default(0),
+  }),
+  start: z.object({
+    resources: resourceMap.default({}),
+    skills: z.record(z.enum(skillKeys), z.number().int()).default({}),
+    /** 開局附帶的靈獸種類 */
+    beast: z.string().optional(),
+  }),
+});
+
+export const regionSchema = z.object({
+  id: z.string().regex(/^region\.[a-z_]+$/),
+  name: z.string(),
+  description: z.string(),
+  slots: z.number().int().positive(),
+  /** 區域本身的靈氣容量（0 表示不適合修煉） */
+  baseQi: z.number().int().nonnegative(),
+  /** 未填表示開局即開放 */
+  unlock: z
+    .object({ cost: resourceMap, months: z.number().int().positive(), requiresHall: z.number().int().nonnegative(), action: z.string() })
+    .optional(),
+  /** 可在此區建造的建築；'any' 表示全部 */
+  allows: z.union([z.literal('any'), z.array(z.string())]),
+  bonus: z.object({
+    buildCostPct: z.number().int().default(0),
+    productionPct: productionPct.default({}),
+    alchemyBonusBp: z.number().int().default(0),
+    cultivationPct: z.number().int().default(0),
+    tradeCapPct: z.number().int().default(0),
+  }),
+  /** 給玩家看的加成說明 */
+  bonusText: z.string(),
+  art: z.string(),
+});
+
+export const beastSpeciesSchema = z.object({
+  id: z.string().regex(/^beast\.[a-z_]+$/),
+  name: z.string(),
+  description: z.string(),
+  /** 相對主人戰鬥能力的百分比 */
+  hpPct: z.number().int().positive(),
+  atkPct: z.number().int().positive(),
+  spd: z.number().int().nonnegative(),
+  row: z.enum(['front', 'back']),
+  art: z.string().optional(),
 });
 
 export type BuildingDef = z.infer<typeof buildingSchema>;
@@ -134,3 +202,5 @@ export type EnemyDef = z.infer<typeof enemySchema>;
 export type SecretRealmDef = z.infer<typeof secretRealmSchema>;
 export type RealmNodeDef = z.infer<typeof nodeSchema>;
 export type LineageDef = z.infer<typeof lineageSchema>;
+export type RegionDef = z.infer<typeof regionSchema>;
+export type BeastSpeciesDef = z.infer<typeof beastSpeciesSchema>;

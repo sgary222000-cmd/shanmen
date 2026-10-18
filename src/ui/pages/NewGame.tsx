@@ -42,12 +42,17 @@ export function NewGamePage() {
             </label>
           </div>
           <div>
-            主傳承：
+            主傳承（之後可開設其他傳承的分支；煉丹房與基礎丹方不限傳承）：<span className="tag provisional">數值暫定</span>
             {[...content.lineages.values()].map((l) => (
-              <label key={l.id} style={{ display: 'block', opacity: l.available ? 1 : 0.55 }}>
+              <label key={l.id} className="panel" style={{ display: 'block', opacity: l.available ? 1 : 0.55, margin: '.3rem 0' }} data-testid={`lineage-${l.id}`}>
                 <input type="radio" disabled={!l.available} checked={lineage === l.id} onChange={() => setLineage(l.id)} />{' '}
                 <b>{l.name}</b> {!l.available && <span className="tag locked">尚未開放</span>}
                 <span className="muted small"> {l.feature}</span>
+                <ul className="small" style={{ margin: '.2rem 0 0 1.4rem' }}>
+                  {l.traits.map((t) => (
+                    <li key={t}>{t}</li>
+                  ))}
+                </ul>
               </label>
             ))}
           </div>

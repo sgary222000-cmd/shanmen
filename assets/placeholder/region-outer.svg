@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9e3d3"/><stop offset="1" stop-color="#b9c9bd"/></linearGradient></defs>
+<rect width="960" height="300" fill="url(#g)"/>
+<path d="M0 216 L144 90 L288 216 L432 54 L595.2 216 L748.8000000000001 105 L960 216 L960 300 L0 300Z" fill="#3f6b62" opacity=".75"/>
+<path d="M0 255 L240 165 L480 255 L691.1999999999999 150 L960 255 L960 300 L0 300Z" fill="#2c4f4a" opacity=".9"/>
+<rect x="8" y="8" width="150" height="28" rx="4" fill="#8b1e1e" opacity=".85"/>
+<text x="16" y="28" font-size="15" fill="#fff" font-family="sans-serif">臨時素材</text>
+<text x="480" y="286" font-size="26" fill="#1f2e2b" text-anchor="middle" font-family="serif">外山</text>
+</svg>

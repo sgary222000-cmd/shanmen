@@ -2,7 +2,8 @@ import { balance } from '../../../content/balance';
 import type { ContentPack } from '../../../content/registry';
 import { addInto, canAfford, RESOURCE_IDS } from '../../resources';
 import type { Building, GameState, Resources } from '../../types';
-import { furnaceCount, FIELD, levelDef, LUMBER, QUARRY, workerSlots } from '../buildings/buildings';
+import { effectsOf, furnaceCount, furnaceRoom, FIELD, levelDef, LUMBER, QUARRY } from '../buildings/buildings';
+import { productionBonusPct } from '../regions/regions';
 import { allCharacters } from '../characters/characters';
 
 // 每月收支計畫。預覽與實際結算共用同一份計算，確保「預覽等於結算」。
@@ -45,14 +46,52 @@ export function foodNeed(state: GameState): number {
   );
 }
 
-export function alchemySuccessBp(state: GameState, content: ContentPack, recipeId: string, alchemistId: string): number {
+export interface AlchemyOdds {
+  bp: number;
+  parts: string[];
+}
+
+/** 成丹率：丹方基礎 + 技藝 + 煉丹房等級 + 所在區域 + 傳承。furnaceIndex 決定是哪一座煉丹房。 */
+export function alchemyOdds(
+  state: GameState,
+  content: ContentPack,
+  recipeId: string,
+  alchemistId: string,
+  furnaceIndex = 0,
+): AlchemyOdds {
   const recipe = content.recipes.get(recipeId);
   const alchemist = allCharacters(state).find((c) => c.id === alchemistId);
-  if (!recipe || !alchemist) return 0;
-  const hall = state.buildings.find((b) => b.defId === 'building.alchemy');
-  const def = content.buildings.get('building.alchemy');
-  const bonus = hall && def ? (levelDef(def, hall.level)?.effects.alchemyBonusBp ?? 0) : 0;
-  return Math.min(9500, recipe.baseSuccessBp + alchemist.skills.alchemy * balance.alchemy.skillBpPerPoint + bonus);
+  if (!recipe || !alchemist) return { bp: 0, parts: [] };
+  const parts = [`丹方 ${recipe.baseSuccessBp / 100}%`];
+  let bp = recipe.baseSuccessBp;
+  const skill = alchemist.skills.alchemy * balance.alchemy.skillBpPerPoint;
+  if (skill) {
+    bp += skill;
+    parts.push(`技藝 +${skill / 100}%`);
+  }
+  const room = furnaceRoom(state, content, furnaceIndex);
+  if (room) {
+    const roomBp = effectsOf(content, room)?.alchemyBonusBp ?? 0;
+    if (roomBp) {
+      bp += roomBp;
+      parts.push(`煉丹房 ${room.level} 級 +${roomBp / 100}%`);
+    }
+    const region = content.regions.get(room.region);
+    if (region?.bonus.alchemyBonusBp) {
+      bp += region.bonus.alchemyBonusBp;
+      parts.push(`${region.name} +${region.bonus.alchemyBonusBp / 100}%`);
+    }
+  }
+  const lineage = content.lineages.get(state.lineage);
+  if (lineage?.bonuses.alchemyBonusBp) {
+    bp += lineage.bonuses.alchemyBonusBp;
+    parts.push(`${lineage.name}傳承 +${lineage.bonuses.alchemyBonusBp / 100}%`);
+  }
+  return { bp: Math.min(9500, bp), parts };
+}
+
+export function alchemySuccessBp(state: GameState, content: ContentPack, recipeId: string, alchemistId: string, furnaceIndex = 0): number {
+  return alchemyOdds(state, content, recipeId, alchemistId, furnaceIndex).bp;
 }
 
 function take(pool: Resources, used: Partial<Resources>, cost: Partial<Resources>): boolean {
@@ -60,6 +99,37 @@ function take(pool: Resources, used: Partial<Resources>, cost: Partial<Resources
   for (const id of RESOURCE_IDS) pool[id] -= cost[id] ?? 0;
   addInto(used, cost);
   return true;
+}
+
+/**
+ * 外門工人填入同種建築的順序：種糧食的靈田優先（避免工人全跑去種藥草而缺糧），
+ * 其次區域與傳承加成高者，同加成依建造順序。
+ */
+export function fillOrder(
+  state: GameState,
+  content: ContentPack,
+  defId: string,
+  operating: (b: Building) => boolean = (b) => b.level >= 1 && b.status !== 'ruined',
+): { b: Building; pct: number }[] {
+  return state.buildings
+    .map((b, order) => ({ b, order, pct: 100 + productionBonusPct(state, content, b.region, defId) }))
+    .filter(({ b }) => b.defId === defId && operating(b))
+    .sort((x, y) => Number(x.b.crop === 'herb') - Number(y.b.crop === 'herb') || y.pct - x.pct || x.order - y.order);
+}
+
+/** 每座建築本月分到的外門工人數，供介面顯示。 */
+export function workersByBuilding(state: GameState, content: ContentPack): Record<string, number> {
+  const out: Record<string, number> = {};
+  const jobs = state.outer.jobs;
+  for (const [defId, workers] of [[FIELD, jobs.field], [QUARRY, jobs.quarry], [LUMBER, jobs.lumber]] as const) {
+    let left = workers;
+    for (const site of fillOrder(state, content, defId)) {
+      const n = Math.min(left, effectsOf(content, site.b)?.workerSlots ?? 0);
+      left -= n;
+      out[site.b.id] = n;
+    }
+  }
+  return out;
 }
 
 export function planMonth(state: GameState, content: ContentPack): MonthPlan {
@@ -106,10 +176,11 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
     else notes.push(`聚氣丹不足，${c.name}本月未服丹。`);
   }
 
-  // 5. 煉丹投入
-  const alchemyRoom = state.buildings.find((b) => b.defId === 'building.alchemy');
-  const roomWorks = operating(alchemyRoom);
-  const slots = roomWorks ? furnaceCount(state, content) : 0;
+  // 5. 煉丹投入（只計本月有付維護費的煉丹房）
+  const unpaidRooms = state.buildings.filter((b) => b.defId === 'building.alchemy' && unpaidBuildings.includes(b.id));
+  const slots =
+    furnaceCount(state, content) - unpaidRooms.reduce((n, b) => n + (b.level >= 1 ? effectsOf(content, b)?.furnaces ?? 0 : 0), 0);
+  const roomWorks = slots > 0;
   const furnaces: FurnacePlan[] = [];
   const expected: Partial<Resources> = {};
   state.furnaces.forEach((f, index) => {
@@ -121,7 +192,7 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
       recipeId: f.recipeId,
       alchemistId: f.alchemistId,
       runs: false,
-      successBp: alchemySuccessBp(state, content, f.recipeId, f.alchemistId),
+      successBp: alchemySuccessBp(state, content, f.recipeId, f.alchemistId, index),
     };
     if (index >= slots) plan.reason = roomWorks ? '丹爐數量不足' : '煉丹房未運作';
     else if (!take(pool, consumption, recipe.inputs)) plan.reason = '材料不足，停爐';
@@ -135,26 +206,25 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
     furnaces.push(plan);
   });
 
-  // 產出（確定部分）
+  // 產出（確定部分）：外門工人依 fillOrder 填入各座建築（糧食田優先，其次加成高者）
   const production: Partial<Resources> = {};
   const jobs = state.outer.jobs;
-  const field = state.buildings.find((b) => b.defId === FIELD);
-  if (operating(field) && field) {
-    const eff = content.buildings.get(FIELD)?.levels[field.level - 1]?.effects;
-    const workers = Math.min(jobs.field, workerSlots(state, content, FIELD));
-    if (field.crop === 'herb') production.herb = workers * (eff?.herbPerWorker ?? 0);
-    else production.food = workers * (eff?.foodPerWorker ?? 0);
-  }
-  const quarry = state.buildings.find((b) => b.defId === QUARRY);
-  if (operating(quarry) && quarry) {
-    const eff = content.buildings.get(QUARRY)?.levels[quarry.level - 1]?.effects;
-    production.stone = Math.min(jobs.quarry, workerSlots(state, content, QUARRY)) * (eff?.stonePerWorker ?? 0);
-  }
-  const lumber = state.buildings.find((b) => b.defId === LUMBER);
-  if (operating(lumber) && lumber) {
-    const eff = content.buildings.get(LUMBER)?.levels[lumber.level - 1]?.effects;
-    production.wood = Math.min(jobs.lumber, workerSlots(state, content, LUMBER)) * (eff?.woodPerWorker ?? 0);
-  }
+  const assign = (defId: string, workers: number, perWorker: (b: Building) => { id: keyof Resources; n: number }) => {
+    let left = workers;
+    for (const site of fillOrder(state, content, defId, operating)) {
+      const n = Math.min(left, effectsOf(content, site.b)?.workerSlots ?? 0);
+      left -= n;
+      const out = perWorker(site.b);
+      const amount = Math.floor((n * out.n * site.pct) / 100);
+      if (amount) production[out.id] = (production[out.id] ?? 0) + amount;
+    }
+  };
+  assign(FIELD, jobs.field, (b) => {
+    const eff = effectsOf(content, b);
+    return b.crop === 'herb' ? { id: 'herb', n: eff?.herbPerWorker ?? 0 } : { id: 'food', n: eff?.foodPerWorker ?? 0 };
+  });
+  assign(QUARRY, jobs.quarry, (b) => ({ id: 'stone', n: effectsOf(content, b)?.stonePerWorker ?? 0 }));
+  assign(LUMBER, jobs.lumber, (b) => ({ id: 'wood', n: effectsOf(content, b)?.woodPerWorker ?? 0 }));
   if (jobs.errand) production.lingshi = jobs.errand * balance.outer.errandLingshi;
   for (const id of RESOURCE_IDS) if (production[id] === 0) delete production[id];
 

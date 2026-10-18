@@ -1,6 +1,6 @@
 import { balance } from '../../../content/balance';
-import type { EnemyDef, LineageDef } from '../../../content/schema';
-import type { Character, CombatStrategy, Row } from '../../types';
+import type { BeastSpeciesDef, EnemyDef, LineageDef } from '../../../content/schema';
+import type { Beast, Character, CombatStrategy, Row } from '../../types';
 import { powerLevel } from '../characters/characters';
 
 // 自動回合戰鬥。純函式：同樣的輸入與亂數序列一定得到同樣的結果。
@@ -20,6 +20,8 @@ export interface Unit {
   mp: number;
   skill?: { name: string; multiplierPct: number; mpCost?: number; piercePct?: number; cooldown?: number };
   turns: number;
+  /** 靈獸等隨行者：全隊只剩隨行者時視為落敗 */
+  companion?: boolean;
 }
 
 export interface BattleInput {
@@ -52,8 +54,8 @@ export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, h
     row,
     hp: Math.min(maxHp, hp ?? Math.floor((maxHp * c.health) / 100)),
     maxHp,
-    atk: 10 + 3 * L + cs,
-    def: 3 + L,
+    atk: Math.round(((10 + 3 * L + cs) * (100 + lineage.bonuses.combatAtkPct)) / 100),
+    def: Math.round(((3 + L) * (100 + lineage.bonuses.combatDefPct)) / 100),
     spd: 9 + Math.floor(L / 2) + Math.floor(cs / 2),
     hit: 8 + L,
     res: 4 + Math.floor(L / 2),
@@ -65,6 +67,29 @@ export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, h
       piercePct: lineage.skill.piercePct,
     },
     turns: 0,
+  };
+}
+
+/** 靈獸隨主人出戰，能力依主人境界與御獸技藝換算。 */
+export function unitFromBeast(beast: Beast, species: BeastSpeciesDef, owner: Character, lineage: LineageDef, hp?: number): Unit {
+  const base = unitFromCharacter(owner, species.row, lineage);
+  const bonus = 100 + owner.skills.beast * 3;
+  const maxHp = Math.floor((base.maxHp * species.hpPct * bonus) / 10000);
+  return {
+    key: beast.id,
+    name: beast.name,
+    side: 'ally',
+    row: species.row,
+    hp: Math.min(maxHp, hp ?? maxHp),
+    maxHp,
+    atk: Math.floor((base.atk * species.atkPct * bonus) / 10000),
+    def: base.def,
+    spd: species.spd + Math.floor(owner.skills.beast / 2),
+    hit: base.hit,
+    res: base.res,
+    mp: 0,
+    turns: 0,
+    companion: true,
   };
 }
 
@@ -189,7 +214,7 @@ export function runBattle(input: BattleInput): BattleOutcome {
         result = 'win';
         break outer;
       }
-      if (!alive(allies).length) {
+      if (!alive(allies).some((u) => !u.companion)) {
         result = 'lose';
         break outer;
       }

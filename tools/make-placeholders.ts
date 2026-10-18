@@ -15,6 +15,13 @@ const items: [string, string, number, number, string][] = [
   ['cave', '荒廢洞府', 800, 360, 'cave'],
   ['portrait-male', '男修肖像', 240, 300, 'person'],
   ['portrait-female', '女修肖像', 240, 300, 'person'],
+  // P1 批次 A：區域場景與靈獸
+  ['region-outer', '外山', 960, 300, 'mountains'],
+  ['region-valley', '靈泉谷', 960, 300, 'field'],
+  ['region-fire', '地火峰', 960, 300, 'rock'],
+  ['region-back', '後山', 960, 300, 'tree'],
+  ['region-gate', '山門', 960, 300, 'building'],
+  ['beast-cloud-ape', '雲紋靈猿', 240, 300, 'person'],
 ];
 
 function motif(kind: string, w: number, h: number): string {

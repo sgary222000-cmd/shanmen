@@ -25,13 +25,13 @@ describe('月份結算', () => {
     const s0 = fresh();
     const snapshot = JSON.stringify(s0);
     run(s0, { type: 'advanceMonth', expectMonth: 0 });
-    run(s0, { type: 'build', defId: 'building.hall' });
+    run(s0, { type: 'upgrade', buildingId: 'b1' });
     expect(JSON.stringify(s0)).toBe(snapshot);
   });
 
   it('有待處理事件時不能推進', () => {
     let s = fresh();
-    s = run(s, { type: 'build', defId: 'building.hall' });
+    s = run(s, { type: 'upgrade', buildingId: 'b1' });
     s = run(s, { type: 'advanceMonth', expectMonth: 0 });
     s = run(s, { type: 'advanceMonth', expectMonth: 1 }); // 大殿完工、觸發招生
     expect(s.events.some((e) => e.kind === 'recruitment')).toBe(true);
