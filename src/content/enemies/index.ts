@@ -13,6 +13,7 @@ export const enemies: EnemyDef[] = [
     hit: 5,
     res: 4,
     row: 'front',
+    art: 'final/enemy-puppet-guard.webp',
   },
   {
     id: 'enemy.puppet_archer',
@@ -35,6 +36,7 @@ export const enemies: EnemyDef[] = [
     hit: 8,
     res: 6,
     row: 'front',
+    art: 'final/enemy-stone-golem.webp',
     skill: { name: '裂石重擊', multiplierPct: 170, cooldown: 3 },
   },
 ];

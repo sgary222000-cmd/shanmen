@@ -23,7 +23,7 @@ export function BuildPage() {
           const action = !existing ? '建造' : existing.level === 0 ? (def.id === 'building.hall' ? '修復' : '建造') : '升級';
           return (
             <div key={def.id} className={`panel${locked ? ' locked' : ''}`} data-testid={`building-${def.id}`}>
-              <Art path={def.art} alt={def.name} />
+              <Art path={existing?.level === 0 && def.artRuined ? def.artRuined : def.art} alt={def.name} />
               <h3 style={{ marginTop: '.5rem' }}>
                 {def.name}{' '}
                 {existing ? (

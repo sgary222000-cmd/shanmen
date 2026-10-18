@@ -3,6 +3,8 @@ import { balance } from '../../content/balance';
 import { hallLevel, innerLimit, outerCapacity } from '../../engine/systems/buildings/buildings';
 import { powerLevel } from '../../engine/systems/characters/characters';
 import { SCHEDULE_NAMES } from '../../engine/systems/characters/schedule';
+import { disciplePortrait } from '../art';
+import { Art } from '../components/Art';
 import { CharacterPanel } from '../components/CharacterPanel';
 import { content, useGame, useUi } from '../store';
 
@@ -74,7 +76,10 @@ export function DisciplesPage() {
       </div>
       <div className="grid two">
         {list.map((d) => (
-          <CharacterPanel key={d.id} c={d} />
+          <div key={d.id} className="disciple-card">
+            <Art path={disciplePortrait(d)} alt={d.name} />
+            <CharacterPanel c={d} />
+          </div>
         ))}
       </div>
       <p className="muted small">親傳、長老與職位（傳功、煉丹、庶務等）於 P1 開放。</p>
