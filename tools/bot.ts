@@ -13,7 +13,7 @@ import { breakthroughOdds } from '../src/engine/systems/cultivation/cultivation'
 import { canJoinExpedition } from '../src/engine/systems/exploration/exploration';
 import { dispatchBlocked, dispatchOdds } from '../src/engine/systems/exploration/dispatch';
 import { powerLevel, readyForFoundation, xpToNext } from '../src/engine/systems/characters/characters';
-import { hatchBlocked } from '../src/engine/systems/beasts/beasts';
+import { ascendBlocked, guardianBeast, guardianNextCost, hatchBlocked, raiseBlocked } from '../src/engine/systems/beasts/beasts';
 import { libraryResearch } from '../src/engine/systems/talent/techniques';
 import { tournamentBlocked } from '../src/engine/systems/world/tournament';
 import { COMMON_EQUIPMENT } from '../src/content/equipment';
@@ -64,14 +64,16 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
   }
 
   // 交易：坊市開了就照行情賣多餘物資（價格較好），沒有坊市時賣給山下商隊
+  // 御獸傳承結丹後要養護宗神獸，獸材與靈藥多留一些
+  const keepForGuardian = s.lineage === 'lineage.beast' && s.protagonist.realm.major === 'core' ? guardianNextCost(s) : undefined;
   const keepStock: Partial<Record<ResourceId, number>> = {
     stone: 150,
     wood: 150,
     herb: 60,
     ore: route === 'craft' ? 20 : 8,
     paper: 12,
-    spirit_herb: 12,
-    beast_mat: 6,
+    spirit_herb: Math.max(12, keepForGuardian?.spirit_herb ?? 0),
+    beast_mat: Math.max(6, keepForGuardian?.beast_mat ?? 0),
     artifact: 2,
     talisman_fire: 6,
     talisman_guard: 6,
@@ -127,10 +129,18 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
   }
 
   // 建設：先升級既有建築，再依偏好區域新建
-  const reserve = 30;
   // 準備結丹：主角築基後期起，靈石優先留給後山聚靈陣 2 級與洞府
   const me0 = s.protagonist;
   const coreFocus = me0.realm.major === 'foundation' && me0.realm.stage >= 3 && isRegionOpen(s, 'region.back') && qiCapacity(s, content, 'region.back') < 40;
+  // 御獸傳承主角結丹後，靈獸苑 2 級且有成年靈獸時，先存資源晉升、供奉護宗神獸
+  const guardianGoal =
+    s.lineage === 'lineage.beast' &&
+    me0.realm.major === 'core' &&
+    s.buildings.some((b) => b.defId === 'building.beast_garden' && b.level >= balance.beasts.guardian.gardenLevel) &&
+    (guardianBeast(s) ? !!guardianNextCost(s) : s.beasts.some((b) => b.stage === 'adult'))
+      ? guardianNextCost(s)
+      : undefined;
+  const reserve = guardianGoal ? (guardianGoal.lingshi ?? 0) + 30 : 30;
   for (const b of s.buildings) {
     if (coreFocus && !(b.region === 'region.back' && (b.defId === 'building.array' || b.defId === 'building.cave_abode'))) continue;
     const opt = upgradeOption(s, content, b);
@@ -188,7 +198,7 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
   const n = s.outer.count - s.outer.labor;
   const field = Math.min(cap.field, Math.max(0, Math.ceil(n / 3)));
   // 準備結丹時石木夠用就改打零工，多攢靈石
-  const saving = coreFocus && s.resources.lingshi < 300;
+  const saving = (coreFocus && s.resources.lingshi < 300) || !!guardianGoal;
   const quarry = saving && s.resources.stone >= 150 ? 0 : Math.min(cap.quarry, Math.max(0, Math.floor((n - field) / 4)));
   const lumber = saving && s.resources.wood >= 150 ? 0 : Math.min(cap.lumber, Math.max(0, Math.floor((n - field - quarry) / 4)));
   let rest = n - field - quarry - lumber;
@@ -291,7 +301,7 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
   if (!coreFocus && !needCore && benchCount(s, content, 'forge') > 0) {
     const cur = benchList(s, 'forge')[0];
     const worker = cur?.alchemistId ? s.disciples.find((d) => d.id === cur.alchemistId) : free()[0];
-    const fRecipe = s.recipes.includes('recipe.artifact_beast') && s.resources.beast_mat >= 2 ? 'recipe.artifact_beast' : 'recipe.artifact_ore';
+    const fRecipe = s.recipes.includes('recipe.artifact_beast') && s.resources.beast_mat >= (guardianGoal?.beast_mat ?? 0) + 2 ? 'recipe.artifact_beast' : 'recipe.artifact_ore';
     if (worker && (cur?.recipeId !== fRecipe || cur?.alchemistId !== worker.id)) {
       s = tryCmd(s, content, { type: 'setFurnace', station: 'forge', index: 0, alchemistId: worker.id, recipeId: fRecipe, repeat: true, keep: 0 });
     }
@@ -400,8 +410,19 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     s = tryCmd(s, content, { type: 'hatchBeast' });
     note('孵化靈獸');
   }
+  // 護宗神獸：資源夠就晉升第一隻成年靈獸，之後再供奉升級
+  if (guardianGoal && !guardianBeast(s)) {
+    const adult = s.beasts.find((b) => b.stage === 'adult' && !ascendBlocked(s, content, b.id));
+    if (adult) {
+      s = tryCmd(s, content, { type: 'ascendGuardian', beastId: adult.id });
+      note(`晉升護宗神獸：${adult.name}`);
+    }
+  } else if (guardianGoal && !raiseBlocked(s)) {
+    s = tryCmd(s, content, { type: 'raiseGuardian' });
+    note('供奉護宗神獸');
+  }
   for (const b of s.beasts) {
-    if (b.ownerId) continue;
+    if (b.ownerId || b.guardian) continue;
     const owner = [s.protagonist, ...s.disciples].find((c) => !s.beasts.some((x) => x.ownerId === c.id));
     if (owner && b.stage === 'adult') s = tryCmd(s, content, { type: 'setBeast', beastId: b.id, ownerId: owner.id, task: 'follow' });
     else if (b.task !== 'gather') s = tryCmd(s, content, { type: 'setBeast', beastId: b.id, ownerId: null, task: 'gather' });

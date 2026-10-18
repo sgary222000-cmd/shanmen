@@ -166,3 +166,44 @@ test('批次 B 存檔匯入後自動升級，新頁面可以打開', async ({ pa
   await expect(page.getByTestId('branches')).toBeVisible();
   await shot(page, '08-批次B存檔升級');
 });
+
+test('護宗神獸：成年靈獸晉升、供奉升級，加成顯示在靈獸苑', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const { writeFileSync, mkdtempSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { content } = await import('../../src/content/registry');
+  const { newGame } = await import('../../src/engine');
+  const { toEnvelope } = await import('../../src/save/codec');
+  // 佈置（御獸傳承開局已有一隻幼年靈獸）：靈獸苑 2 級、一隻成年赤焰狐與一隻幼年墨麟、材料充足
+  const s = newGame(content, { sectName: '長生宗', protagonistName: '顧長青', gender: 'male', lineage: 'lineage.beast', seed: 33 });
+  s.resources = { ...s.resources, lingshi: 1500, food: 800, beast_mat: 200, spirit_herb: 200, beast_egg: 1 };
+  for (const id of Object.keys(s.regions)) s.regions[id] = { status: 'open', construction: null };
+  s.buildings.push({ id: 'b94', defId: 'building.beast_garden', region: 'region.valley', level: 2, status: 'active', construction: null });
+  s.beasts.push(
+    { id: 'beast90', speciesId: 'beast.fire_fox', name: '赤焰狐', ownerId: null, stage: 'adult', growth: 120, task: 'rest' },
+    { id: 'beast91', speciesId: 'beast.ink_qilin', name: '墨麟', ownerId: null, stage: 'young', growth: 30, task: 'rest' },
+  );
+  const file = join(mkdtempSync(join(tmpdir(), 'shanmen-')), 'guardian-save.json');
+  writeFileSync(file, JSON.stringify(toEnvelope(s, '2026-10-18T00:00:00.000Z')));
+
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: '匯入存檔檔案' })).toBeEnabled();
+  await page.locator('input[type=file]').setInputFiles(file);
+  await page.getByRole('button', { name: '讀取存檔' }).click();
+  await page.getByRole('button', { name: '讀取', exact: true }).first().click();
+  await nav(page, 'beasts');
+  await expect(page.getByTestId('guardian')).toContainText('晉升為護宗神獸');
+  await expect(page.getByTestId('beast-beast91')).toContainText('墨麟');
+  await expect(page.getByTestId('ascend-beast91')).toHaveCount(0);
+  await page.getByTestId('ascend-beast90').click();
+  await expect(page.getByTestId('guardian')).toContainText('鎮爐火狐');
+  await expect(page.getByTestId('guardian')).toContainText('成功率 +2%');
+  await expect(page.getByTestId('beast-beast90')).toHaveCount(0);
+  await page.getByTestId('raise-guardian').click();
+  await expect(page.getByTestId('guardian')).toContainText('2 級');
+  await expect(page.getByTestId('guardian')).toContainText('成功率 +4%');
+  await shot(page, '09-護宗神獸');
+  expect(errors).toEqual([]);
+});

@@ -234,6 +234,19 @@ export const balance = {
     ownerSkillPct: 3,
     /** 非御獸傳承憑馴獸法最多養幾隻 */
     tamingCap: 1,
+    /** 護宗神獸（批次 F，暫定）：成年靈獸、靈獸苑 2 級可晉升，全宗只能有一隻 */
+    guardian: {
+      gardenLevel: 2,
+      /** 晉升費用；之後每次供奉升一級，最高 maxLevel 級 */
+      ascendCost: { lingshi: 150, beast_mat: 20, spirit_herb: 15 },
+      raiseCost: [
+        { lingshi: 200, beast_mat: 40, spirit_herb: 30 },
+        { lingshi: 350, beast_mat: 80, spirit_herb: 60 },
+      ],
+      maxLevel: 3,
+      /** 食量為成年的幾倍；沒吃飽的月份，下個月加成失效 */
+      foodMultiplier: 2,
+    },
   },
   /** 傳承分支：主持人需要的技藝 */
   branch: { skillRequired: 8, scripturePrice: 300, scriptureReputation: 30 },

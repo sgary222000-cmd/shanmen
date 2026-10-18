@@ -52,6 +52,9 @@ export interface BattleOutcome {
 export interface UnitMods {
   equip?: EquipmentDef | undefined;
   techniquePct?: number;
+  /** 護宗神獸加成 */
+  guardianAtkPct?: number;
+  guardianHpPct?: number;
 }
 
 /** 金丹修士的傳承招式威力提高 */
@@ -61,7 +64,8 @@ export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, h
   const L = powerLevel(c.realm);
   const cs = c.skills.combat;
   const tech = 100 + (mods.techniquePct ?? 0);
-  const maxHp = Math.floor(((60 + 12 * L + 3 * cs) * tech) / 100) + (mods.equip?.hp ?? 0);
+  const maxHp =
+    Math.floor((Math.floor(((60 + 12 * L + 3 * cs) * tech) / 100) * (100 + (mods.guardianHpPct ?? 0))) / 100) + (mods.equip?.hp ?? 0);
   return {
     key: c.id,
     name: c.name,
@@ -69,7 +73,10 @@ export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, h
     row,
     hp: Math.min(maxHp, hp ?? Math.floor((maxHp * c.health) / 100)),
     maxHp,
-    atk: Math.round(((10 + 3 * L + cs) * (100 + lineage.bonuses.combatAtkPct) * tech) / 10000) + (mods.equip?.atk ?? 0),
+    atk:
+      Math.round(
+        ((10 + 3 * L + cs) * (100 + lineage.bonuses.combatAtkPct) * tech * (100 + (mods.guardianAtkPct ?? 0))) / 1000000,
+      ) + (mods.equip?.atk ?? 0),
     def: Math.round(((3 + L) * (100 + lineage.bonuses.combatDefPct)) / 100) + (mods.equip?.def ?? 0),
     spd: 9 + Math.floor(L / 2) + Math.floor(cs / 2),
     hit: 8 + L,

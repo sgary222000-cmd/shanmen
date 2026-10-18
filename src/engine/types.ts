@@ -183,6 +183,8 @@ export interface Beast {
   growth: number;
   /** follow：隨主人出戰（不佔隊伍名額）；gather：外出採集；rest：休養 */
   task: BeastTask;
+  /** 已晉升為護宗神獸（批次 F）。不再有主人、不出戰也不採集；hungry 表示上個月沒吃飽，本月加成失效 */
+  guardian?: { level: number; hungry: boolean };
 }
 
 export type PositionId = 'mentor' | 'alchemy' | 'forge' | 'steward' | 'envoy';

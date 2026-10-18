@@ -16,6 +16,7 @@ import {
 } from '../characters/characters';
 import { techniqueOf, techniqueTier } from '../talent/techniques';
 import { mentorPct, positionOf, POSITION_NAMES } from '../talent/positions';
+import { guardianBonus } from '../beasts/beasts';
 
 /** 某區域的靈氣效率（百分比）：容量不足時在此修煉的人按比例降低。 */
 export function qiEfficiencyPct(state: GameState, content: ContentPack, regionId: string = MAIN_REGION): number {
@@ -57,6 +58,11 @@ export function monthlyXp(state: GameState, content: ContentPack, c: Character, 
   if (c.role === 'inner' && mentor && state.positions.mentor !== c.id && (c.schedule === 'cultivate' || c.schedule === 'seclusion')) {
     pct += mentor;
     parts.push(`傳功長老 +${mentor}%`);
+  }
+  const guard = guardianBonus(state, content);
+  if (guard.xpPct && pct > 0) {
+    pct += guard.xpPct;
+    parts.push(`${guard.title} +${guard.xpPct}%`);
   }
   const tier = techniqueTier(c);
   if (tier.pct) {

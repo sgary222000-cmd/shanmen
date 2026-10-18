@@ -94,6 +94,7 @@ export const worldSchema = z
         stage: z.enum(['young', 'adult']),
         growth: nonneg,
         task: z.enum(['follow', 'gather', 'rest']),
+        guardian: z.object({ level: z.number().int().min(1), hungry: z.boolean() }).optional(),
       }),
     ),
     furnaces: z.array(furnace),

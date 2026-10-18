@@ -276,6 +276,24 @@ export const beastSpeciesSchema = z.object({
   /** 每月食量（成年 +1） */
   food: z.number().int().nonnegative(),
   artAdult: z.string().optional(),
+  /** 孵化時的相對機率（越大越常見） */
+  weight: z.number().int().positive().default(10),
+  /** 晉升護宗神獸後，每一級給全宗門的加成 */
+  guardian: z.object({
+    title: z.string(),
+    /** 外門工人產量 +% */
+    productionPct: z.number().int().default(0),
+    /** 丹爐、器爐、符案成功率 +萬分比 */
+    craftBp: z.number().int().default(0),
+    /** 內門弟子與主角修煉 +% */
+    xpPct: z.number().int().default(0),
+    /** 人物戰鬥攻擊 +% */
+    atkPct: z.number().int().default(0),
+    /** 人物戰鬥生命 +% */
+    hpPct: z.number().int().default(0),
+    /** 每月帶來的資源 */
+    monthly: resourceMap.default({}),
+  }),
 });
 
 export const techniqueSchema = z.object({
