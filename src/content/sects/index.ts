@@ -10,7 +10,7 @@ export const sects: SectDef[] = [
     temperament: 'steady',
     description: '以靈植與丹藥立宗的老牌宗門，作風保守，重視根基與人丁。',
     start: { lingshi: 300, food: 300, stone: 100, wood: 100, population: 30, buildings: 8, power: 40, favor: 40 },
-    art: 'placeholder/sect-qingmu.svg',
+    art: 'final/sect-qingmu.webp',
   },
   {
     id: 'sect.chixia',
@@ -19,7 +19,7 @@ export const sects: SectDef[] = [
     temperament: 'warlike',
     description: '劍修宗門，門風好勝，常年操練弟子，對新興宗門不太友善。',
     start: { lingshi: 250, food: 250, stone: 80, wood: 80, population: 28, buildings: 7, power: 55, favor: 25 },
-    art: 'placeholder/sect-chixia.svg',
+    art: 'final/sect-chixia.webp',
   },
   {
     id: 'sect.luoyun',
@@ -28,6 +28,6 @@ export const sects: SectDef[] = [
     temperament: 'merchant',
     description: '以符籙買賣致富的宗門，消息靈通，坊市行情常受其左右。',
     start: { lingshi: 450, food: 220, stone: 60, wood: 120, population: 24, buildings: 7, power: 35, favor: 45 },
-    art: 'placeholder/sect-luoyun.svg',
+    art: 'final/sect-luoyun.webp',
   },
 ];

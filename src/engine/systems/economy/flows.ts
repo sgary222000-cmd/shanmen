@@ -20,7 +20,7 @@ import {
 import { productionBonusPct } from '../regions/regions';
 import { allCharacters } from '../characters/characters';
 import { craftPositionBp, stewardPct } from '../talent/positions';
-import { beastFood, beastGather } from '../beasts/beasts';
+import { beastFood, beastGather, guardianBonus } from '../beasts/beasts';
 import { monthIndex } from '../../date';
 
 // 每月收支計畫。預覽與實際結算共用同一份計算，確保「預覽等於結算」。
@@ -124,6 +124,11 @@ export function craftOdds(
   if (posBp) {
     bp += posBp;
     parts.push(`${station === 'alchemy' ? '煉丹' : '煉器'}執事 +${posBp / 100}%`);
+  }
+  const guard = guardianBonus(state, content);
+  if (guard.craftBp) {
+    bp += guard.craftBp;
+    parts.push(`${guard.title} +${guard.craftBp / 100}%`);
   }
   return { bp: Math.min(balance.craft.maxBp, bp), parts };
 }
@@ -284,7 +289,8 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
   // 產出（確定部分）：外門工人依 fillOrder 填入各座建築（糧食田優先，其次加成高者）
   const production: Partial<Resources> = {};
   const jobs = state.outer.jobs;
-  const steward = stewardPct(state);
+  const guard = guardianBonus(state, content);
+  const steward = stewardPct(state) + guard.productionPct;
   const assign = (defId: string, workers: number, perWorker: (b: Building) => { id: keyof Resources; n: number }) => {
     let left = workers;
     for (const site of fillOrder(state, content, defId, operating)) {
@@ -306,6 +312,7 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
   if (jobs.errand) production.lingshi = jobs.errand * balance.outer.errandLingshi;
   // 靈獸採集與靈脈收入
   for (const b of state.beasts) if (fedBeasts.includes(b.id)) addInto(production, beastGather(state, content, b));
+  addInto(production, guard.monthly);
   const now = monthIndex(state.date);
   const veinOre = state.veins.filter((v) => v.until >= now).reduce((n, v) => n + v.orePerMonth, 0);
   if (veinOre) production.ore = (production.ore ?? 0) + veinOre;

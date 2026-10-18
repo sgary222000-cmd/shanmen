@@ -4,7 +4,7 @@ import type { BeastTask, GameState, MonthReport, OuterDisciples, PositionId, Res
 import { setPosition } from '../systems/talent/positions';
 import { equipItem } from '../systems/talent/equipment';
 import { buyScripture, openBranch } from '../systems/talent/branches';
-import { hatchBeast, setBeast } from '../systems/beasts/beasts';
+import { ascendGuardian, hatchBeast, raiseGuardian, setBeast } from '../systems/beasts/beasts';
 import { startDispatch } from '../systems/exploration/dispatch';
 import { giftSect, sectTrade } from '../systems/world/sects';
 import { enterTournament } from '../systems/world/tournament';
@@ -69,6 +69,8 @@ export type Command =
   | { type: 'buyScripture'; lineageId: string }
   | { type: 'hatchBeast' }
   | { type: 'setBeast'; beastId: string; ownerId: string | null; task: BeastTask }
+  | { type: 'ascendGuardian'; beastId: string }
+  | { type: 'raiseGuardian' }
   | { type: 'dispatch'; realmId: string; teamIds: string[] }
   | { type: 'giftSect'; sectId: string; lingshi: number }
   | { type: 'sectTrade'; sectId: string; lots: number }
@@ -203,6 +205,12 @@ export function applyCommand(state: GameState, content: ContentPack, cmd: Comman
         break;
       case 'setBeast':
         message = setBeast(next, cmd.beastId, cmd.ownerId, cmd.task);
+        break;
+      case 'ascendGuardian':
+        message = ascendGuardian(next, content, cmd.beastId);
+        break;
+      case 'raiseGuardian':
+        message = raiseGuardian(next, content);
         break;
       case 'dispatch':
         message = startDispatch(next, content, cmd.realmId, cmd.teamIds);

@@ -4,6 +4,7 @@ import { ensure } from '../../errors';
 import type { Character, GameState, Row } from '../../types';
 import { findCharacter } from '../characters/characters';
 import { techniqueTier } from '../talent/techniques';
+import { guardianBonus } from '../beasts/beasts';
 import { unitFromBeast, unitFromCharacter, type Unit } from './combat';
 
 // 組成出戰隊伍：人物（含法器、功法）、隨行靈獸、傳承的隊伍加成（劍陣）。
@@ -12,9 +13,12 @@ import { unitFromBeast, unitFromCharacter, type Unit } from './combat';
 export function allyUnit(state: GameState, content: ContentPack, c: Character, row: Row, hp?: number): Unit {
   const lineage = content.lineages.get(state.lineage);
   ensure(lineage, '傳承資料錯誤');
+  const guard = guardianBonus(state, content);
   return unitFromCharacter(c, row, lineage, hp, {
     equip: c.equipment ? content.equipment.get(c.equipment) : undefined,
     techniquePct: techniqueTier(c).pct,
+    guardianAtkPct: guard.atkPct,
+    guardianHpPct: guard.hpPct,
   });
 }
 

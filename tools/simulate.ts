@@ -56,6 +56,8 @@ for (let i = 0; i < years * 12; i++) {
   if (state.buildings.some((b) => b.defId === 'building.market' && b.level >= 1)) mark('坊市完工');
   if (state.buildings.some((b) => b.defId === 'building.talisman' && b.level >= 1)) mark('符陣閣完工');
   if (state.buildings.some((b) => b.defId === 'building.forge' && b.level >= 1)) mark('煉器坊完工');
+  if (state.beasts.some((b) => b.guardian)) mark('護宗神獸晉升');
+  if (state.beasts.some((b) => (b.guardian?.level ?? 0) >= 3)) mark('護宗神獸 3 級');
   if (state.reputation >= 20) mark('聲望 20');
   if (state.reputation >= 60) mark('聲望 60');
   const p = state.protagonist;

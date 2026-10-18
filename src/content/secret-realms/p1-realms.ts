@@ -13,7 +13,7 @@ export const undergroundMine: SecretRealmDef = {
   startNode: 'entrance',
   repeatLootPct: 50,
   retreatLootPct: 50,
-  art: 'placeholder/realm-mine.svg',
+  art: 'final/realm-mine.webp',
   dispatch: { months: 1, power: 300, lootPct: [30, 50] },
   firstClear: {
     rewardId: 'reward.underground_mine.first_clear',
@@ -81,7 +81,7 @@ export const beastValley: SecretRealmDef = {
   startNode: 'entrance',
   repeatLootPct: 50,
   retreatLootPct: 50,
-  art: 'placeholder/realm-valley.svg',
+  art: 'final/realm-valley.webp',
   dispatch: { months: 1, power: 420, lootPct: [30, 50] },
   firstClear: {
     rewardId: 'reward.beast_valley.first_clear',
