@@ -1,0 +1,154 @@
+{
+  "format": "shanmen-save",
+  "formatVersion": 1,
+  "gameVersion": "0.0.1",
+  "savedAt": "2026-10-18T00:00:00.000Z",
+  "summary": {
+    "sectName": "舊檔宗",
+    "protagonistName": "舊檔",
+    "realm": "煉氣一層",
+    "date": "第 1 年 1 月"
+  },
+  "checksum": "8f748f8f",
+  "world": {
+    "version": 1,
+    "sectName": "舊檔宗",
+    "lineage": "lineage.sword",
+    "date": {
+      "year": 1,
+      "month": 1
+    },
+    "resources": {
+      "lingshi": 300,
+      "food": 200,
+      "stone": 80,
+      "wood": 60,
+      "herb": 20,
+      "pill_qi": 0,
+      "pill_heal": 0,
+      "pill_foundation": 0
+    },
+    "protagonist": {
+      "id": "c0",
+      "name": "舊檔",
+      "gender": "female",
+      "role": "protagonist",
+      "ageMonths": 216,
+      "realm": {
+        "major": "qi",
+        "stage": 1
+      },
+      "xp": 0,
+      "root": {
+        "grade": "mid",
+        "elements": [
+          "metal",
+          "water"
+        ]
+      },
+      "health": 100,
+      "injuryMonths": 0,
+      "loyalty": 100,
+      "skills": {
+        "alchemy": 2,
+        "farming": 1,
+        "combat": 5
+      },
+      "schedule": "cultivate",
+      "takePill": false,
+      "seclusion": null
+    },
+    "disciples": [],
+    "outer": {
+      "count": 12,
+      "jobs": {
+        "field": 0,
+        "quarry": 0,
+        "lumber": 0,
+        "errand": 0
+      },
+      "satisfaction": 60,
+      "training": 0,
+      "hungerMonths": 0
+    },
+    "buildings": [
+      {
+        "id": "b1",
+        "defId": "building.hall",
+        "level": 0,
+        "status": "ruined",
+        "construction": null
+      },
+      {
+        "id": "b2",
+        "defId": "building.dorm",
+        "level": 1,
+        "status": "active",
+        "construction": null
+      }
+    ],
+    "furnaces": [],
+    "recipes": [
+      "recipe.qi_pill",
+      "recipe.heal_pill"
+    ],
+    "exploration": null,
+    "exploredThisMonth": false,
+    "realmClears": {},
+    "claimedRewards": [],
+    "pendingLoot": {},
+    "events": [],
+    "reports": [],
+    "battles": [],
+    "nextRecruitMonth": 0,
+    "rng": {
+      "world": [
+        1017068411,
+        1518103152,
+        1369810846,
+        3203016557
+      ],
+      "recruit": [
+        3184499301,
+        1469723491,
+        3798813103,
+        203558813
+      ],
+      "alchemy": [
+        2696321029,
+        366507375,
+        4216117222,
+        1827452065
+      ],
+      "combat": [
+        606740579,
+        2815353938,
+        843940314,
+        4090533347
+      ],
+      "explore": [
+        3508157983,
+        1939892175,
+        2042051071,
+        340309460
+      ],
+      "cultivation": [
+        1432695526,
+        1266809336,
+        654020082,
+        3093804928
+      ]
+    },
+    "nextId": 3,
+    "tutorial": {
+      "skipped": false,
+      "viewedLedger": false,
+      "done": []
+    },
+    "stats": {
+      "commands": 0,
+      "monthsAdvanced": 0,
+      "explorations": 0
+    }
+  }
+}
