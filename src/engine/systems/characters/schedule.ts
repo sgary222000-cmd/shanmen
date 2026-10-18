@@ -1,0 +1,78 @@
+import { balance } from '../../../content/balance';
+import type { ContentPack } from '../../../content/registry';
+import { ensure } from '../../errors';
+import type { Character, GameState, ScheduleKind } from '../../types';
+import { releaseFurnace } from '../alchemy/alchemy';
+import { breakthroughOdds } from '../cultivation/cultivation';
+import { findCharacter } from './characters';
+
+export const SCHEDULE_NAMES: Record<ScheduleKind, string> = {
+  cultivate: '日常修煉',
+  seclusion: '閉關',
+  teach: '授課',
+  alchemy: '煉丹',
+  heal: '療傷',
+  breakthrough: '突破',
+  explore: '探索',
+};
+
+/** 尚未開放的主角行程（企畫書 §5），介面需明確標示。 */
+export const LOCKED_SCHEDULES = ['煉器', '研究', '交涉'] as const;
+
+/** 玩家可直接選擇的行程（煉丹由丹爐指派、探索由探索系統設定）。 */
+export function selectableSchedules(c: Character): ScheduleKind[] {
+  return c.role === 'protagonist'
+    ? ['cultivate', 'seclusion', 'teach', 'heal', 'breakthrough']
+    : ['cultivate', 'heal', 'breakthrough'];
+}
+
+export function seclusionInterruptCost(state: GameState): string {
+  const s = state.protagonist.seclusion;
+  if (!s) return '';
+  const lost = Math.min(s.streak, balance.seclusionStreakMax) * balance.seclusionStreakPct;
+  return lost
+    ? `中斷閉關將失去已累積的連續閉關加成（目前 +${lost}%）。`
+    : '中斷閉關沒有額外損失，但需重新累積連續閉關加成。';
+}
+
+export function setSchedule(
+  state: GameState,
+  content: ContentPack,
+  characterId: string,
+  schedule: ScheduleKind,
+  months?: number,
+): void {
+  const c = findCharacter(state, characterId);
+  ensure(c, '找不到這個人物');
+  ensure(selectableSchedules(c).includes(schedule), `${c.name}不能直接安排「${SCHEDULE_NAMES[schedule]}」`);
+  ensure(c.schedule !== 'explore', `${c.name}本月已出外探索，下月才能改變行程`);
+  if (c.role === 'protagonist') {
+    ensure(!state.protagonist.seclusion, '主角閉關中，請先中斷閉關');
+  }
+  if (schedule === 'breakthrough') {
+    const odds = breakthroughOdds(state, content, c);
+    ensure(!odds.blocked, odds.blocked ?? '');
+  }
+  if (c.schedule === 'alchemy') releaseFurnace(state, c.id);
+  c.schedule = schedule;
+  if (schedule === 'seclusion') {
+    const m = months ?? 1;
+    ensure(Number.isInteger(m) && m >= 1 && m <= 12, '閉關月數需為 1–12');
+    state.protagonist.seclusion = { plannedMonths: m, remainingMonths: m, streak: 0 };
+  }
+}
+
+export function interruptSeclusion(state: GameState): string {
+  const p = state.protagonist;
+  ensure(p.seclusion, '主角沒有在閉關');
+  const note = seclusionInterruptCost(state);
+  p.seclusion = null;
+  p.schedule = 'cultivate';
+  return note;
+}
+
+export function setTakePill(state: GameState, characterId: string, value: boolean): void {
+  const c = findCharacter(state, characterId);
+  ensure(c, '找不到這個人物');
+  c.takePill = value;
+}
