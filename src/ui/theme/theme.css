@@ -141,3 +141,8 @@ input[type=text] { padding: .3rem .5rem; border: 1px solid var(--line); border-r
 select { padding: .2rem .3rem; }
 .dev { position: fixed; left: .5rem; bottom: .5rem; z-index: 40; background: #222; color: #eee; padding: .5rem; border-radius: 6px; font-size: .8rem; }
 .dev button { margin: .15rem; }
+
+.disciple-card { display: grid; grid-template-columns: 110px 1fr; gap: .75rem; align-items: start; }
+.disciple-card .panel { margin-bottom: 0; }
+.enemy-art { display: flex; gap: .5rem; flex-wrap: wrap; margin: .35rem 0; }
+.enemy-art .art { width: 180px; }

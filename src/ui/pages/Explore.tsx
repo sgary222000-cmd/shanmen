@@ -6,6 +6,19 @@ import { Art } from '../components/Art';
 import { ResList } from '../components/Res';
 import { content, useGame, useUi } from '../store';
 
+// 戰報中有圖的敵人（同種只顯示一張）
+function EnemyArt({ units }: { units: BattleRecord['enemies'] }) {
+  const defs = [...new Set(units.map((u) => u.id.split('#')[0] ?? ''))]
+    .map((id) => content.enemies.get(id))
+    .filter((d) => d?.art);
+  if (!defs.length) return null;
+  return (
+    <div className="enemy-art">
+      {defs.map((d) => d && <Art key={d.id} path={d.art!} alt={d.name} />)}
+    </div>
+  );
+}
+
 export function BattleView({ b, open }: { b: BattleRecord; open?: boolean }) {
   const [full, setFull] = useState(!!open);
   const label = { win: '勝利', lose: '戰敗', draw: '平局（撤出）' }[b.result];
@@ -22,6 +35,7 @@ export function BattleView({ b, open }: { b: BattleRecord; open?: boolean }) {
         ].map(([title, units]) => (
           <div key={title as string}>
             <b>{title as string}</b>
+            {title === '敵方' && <EnemyArt units={units as BattleRecord['enemies']} />}
             {(units as BattleRecord['allies']).map((u) => (
               <div key={u.id} className="small">
                 {u.name} {u.hp}/{u.maxHp}

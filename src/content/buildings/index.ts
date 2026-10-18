@@ -9,6 +9,7 @@ export const buildings: BuildingDef[] = [
     description: '宗門中樞。修復後可招收弟子並開放更多建設；等級決定其他建築的上限。',
     unlockHall: 0,
     art: 'final/hall.webp',
+    artRuined: 'final/hall-ruined.webp',
     levels: [
       {
         level: 1,

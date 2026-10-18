@@ -8,3 +8,12 @@ export function artUrl(path: string): string | undefined {
 export function isPlaceholder(path: string): boolean {
   return path.startsWith('placeholder/');
 }
+
+// 內門弟子肖像：依性別各 3 張，以弟子 id 固定分配，讀檔後不會變。
+const DISCIPLE_PORTRAITS = { male: 3, female: 3 };
+
+export function disciplePortrait(c: { id: string; gender: 'male' | 'female' }): string {
+  let h = 0;
+  for (const ch of c.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return `final/disciple-${c.gender}-0${(h % DISCIPLE_PORTRAITS[c.gender]) + 1}.webp`;
+}

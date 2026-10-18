@@ -47,6 +47,8 @@ export const buildingSchema = z.object({
   unlockHall: z.number().int().nonnegative(),
   levels: z.array(buildingLevelSchema).min(1),
   art: z.string(),
+  /** 0 級（殘破）時改用的圖 */
+  artRuined: z.string().optional(),
 });
 
 export const recipeSchema = z.object({
@@ -69,6 +71,7 @@ export const enemySchema = z.object({
   hit: z.number().int().nonnegative(),
   res: z.number().int().nonnegative(),
   row: z.enum(['front', 'back']),
+  art: z.string().optional(),
   skill: z
     .object({ name: z.string(), multiplierPct: z.number().int(), cooldown: z.number().int().positive() })
     .optional(),
