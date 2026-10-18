@@ -28,8 +28,8 @@ export const beastSpecies: BeastSpeciesDef[] = [
     food: 2,
     weight: 10,
     guardian: guardian({ title: '護山靈猿', productionPct: 5 }),
-    art: 'placeholder/beast-cloud-ape.svg',
-    artAdult: 'placeholder/beast-cloud-ape-adult.svg',
+    art: 'final/beast-cloud-ape.webp',
+    artAdult: 'final/beast-cloud-ape-adult.webp',
   },
   {
     id: 'beast.fire_fox',
@@ -44,8 +44,8 @@ export const beastSpecies: BeastSpeciesDef[] = [
     food: 2,
     weight: 10,
     guardian: guardian({ title: '鎮爐火狐', craftBp: 200 }),
-    art: 'placeholder/beast-fire-fox.svg',
-    artAdult: 'placeholder/beast-fire-fox-adult.svg',
+    art: 'final/beast-fire-fox.webp',
+    artAdult: 'final/beast-fire-fox-adult.webp',
   },
   {
     id: 'beast.black_turtle',
@@ -60,8 +60,8 @@ export const beastSpecies: BeastSpeciesDef[] = [
     food: 3,
     weight: 10,
     guardian: guardian({ title: '負山玄龜', hpPct: 8 }),
-    art: 'placeholder/beast-black-turtle.svg',
-    artAdult: 'placeholder/beast-black-turtle-adult.svg',
+    art: 'final/beast-black-turtle.webp',
+    artAdult: 'final/beast-black-turtle-adult.webp',
   },
   {
     id: 'beast.frost_wolf',

@@ -345,7 +345,7 @@ export const buildings: BuildingDef[] = [
     description: '收藏功法典籍之處。人物可在此「研究」主修功法、提升領悟；2 級後可開設傳承分支。',
     unlockHall: 1,
     maxTotal: 1,
-    art: 'placeholder/library.svg',
+    art: 'final/library.webp',
     levels: [
       {
         level: 1,
@@ -374,7 +374,7 @@ export const buildings: BuildingDef[] = [
     unlockHall: 1,
     maxTotal: 1,
     exclusive: { lineage: 'lineage.sword', items: [] },
-    art: 'placeholder/training.svg',
+    art: 'final/training.webp',
     levels: [
       {
         level: 1,
@@ -403,7 +403,7 @@ export const buildings: BuildingDef[] = [
     unlockHall: 2,
     maxTotal: 1,
     onlyRegions: ['region.back'],
-    art: 'placeholder/cave-abode.svg',
+    art: 'final/cave-abode.webp',
     levels: [
       {
         level: 1,
@@ -432,7 +432,7 @@ export const buildings: BuildingDef[] = [
     unlockHall: 1,
     maxTotal: 1,
     exclusive: { lineage: 'lineage.beast', items: ['item.beast_taming'] },
-    art: 'placeholder/beast-garden.svg',
+    art: 'final/beast-garden.webp',
     levels: [
       {
         level: 1,
