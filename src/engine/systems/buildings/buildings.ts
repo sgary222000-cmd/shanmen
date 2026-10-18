@@ -3,7 +3,7 @@ import type { BuildingDef, BuildingLevelDef } from '../../../content/schema';
 import { ensure } from '../../errors';
 import { newId } from '../../ids';
 import { addInto, canAfford, formatResources, gain, RESOURCE_IDS, scaleResources, spend } from '../../resources';
-import type { Building, GameState, Resources } from '../../types';
+import type { Building, Furnace, GameState, Resources, ScheduleKind, Skills, Station } from '../../types';
 import { isRegionOpen, lineageDef, MAIN_REGION, regionDef } from '../regions/regions';
 
 export const HALL = 'building.hall';
@@ -13,6 +13,27 @@ export const QUARRY = 'building.quarry';
 export const LUMBER = 'building.lumber';
 export const ALCHEMY = 'building.alchemy';
 export const ARRAY = 'building.array';
+export const GARDEN = 'building.garden';
+export const MINE = 'building.mine';
+export const FORGE = 'building.forge';
+export const TALISMAN = 'building.talisman';
+export const MARKET = 'building.market';
+
+export const STATIONS: Station[] = ['alchemy', 'forge', 'talisman'];
+
+/** 三種工坊的對照：所在建築、使用的技藝、工作者的行程與介面用詞。 */
+export const STATION_INFO: Record<
+  Station,
+  { building: string; skill: keyof Skills; schedule: ScheduleKind; bench: string; worker: string; verb: string; room: string; odds: string }
+> = {
+  alchemy: { building: ALCHEMY, skill: 'alchemy', schedule: 'alchemy', bench: '丹爐', worker: '掌爐', verb: '煉成', room: '煉丹房', odds: '成丹率' },
+  forge: { building: FORGE, skill: 'forging', schedule: 'forge', bench: '器爐', worker: '掌爐', verb: '煉成', room: '煉器坊', odds: '成器率' },
+  talisman: { building: TALISMAN, skill: 'talisman', schedule: 'talisman', bench: '符案', worker: '執筆', verb: '畫成', room: '符陣閣', odds: '成符率' },
+};
+
+export function isCraftSchedule(kind: ScheduleKind): boolean {
+  return kind === 'alchemy' || kind === 'forge' || kind === 'talisman';
+}
 
 /** 取消施工時退還的比例 */
 export const CANCEL_REFUND_PCT = 50;
@@ -77,23 +98,47 @@ export function qiCapacity(state: GameState, content: ContentPack, regionId: str
   return region.baseQi + Math.floor((fromArrays * arrayPct) / 100);
 }
 
-/** 運作中的煉丹房，依建築順序排列；丹爐依此順序編號。 */
+/** 運作中的某種工坊建築，依建築順序排列；爐位依此順序編號。 */
+export function stationRooms(state: GameState, station: Station): Building[] {
+  return state.buildings.filter((b) => b.defId === STATION_INFO[station].building && isOperating(b));
+}
+
+/** 一座工坊建築提供的爐位數（煉丹房為丹爐，煉器坊、符陣閣為器爐、符案）。 */
+export function benchesOf(content: ContentPack, b: Building): number {
+  const eff = effectsOf(content, b);
+  return (b.defId === ALCHEMY ? eff?.furnaces : eff?.benches) ?? 0;
+}
+
+export function benchCount(state: GameState, content: ContentPack, station: Station): number {
+  return stationRooms(state, station).reduce((n, b) => n + benchesOf(content, b), 0);
+}
+
+/** 第 index 個爐位所在的建築。 */
+export function benchRoom(state: GameState, content: ContentPack, station: Station, index: number): Building | undefined {
+  let n = 0;
+  for (const b of stationRooms(state, station)) {
+    n += benchesOf(content, b);
+    if (index < n) return b;
+  }
+  return undefined;
+}
+
+/** 某種工坊的爐位設定（存檔中的陣列，可直接修改）。 */
+export function benchList(state: GameState, station: Station): Furnace[] {
+  return station === 'alchemy' ? state.furnaces : state.workshops[station];
+}
+
 export function alchemyRooms(state: GameState): Building[] {
-  return state.buildings.filter((b) => b.defId === ALCHEMY && isOperating(b));
+  return stationRooms(state, 'alchemy');
 }
 
 export function furnaceCount(state: GameState, content: ContentPack): number {
-  return alchemyRooms(state).reduce((n, b) => n + (effectsOf(content, b)?.furnaces ?? 0), 0);
+  return benchCount(state, content, 'alchemy');
 }
 
 /** 第 index 座丹爐所在的煉丹房。 */
 export function furnaceRoom(state: GameState, content: ContentPack, index: number): Building | undefined {
-  let n = 0;
-  for (const b of alchemyRooms(state)) {
-    n += effectsOf(content, b)?.furnaces ?? 0;
-    if (index < n) return b;
-  }
-  return undefined;
+  return benchRoom(state, content, 'alchemy', index);
 }
 
 export function workerSlots(state: GameState, content: ContentPack, defId: string): number {
@@ -119,6 +164,8 @@ export function regionCost(content: ContentPack, regionId: string, cost: Partial
 }
 
 export function regionAllows(content: ContentPack, regionId: string, defId: string): boolean {
+  const only = content.buildings.get(defId)?.onlyRegions;
+  if (only && !only.includes(regionId)) return false;
   const allows = content.regions.get(regionId)?.allows;
   return allows === 'any' || (allows ?? []).includes(defId);
 }
@@ -251,14 +298,16 @@ export function demolish(state: GameState, content: ContentPack, buildingId: str
   const refund = demolishRefund(content, b);
   gain(state.resources, refund);
   state.buildings = state.buildings.filter((x) => x.id !== buildingId);
-  // 丹爐變少時，超出的丹爐掌爐者回到日常修煉
-  const slots = furnaceCount(state, content);
-  state.furnaces.forEach((f, i) => {
-    if (i < slots || !f.alchemistId) return;
-    const c = [state.protagonist, ...state.disciples].find((x) => x.id === f.alchemistId);
-    if (c && c.schedule === 'alchemy') c.schedule = 'cultivate';
-    f.alchemistId = null;
-  });
+  // 爐位變少時，超出的爐位工作者回到日常修煉
+  for (const station of STATIONS) {
+    const slots = benchCount(state, content, station);
+    benchList(state, station).forEach((f, i) => {
+      if (i < slots || !f.alchemistId) return;
+      const c = [state.protagonist, ...state.disciples].find((x) => x.id === f.alchemistId);
+      if (c && c.schedule === STATION_INFO[station].schedule) c.schedule = 'cultivate';
+      f.alchemistId = null;
+    });
+  }
   const name = content.buildings.get(b.defId)?.name ?? b.defId;
   return `已拆除${name}，退還 ${formatResources(refund)}。`;
 }

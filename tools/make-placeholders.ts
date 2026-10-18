@@ -22,6 +22,12 @@ const items: [string, string, number, number, string][] = [
   ['region-back', '後山', 960, 300, 'tree'],
   ['region-gate', '山門', 960, 300, 'building'],
   ['beast-cloud-ape', '雲紋靈猿', 240, 300, 'person'],
+  // P1 批次 B：新建築
+  ['garden', '藥園', 480, 300, 'field'],
+  ['mine', '靈礦場', 480, 300, 'rock'],
+  ['forge', '煉器坊', 480, 300, 'building'],
+  ['talisman', '符陣閣', 480, 300, 'building'],
+  ['market', '坊市', 480, 300, 'building'],
 ];
 
 function motif(kind: string, w: number, h: number): string {

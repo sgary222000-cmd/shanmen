@@ -143,7 +143,7 @@ export function qiDemandOf(state: GameState, regionId: string = MAIN_REGION): nu
 
 export function outerAssigned(state: GameState): number {
   const j = state.outer.jobs;
-  return j.field + j.quarry + j.lumber + j.errand;
+  return j.field + j.quarry + j.lumber + j.garden + j.mine + j.errand + state.outer.labor;
 }
 
 export function outerCultivating(state: GameState): number {

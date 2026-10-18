@@ -111,6 +111,13 @@ export function OverviewPage() {
                 <td>{content.lineages.get(game.lineage)?.name}</td>
               </tr>
               <tr>
+                <th>聲望</th>
+                <td>
+                  {game.reputation}・委託榜 {game.commissions.length} 件
+                  {game.market.rumor && <span className="muted small">・坊市消息：{game.market.rumor}</span>}
+                </td>
+              </tr>
+              <tr>
                 <th>區域</th>
                 <td>
                   {[...content.regions.values()]

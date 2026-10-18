@@ -1,3 +1,4 @@
+import { emptyResources } from '../../src/engine/resources';
 import { content } from '../../src/content/registry';
 import { applyCommand, monthIndex, newGame, type Command, type GameState } from '../../src/engine';
 
@@ -40,7 +41,7 @@ export function edit(state: GameState, fn: (s: GameState) => void): GameState {
 /** 佈置一個已建好大殿 2 級、煉丹房、聚靈陣的宗門。 */
 export function developed(seed = 1): GameState {
   return edit(fresh(seed), (s) => {
-    s.resources = { lingshi: 2000, food: 1000, stone: 1000, wood: 1000, herb: 300, pill_qi: 20, pill_heal: 10, pill_foundation: 0 };
+    s.resources = { ...emptyResources(), lingshi: 2000, food: 1000, stone: 1000, wood: 1000, herb: 300, pill_qi: 20, pill_heal: 10 };
     const hall = s.buildings.find((b) => b.defId === 'building.hall');
     if (hall) {
       hall.level = 2;

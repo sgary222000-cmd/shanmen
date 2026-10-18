@@ -136,9 +136,12 @@ function fight(state: GameState, content: ContentPack, realm: SecretRealmDef, no
     enemies,
     strategy: state.strategy,
     healPills: state.resources.pill_heal,
+    talismans: { fire: state.resources.talisman_fire, guard: state.resources.talisman_guard },
     randInt: (n) => r.int(n),
   });
   state.resources.pill_heal -= outcome.pillsUsed;
+  state.resources.talisman_fire -= outcome.talismansUsed.fire;
+  state.resources.talisman_guard -= outcome.talismansUsed.guard;
   for (const u of outcome.allies) run.hp[u.key] = u.hp;
   const record: BattleRecord = {
     id: newId(state, 'battle'),

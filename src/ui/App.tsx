@@ -7,6 +7,7 @@ import { BuildPage } from './pages/Build';
 import { DisciplesPage } from './pages/Disciples';
 import { ExplorePage } from './pages/Explore';
 import { IndustryPage } from './pages/Industry';
+import { MarketPage } from './pages/Market';
 import { NewGamePage } from './pages/NewGame';
 import { OverviewPage } from './pages/Overview';
 import { ProtagonistPage } from './pages/Protagonist';
@@ -32,6 +33,7 @@ function GameScreen() {
           {page === 'protagonist' && <ProtagonistPage />}
           {page === 'disciples' && <DisciplesPage />}
           {page === 'industry' && <IndustryPage />}
+          {page === 'market' && <MarketPage />}
           {page === 'explore' && <ExplorePage />}
           {page === 'reports' && <ReportsPage />}
           {page === 'saves' && <SavesPage />}

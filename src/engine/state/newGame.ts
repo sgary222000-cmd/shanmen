@@ -5,9 +5,11 @@ import { seedAll } from '../rng';
 import { MAIN_REGION } from '../../content/registry';
 import { gain } from '../resources';
 import { initialRegions } from '../systems/regions/regions';
+import { refreshBoard } from '../systems/commissions/commissions';
+import { emptyMarket, rollMarket } from '../systems/economy/market';
 import type { Beast, GameState, Skills } from '../types';
 
-export const STATE_VERSION = 3;
+export const STATE_VERSION = 4;
 
 export interface NewGameOptions {
   sectName: string;
@@ -34,7 +36,7 @@ export function newGame(content: ContentPack, opts: NewGameOptions): GameState {
   const beasts: Beast[] = [];
   const species = lineage.start.beast ? content.beasts.get(lineage.start.beast) : undefined;
   if (species) beasts.push({ id: 'beast1', speciesId: species.id, name: species.name, ownerId: 'c0' });
-  return {
+  const state: GameState = {
     version: STATE_VERSION,
     sectName,
     lineage: lineage.id,
@@ -61,10 +63,11 @@ export function newGame(content: ContentPack, opts: NewGameOptions): GameState {
     disciples: [],
     outer: {
       count: start.outerCount,
-      jobs: { field: 0, quarry: 0, lumber: 0, errand: 0 },
+      jobs: { field: 0, quarry: 0, lumber: 0, garden: 0, mine: 0, errand: 0 },
       satisfaction: 60,
       training: 0,
       hungerMonths: 0,
+      labor: 0,
     },
     buildings: [
       { id: 'b1', defId: 'building.hall', region: MAIN_REGION, level: 0, status: 'ruined', construction: null },
@@ -73,7 +76,14 @@ export function newGame(content: ContentPack, opts: NewGameOptions): GameState {
     regions: initialRegions(content),
     beasts,
     furnaces: [],
-    recipes: [...content.recipes.values()].filter((r) => r.knownAtStart).map((r) => r.id),
+    workshops: { forge: [], talisman: [] },
+    market: emptyMarket(),
+    commissions: [],
+    reputation: 0,
+    recipes: [
+      ...[...content.recipes.values()].filter((r) => r.knownAtStart).map((r) => r.id),
+      ...lineage.start.recipes.filter((id) => !content.recipes.get(id)?.knownAtStart),
+    ],
     exploration: null,
     exploredThisMonth: false,
     realmClears: {},
@@ -87,7 +97,10 @@ export function newGame(content: ContentPack, opts: NewGameOptions): GameState {
     nextId: 3,
     tutorial: { skipped: false, viewedLedger: false, done: [] },
     trade: { soldLingshi: 0, boughtFood: 0 },
-    strategy: { useHealPill: true, focusLowest: true },
+    strategy: { useHealPill: true, useTalismans: true, focusLowest: true },
     stats: { commands: 0, monthsAdvanced: 0, explorations: 0 },
   };
+  rollMarket(state);
+  refreshBoard(state, content);
+  return state;
 }

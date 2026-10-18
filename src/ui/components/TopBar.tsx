@@ -21,7 +21,8 @@ export function TopBar() {
         <span>石材<b>{r.stone}</b></span>
         <span>靈木<b>{r.wood}</b></span>
         <span>藥草<b>{r.herb}</b></span>
-        <span>丹藥<b>{r.pill_qi + r.pill_heal + r.pill_foundation}</b></span>
+        <span>丹藥<b>{r.pill_qi + r.pill_heal + r.pill_foundation + r.pill_peiyuan}</b></span>
+        <span>聲望<b data-testid="reputation">{game.reputation}</b></span>
       </span>
       <span className="spacer" />
       <button className="btn small alerts" onClick={() => setPage('overview')} title="查看警報">

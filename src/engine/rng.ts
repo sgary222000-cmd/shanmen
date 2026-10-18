@@ -38,7 +38,8 @@ export function seedState(seed: number): RngState {
   return s;
 }
 
-export const RNG_STREAMS: RngStream[] = ['world', 'recruit', 'alchemy', 'combat', 'explore', 'cultivation'];
+// 新的亂數流只能加在最後，既有種子產生的序列才不會改變。
+export const RNG_STREAMS: RngStream[] = ['world', 'recruit', 'alchemy', 'combat', 'explore', 'cultivation', 'market', 'commission'];
 
 export function seedAll(seed: number): Record<RngStream, RngState> {
   const out = {} as Record<RngStream, RngState>;

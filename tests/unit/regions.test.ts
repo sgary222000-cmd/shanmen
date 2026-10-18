@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { applyCommand, monthIndex, newGame, planMonth, type GameState } from '../../src/engine';
+import { applyCommand, monthIndex, newGame, planMonth, STATE_VERSION, type GameState } from '../../src/engine';
 import { workersByBuilding } from '../../src/engine/systems/economy/flows';
 import { RESOURCE_IDS } from '../../src/engine/resources';
 import { qiCapacity, usedSlots } from '../../src/engine/systems/buildings/buildings';
@@ -42,7 +42,7 @@ describe('P0 存檔遷移到 v3', () => {
     if (!r.ok) return;
     expect(r.migratedFrom).toBe(2);
     const s = r.state;
-    expect(s.version).toBe(3);
+    expect(s.version).toBe(STATE_VERSION);
     expect(s.lineage).toBe('lineage.sword');
     expect(s.buildings.every((b) => b.region === 'region.main')).toBe(true);
     expect(s.regions['region.main']?.status).toBe('open');
@@ -50,7 +50,7 @@ describe('P0 存檔遷移到 v3', () => {
     expect(s.protagonist.seat).toBe('region.main');
     expect(s.protagonist.skills.forging).toBe(0);
     // 原有資源、境界、日期保留
-    expect(s.resources).toEqual(p0.world.resources);
+    expect(s.resources).toMatchObject(p0.world.resources);
     expect(s.protagonist.realm).toEqual(p0.world.protagonist.realm);
     expect(s.date).toEqual(p0.world.date);
   });
@@ -122,7 +122,7 @@ describe('區域', () => {
   it('靈泉谷的靈田產量 +25%，預覽等於實際結算', () => {
     const base = edit(openAll(developed()), (x) => {
       x.buildings = x.buildings.filter((b) => b.defId !== 'building.field');
-      x.outer.jobs = { field: 6, quarry: 0, lumber: 0, errand: 0 };
+      x.outer.jobs = { field: 6, quarry: 0, lumber: 0, garden: 0, mine: 0, errand: 0 };
     });
     const withField = (region: string) =>
       edit(base, (x) => {
@@ -144,7 +144,7 @@ describe('區域', () => {
         { id: 'b201', defId: 'building.field', region: 'region.main', level: 1, status: 'active', construction: null, crop: 'food' },
         { id: 'b202', defId: 'building.field', region: 'region.valley', level: 1, status: 'active', construction: null, crop: 'food' },
       );
-      x.outer.jobs = { field: 8, quarry: 0, lumber: 0, errand: 0 };
+      x.outer.jobs = { field: 8, quarry: 0, lumber: 0, garden: 0, mine: 0, errand: 0 };
     });
     // 靈泉谷 6 人 × 3 × 1.25 = 22；主峰 2 人 × 3 = 6
     expect(planMonth(s, content).production.food).toBe(28);
@@ -157,7 +157,7 @@ describe('區域', () => {
         { id: 'b201', defId: 'building.field', region: 'region.valley', level: 1, status: 'active', construction: null, crop: 'herb' },
         { id: 'b202', defId: 'building.field', region: 'region.main', level: 1, status: 'active', construction: null, crop: 'food' },
       );
-      x.outer.jobs = { field: 6, quarry: 0, lumber: 0, errand: 0 };
+      x.outer.jobs = { field: 6, quarry: 0, lumber: 0, garden: 0, mine: 0, errand: 0 };
     });
     const plan = planMonth(s, content);
     expect(plan.production.food).toBe(18);

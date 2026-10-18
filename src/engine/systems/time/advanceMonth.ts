@@ -3,9 +3,11 @@ import { monthIndex, nextMonth } from '../../date';
 import { ensure } from '../../errors';
 import { addInto, gain, RESOURCE_IDS } from '../../resources';
 import type { GameState, MonthReport, Resources } from '../../types';
-import { resolveFurnaces } from '../alchemy/alchemy';
+import { resolveFurnaces, tidyBenches } from '../alchemy/alchemy';
 import { progressConstruction } from '../buildings/buildings';
-import { allCharacters, findCharacter } from '../characters/characters';
+import { allCharacters } from '../characters/characters';
+import { refreshBoard } from '../commissions/commissions';
+import { rollMarket } from '../economy/market';
 import { tickOuter } from '../characters/outer';
 import { addXp, breakthroughOdds, monthlyXp, resolveBreakthrough, tickBody } from '../cultivation/cultivation';
 import { planMonth } from '../economy/flows';
@@ -74,7 +76,8 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
       else c.schedule = 'cultivate';
       continue;
     }
-    const xp = monthlyXp(state, content, c, plan.pillTakers.includes(c.id));
+    const pill = plan.peiyuanTakers.includes(c.id) ? 'peiyuan' : plan.pillTakers.includes(c.id);
+    const xp = monthlyXp(state, content, c, pill);
     addXp(c, xp.total, lines);
   }
   tickBody(state, lines);
@@ -90,12 +93,12 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
   state.exploration = null;
   state.exploredThisMonth = false;
   for (const c of allCharacters(state)) if (c.schedule === 'explore') c.schedule = c.injuryMonths > 0 ? 'heal' : 'cultivate';
-  // 掌爐者若已不在煉丹行程，從丹爐移除
-  for (const f of state.furnaces) {
-    if (f.alchemistId && findCharacter(state, f.alchemistId)?.schedule !== 'alchemy') f.alchemistId = null;
-  }
+  // 工作者若已不在工坊行程，從爐位移除
+  tidyBenches(state);
 
   state.trade = { soldLingshi: 0, boughtFood: 0 };
+  state.outer.labor = 0;
+  rollMarket(state);
 
   // 6. 電腦宗門：P0 尚未開放
 
@@ -103,6 +106,8 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
   const settled = { ...state.date };
   state.date = nextMonth(state.date);
   maybeRecruitment(state, content, lines);
+  refreshBoard(state, content);
+  if (state.market.rumor) lines.push(`坊市消息：${state.market.rumor}`);
 
   for (const id of RESOURCE_IDS) {
     if (state.resources[id] < 0) throw new Error(`結算後資源為負：${id}`);

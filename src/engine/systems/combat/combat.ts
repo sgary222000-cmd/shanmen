@@ -29,6 +29,8 @@ export interface BattleInput {
   enemies: Unit[];
   strategy: CombatStrategy;
   healPills: number;
+  /** 庫存的火符、護身符；策略開啟時戰鬥開始各用一張 */
+  talismans?: { fire: number; guard: number };
   /** 回傳 [0, n) 的整數 */
   randInt: (n: number) => number;
 }
@@ -41,6 +43,7 @@ export interface BattleOutcome {
   allies: Unit[];
   enemies: Unit[];
   pillsUsed: number;
+  talismansUsed: { fire: number; guard: number };
 }
 
 export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, hp?: number): Unit {
@@ -135,6 +138,26 @@ export function runBattle(input: BattleInput): BattleOutcome {
   let pills = input.healPills;
   let pillsUsed = 0;
   const { maxRounds, healThresholdPct, healPct } = balance.combat;
+  const talismansUsed = { fire: 0, guard: 0 };
+
+  // 戰前用符：護身符提高全隊防禦，火符對每個敵人造成固定傷害
+  if (input.strategy.useTalismans && input.talismans) {
+    if (input.talismans.guard > 0) {
+      talismansUsed.guard = 1;
+      for (const u of allies) u.def += balance.talismanCombat.guardDef;
+      const line = `祭出護身符，全隊防禦 +${balance.talismanCombat.guardDef}。`;
+      log.push(line);
+      highlights.push(line);
+    }
+    if (input.talismans.fire > 0) {
+      talismansUsed.fire = 1;
+      for (const u of enemies) u.hp = Math.max(0, u.hp - balance.talismanCombat.fireDamage);
+      const line = `打出火符，每個敵人受到 ${balance.talismanCombat.fireDamage} 傷害。`;
+      log.push(line);
+      highlights.push(line);
+      for (const u of enemies) if (u.hp === 0) log.push(`${u.name}倒下。`);
+    }
+  }
 
   const order = [...allies, ...enemies].sort((a, b) => {
     if (b.spd !== a.spd) return b.spd - a.spd;
@@ -143,8 +166,8 @@ export function runBattle(input: BattleInput): BattleOutcome {
   });
 
   let round = 0;
-  let result: BattleOutcome['result'] = 'draw';
-  outer: for (round = 1; round <= maxRounds; round++) {
+  let result: BattleOutcome['result'] = alive(enemies).length ? 'draw' : 'win';
+  outer: for (round = 1; result === 'draw' && round <= maxRounds; round++) {
     log.push(`── 第 ${round} 回合 ──`);
     for (const actor of order) {
       if (actor.hp <= 0) continue;
@@ -225,5 +248,5 @@ export function runBattle(input: BattleInput): BattleOutcome {
   if (result === 'win') highlights.push(`第 ${rounds} 回合獲勝。`);
   if (result === 'lose') highlights.push(`第 ${rounds} 回合，我方全員倒下。`);
   if (pillsUsed) highlights.push(`使用回春丹 ${pillsUsed} 顆。`);
-  return { result, rounds, log, highlights, allies, enemies, pillsUsed };
+  return { result, rounds, log, highlights, allies, enemies, pillsUsed, talismansUsed };
 }

@@ -1,15 +1,31 @@
 import { balance } from '../../../content/balance';
 import type { ContentPack } from '../../../content/registry';
 import { addInto, canAfford, RESOURCE_IDS } from '../../resources';
-import type { Building, GameState, Resources } from '../../types';
-import { effectsOf, furnaceCount, furnaceRoom, FIELD, levelDef, LUMBER, QUARRY } from '../buildings/buildings';
+import type { Building, GameState, Resources, Station } from '../../types';
+import {
+  benchCount,
+  benchesOf,
+  benchList,
+  benchRoom,
+  effectsOf,
+  FIELD,
+  GARDEN,
+  levelDef,
+  LUMBER,
+  MINE,
+  QUARRY,
+  STATION_INFO,
+  STATIONS,
+} from '../buildings/buildings';
 import { productionBonusPct } from '../regions/regions';
 import { allCharacters } from '../characters/characters';
 
 // 每月收支計畫。預覽與實際結算共用同一份計算，確保「預覽等於結算」。
 // 規則：所有消耗只從「月初庫存」扣除（第 2 步），產出在第 3 步入庫，下個月才能使用。
+// 坊市與委託屬於安排階段的即時交易，不在月結算內。
 
 export interface FurnacePlan {
+  station: Station;
   index: number;
   recipeId: string;
   alchemistId: string;
@@ -30,8 +46,10 @@ export interface MonthPlan {
   foodNeed: number;
   /** 因維護不足而停用的建築 ID */
   unpaidBuildings: string[];
-  /** 本月能服用聚氣丹的人物 */
+  /** 本月能服用丹藥修煉的人物（煉氣服聚氣丹；築基優先服培元丹） */
   pillTakers: string[];
+  /** 本月服用培元丹的人物（pillTakers 的子集） */
+  peiyuanTakers: string[];
   /** 本月有築基丹可突破的人物 */
   breakthroughReady: string[];
   furnaces: FurnacePlan[];
@@ -51,7 +69,56 @@ export interface AlchemyOdds {
   parts: string[];
 }
 
-/** 成丹率：丹方基礎 + 技藝 + 煉丹房等級 + 所在區域 + 傳承。furnaceIndex 決定是哪一座煉丹房。 */
+/** 工坊成功率：配方基礎 + 技藝 + 建築等級 + 所在區域 + 傳承。index 決定是哪一座建築的爐位。 */
+export function craftOdds(
+  state: GameState,
+  content: ContentPack,
+  station: Station,
+  recipeId: string,
+  workerId: string,
+  index = 0,
+): AlchemyOdds {
+  const recipe = content.recipes.get(recipeId);
+  const worker = allCharacters(state).find((c) => c.id === workerId);
+  if (!recipe || !worker) return { bp: 0, parts: [] };
+  const info = STATION_INFO[station];
+  const parts = [`配方 ${recipe.baseSuccessBp / 100}%`];
+  let bp = recipe.baseSuccessBp;
+  const skill = worker.skills[info.skill] * balance.craft.skillBpPerPoint;
+  if (skill) {
+    bp += skill;
+    parts.push(`技藝 +${skill / 100}%`);
+  }
+  const room = benchRoom(state, content, station, index);
+  if (room) {
+    const eff = effectsOf(content, room);
+    const roomBp = (station === 'alchemy' ? eff?.alchemyBonusBp : eff?.craftBonusBp) ?? 0;
+    if (roomBp) {
+      bp += roomBp;
+      parts.push(`${info.room} ${room.level} 級 +${roomBp / 100}%`);
+    }
+    const region = content.regions.get(room.region);
+    const regionBp = station === 'alchemy' ? region?.bonus.alchemyBonusBp : station === 'forge' ? region?.bonus.forgeBonusBp : 0;
+    if (region && regionBp) {
+      bp += regionBp;
+      parts.push(`${region.name} +${regionBp / 100}%`);
+    }
+  }
+  const lineage = content.lineages.get(state.lineage);
+  const lineageBp =
+    station === 'alchemy'
+      ? lineage?.bonuses.alchemyBonusBp
+      : station === 'forge'
+        ? lineage?.bonuses.forgeBonusBp
+        : lineage?.bonuses.talismanBonusBp;
+  if (lineage && lineageBp) {
+    bp += lineageBp;
+    parts.push(`${lineage.name}傳承 +${lineageBp / 100}%`);
+  }
+  return { bp: Math.min(balance.craft.maxBp, bp), parts };
+}
+
+/** 成丹率（煉丹房）。furnaceIndex 決定是哪一座煉丹房。 */
 export function alchemyOdds(
   state: GameState,
   content: ContentPack,
@@ -59,35 +126,7 @@ export function alchemyOdds(
   alchemistId: string,
   furnaceIndex = 0,
 ): AlchemyOdds {
-  const recipe = content.recipes.get(recipeId);
-  const alchemist = allCharacters(state).find((c) => c.id === alchemistId);
-  if (!recipe || !alchemist) return { bp: 0, parts: [] };
-  const parts = [`丹方 ${recipe.baseSuccessBp / 100}%`];
-  let bp = recipe.baseSuccessBp;
-  const skill = alchemist.skills.alchemy * balance.alchemy.skillBpPerPoint;
-  if (skill) {
-    bp += skill;
-    parts.push(`技藝 +${skill / 100}%`);
-  }
-  const room = furnaceRoom(state, content, furnaceIndex);
-  if (room) {
-    const roomBp = effectsOf(content, room)?.alchemyBonusBp ?? 0;
-    if (roomBp) {
-      bp += roomBp;
-      parts.push(`煉丹房 ${room.level} 級 +${roomBp / 100}%`);
-    }
-    const region = content.regions.get(room.region);
-    if (region?.bonus.alchemyBonusBp) {
-      bp += region.bonus.alchemyBonusBp;
-      parts.push(`${region.name} +${region.bonus.alchemyBonusBp / 100}%`);
-    }
-  }
-  const lineage = content.lineages.get(state.lineage);
-  if (lineage?.bonuses.alchemyBonusBp) {
-    bp += lineage.bonuses.alchemyBonusBp;
-    parts.push(`${lineage.name}傳承 +${lineage.bonuses.alchemyBonusBp / 100}%`);
-  }
-  return { bp: Math.min(9500, bp), parts };
+  return craftOdds(state, content, 'alchemy', recipeId, alchemistId, furnaceIndex);
 }
 
 export function alchemySuccessBp(state: GameState, content: ContentPack, recipeId: string, alchemistId: string, furnaceIndex = 0): number {
@@ -121,7 +160,13 @@ export function fillOrder(
 export function workersByBuilding(state: GameState, content: ContentPack): Record<string, number> {
   const out: Record<string, number> = {};
   const jobs = state.outer.jobs;
-  for (const [defId, workers] of [[FIELD, jobs.field], [QUARRY, jobs.quarry], [LUMBER, jobs.lumber]] as const) {
+  for (const [defId, workers] of [
+    [FIELD, jobs.field],
+    [QUARRY, jobs.quarry],
+    [LUMBER, jobs.lumber],
+    [GARDEN, jobs.garden],
+    [MINE, jobs.mine],
+  ] as const) {
     let left = workers;
     for (const site of fillOrder(state, content, defId)) {
       const n = Math.min(left, effectsOf(content, site.b)?.workerSlots ?? 0);
@@ -168,43 +213,54 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
     else notes.push(`${c.name}缺少築基丹，本月無法突破。`);
   }
 
-  // 4. 修煉用聚氣丹
+  // 4. 修煉用丹藥：煉氣服聚氣丹；築基優先服培元丹，沒有時改服聚氣丹
   const pillTakers: string[] = [];
+  const peiyuanTakers: string[] = [];
   for (const c of allCharacters(state)) {
     if (!c.takePill) continue;
-    if (take(pool, consumption, { pill_qi: 1 })) pillTakers.push(c.id);
-    else notes.push(`聚氣丹不足，${c.name}本月未服丹。`);
+    if (c.realm.major !== 'qi' && take(pool, consumption, { pill_peiyuan: 1 })) {
+      pillTakers.push(c.id);
+      peiyuanTakers.push(c.id);
+    } else if (take(pool, consumption, { pill_qi: 1 })) pillTakers.push(c.id);
+    else notes.push(`修煉丹藥不足，${c.name}本月未服丹。`);
   }
 
-  // 5. 煉丹投入（只計本月有付維護費的煉丹房）
-  const unpaidRooms = state.buildings.filter((b) => b.defId === 'building.alchemy' && unpaidBuildings.includes(b.id));
-  const slots =
-    furnaceCount(state, content) - unpaidRooms.reduce((n, b) => n + (b.level >= 1 ? effectsOf(content, b)?.furnaces ?? 0 : 0), 0);
-  const roomWorks = slots > 0;
+  // 5. 工坊投入：丹爐、器爐、符案（只計本月有付維護費的建築）
   const furnaces: FurnacePlan[] = [];
   const expected: Partial<Resources> = {};
-  state.furnaces.forEach((f, index) => {
-    if (!f.recipeId || !f.alchemistId) return;
-    const recipe = content.recipes.get(f.recipeId);
-    if (!recipe) return;
-    const plan: FurnacePlan = {
-      index,
-      recipeId: f.recipeId,
-      alchemistId: f.alchemistId,
-      runs: false,
-      successBp: alchemySuccessBp(state, content, f.recipeId, f.alchemistId, index),
-    };
-    if (index >= slots) plan.reason = roomWorks ? '丹爐數量不足' : '煉丹房未運作';
-    else if (!take(pool, consumption, recipe.inputs)) plan.reason = '材料不足，停爐';
-    else plan.runs = true;
-    if (plan.runs) {
-      for (const id of RESOURCE_IDS) {
-        const out = recipe.outputs[id];
-        if (out) expected[id] = (expected[id] ?? 0) + Math.floor((out * plan.successBp) / 10000);
-      }
-    } else if (plan.reason) notes.push(`丹爐 ${index + 1}：${plan.reason}。`);
-    furnaces.push(plan);
-  });
+  for (const station of STATIONS) {
+    const info = STATION_INFO[station];
+    const unpaid = state.buildings.filter((b) => b.defId === info.building && unpaidBuildings.includes(b.id));
+    const slots = benchCount(state, content, station) - unpaid.reduce((n, b) => n + (b.level >= 1 ? benchesOf(content, b) : 0), 0);
+    const roomWorks = slots > 0;
+    benchList(state, station).forEach((f, index) => {
+      if (!f.recipeId || !f.alchemistId) return;
+      const recipe = content.recipes.get(f.recipeId);
+      if (!recipe) return;
+      const plan: FurnacePlan = {
+        station,
+        index,
+        recipeId: f.recipeId,
+        alchemistId: f.alchemistId,
+        runs: false,
+        successBp: craftOdds(state, content, station, f.recipeId, f.alchemistId, index).bp,
+      };
+      const keep = f.keep ?? 0;
+      const belowKeep =
+        keep > 0 && RESOURCE_IDS.some((id) => id !== 'lingshi' && (recipe.inputs[id] ?? 0) > 0 && pool[id] - (recipe.inputs[id] ?? 0) < keep);
+      if (index >= slots) plan.reason = roomWorks ? `${info.bench}數量不足` : `${info.room}未運作`;
+      else if (belowKeep) plan.reason = `材料會低於保留量 ${keep}，停工`;
+      else if (!take(pool, consumption, recipe.inputs)) plan.reason = '材料不足，停工';
+      else plan.runs = true;
+      if (plan.runs) {
+        for (const id of RESOURCE_IDS) {
+          const out = recipe.outputs[id];
+          if (out) expected[id] = (expected[id] ?? 0) + Math.floor((out * plan.successBp) / 10000);
+        }
+      } else if (plan.reason) notes.push(`${info.bench} ${index + 1}：${plan.reason}。`);
+      furnaces.push(plan);
+    });
+  }
 
   // 產出（確定部分）：外門工人依 fillOrder 填入各座建築（糧食田優先，其次加成高者）
   const production: Partial<Resources> = {};
@@ -225,6 +281,8 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
   });
   assign(QUARRY, jobs.quarry, (b) => ({ id: 'stone', n: effectsOf(content, b)?.stonePerWorker ?? 0 }));
   assign(LUMBER, jobs.lumber, (b) => ({ id: 'wood', n: effectsOf(content, b)?.woodPerWorker ?? 0 }));
+  assign(GARDEN, jobs.garden, (b) => ({ id: 'spirit_herb', n: effectsOf(content, b)?.spiritHerbPerWorker ?? 0 }));
+  assign(MINE, jobs.mine, (b) => ({ id: 'ore', n: effectsOf(content, b)?.orePerWorker ?? 0 }));
   if (jobs.errand) production.lingshi = jobs.errand * balance.outer.errandLingshi;
   for (const id of RESOURCE_IDS) if (production[id] === 0) delete production[id];
 
@@ -236,6 +294,7 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
     foodNeed: need,
     unpaidBuildings,
     pillTakers,
+    peiyuanTakers,
     breakthroughReady,
     furnaces,
     notes,

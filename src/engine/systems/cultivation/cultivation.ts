@@ -27,7 +27,7 @@ export interface XpBreakdown {
 }
 
 /** 計算人物本月修為；預覽與結算共用。 */
-export function monthlyXp(state: GameState, content: ContentPack, c: Character, tookPill: boolean): XpBreakdown {
+export function monthlyXp(state: GameState, content: ContentPack, c: Character, tookPill: boolean | 'peiyuan'): XpBreakdown {
   const parts: string[] = [];
   if (c.schedule === 'breakthrough') return { total: 0, parts: ['本月突破，不累積修為'] };
   let pct = balance.scheduleXpPct[c.schedule];
@@ -57,7 +57,10 @@ export function monthlyXp(state: GameState, content: ContentPack, c: Character, 
     total = Math.floor((total * balance.injuredXpPct) / 100);
     parts.push(`受傷 ${balance.injuredXpPct}%`);
   }
-  if (tookPill) {
+  if (tookPill === 'peiyuan') {
+    total += balance.pillPeiyuanXp;
+    parts.push(`培元丹 +${balance.pillPeiyuanXp}`);
+  } else if (tookPill) {
     total += balance.pillQiXp;
     parts.push(`聚氣丹 +${balance.pillQiXp}`);
   }

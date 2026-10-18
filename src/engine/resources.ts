@@ -7,9 +7,17 @@ export const RESOURCE_IDS: ResourceId[] = [
   'stone',
   'wood',
   'herb',
+  'spirit_herb',
+  'ore',
+  'paper',
+  'beast_mat',
   'pill_qi',
   'pill_heal',
   'pill_foundation',
+  'pill_peiyuan',
+  'talisman_fire',
+  'talisman_guard',
+  'artifact',
 ];
 
 export const RESOURCE_NAMES: Record<ResourceId, string> = {
@@ -18,13 +26,21 @@ export const RESOURCE_NAMES: Record<ResourceId, string> = {
   stone: '石材',
   wood: '靈木',
   herb: '藥草',
+  spirit_herb: '靈藥',
+  ore: '靈礦',
+  paper: '符紙',
+  beast_mat: '獸材',
   pill_qi: '聚氣丹',
   pill_heal: '回春丹',
   pill_foundation: '築基丹',
+  pill_peiyuan: '培元丹',
+  talisman_fire: '火符',
+  talisman_guard: '護身符',
+  artifact: '法器',
 };
 
 export function emptyResources(): Resources {
-  return { lingshi: 0, food: 0, stone: 0, wood: 0, herb: 0, pill_qi: 0, pill_heal: 0, pill_foundation: 0 };
+  return Object.fromEntries(RESOURCE_IDS.map((id) => [id, 0])) as Resources;
 }
 
 export function canAfford(have: Resources, cost: Partial<Resources>): boolean {

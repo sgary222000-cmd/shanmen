@@ -1,6 +1,13 @@
 // 存檔升版遷移。每次世界狀態格式改變：STATE_VERSION +1，並在這裡加入一支「舊版 → 新版」函式。
 // 讀到舊存檔時依序執行；遷移前原檔會另存為升版前備份（見 storage.ts）。
 
+import { content } from '../content/registry';
+import type { GameState } from '../engine';
+import { refreshBoard } from '../engine/systems/commissions/commissions';
+import { emptyMarket, rollMarket } from '../engine/systems/economy/market';
+import { RESOURCE_IDS } from '../engine/resources';
+import { seedState } from '../engine/rng';
+
 type World = Record<string, unknown>;
 
 export const migrations: Record<number, (w: World) => World> = {
@@ -39,6 +46,38 @@ export const migrations: Record<number, (w: World) => World> = {
       },
       beasts: [],
     };
+  },
+  // v3 → v4（P1 批次 B）：新資源、藥園與靈礦場的分工、煉器與製符工坊、坊市、委託榜、聲望。
+  // 新的亂數流由既有的 world 流狀態衍生，同一份存檔升級結果固定；傳承開局配方補進已學配方。
+  3: (w) => {
+    const resources = Object.fromEntries(RESOURCE_IDS.map((id) => [id, (w.resources as Record<string, number>)[id] ?? 0]));
+    const outer = w.outer as Record<string, unknown>;
+    const rngs = w.rng as Record<string, [number, number, number, number]>;
+    const world = rngs.world ?? [1, 2, 3, 4];
+    const lineage = content.lineages.get(w.lineage as string);
+    const recipes = new Set(w.recipes as string[]);
+    for (const r of content.recipes.values()) if (r.knownAtStart) recipes.add(r.id);
+    for (const r of lineage?.start.recipes ?? []) recipes.add(r);
+    const next = {
+      ...w,
+      version: 4,
+      resources,
+      outer: { ...outer, jobs: { garden: 0, mine: 0, ...(outer.jobs as Record<string, number>) }, labor: 0 },
+      workshops: { forge: [], talisman: [] },
+      market: emptyMarket(),
+      commissions: [],
+      reputation: 0,
+      recipes: [...recipes],
+      rng: {
+        ...rngs,
+        market: seedState((world[0] ^ 0x6d61726b) >>> 0),
+        commission: seedState((world[1] ^ 0x636f6d6d) >>> 0),
+      },
+      strategy: { useTalismans: true, ...(w.strategy as Record<string, boolean>) },
+    } as unknown as GameState;
+    rollMarket(next);
+    refreshBoard(next, content);
+    return next as unknown as World;
   },
 };
 

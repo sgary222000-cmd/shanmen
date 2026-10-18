@@ -5,16 +5,19 @@ import { enemies } from './enemies';
 import { lineages } from './lineages';
 import { regions } from './regions';
 import { beastSpecies } from './beasts';
+import { commissions } from './commissions';
 import { abandonedCave } from './secret-realms/abandoned-cave';
 import {
   beastSpeciesSchema,
   buildingSchema,
+  commissionSchema,
   regionSchema,
   enemySchema,
   lineageSchema,
   recipeSchema,
   secretRealmSchema,
   type BuildingDef,
+  type CommissionDef,
   type EnemyDef,
   type BeastSpeciesDef,
   type LineageDef,
@@ -31,6 +34,7 @@ export interface ContentPack {
   secretRealms: Map<string, SecretRealmDef>;
   regions: Map<string, RegionDef>;
   beasts: Map<string, BeastSpeciesDef>;
+  commissions: Map<string, CommissionDef>;
 }
 
 export interface RawContent {
@@ -41,6 +45,7 @@ export interface RawContent {
   secretRealms: unknown[];
   regions: unknown[];
   beasts: unknown[];
+  commissions: unknown[];
 }
 
 export const MAIN_REGION = 'region.main';
@@ -64,6 +69,7 @@ export function buildContent(raw: RawContent): ContentPack {
     secretRealms: index('秘境', z.array(secretRealmSchema).parse(raw.secretRealms)),
     regions: index('區域', z.array(regionSchema).parse(raw.regions)),
     beasts: index('靈獸', z.array(beastSpeciesSchema).parse(raw.beasts)),
+    commissions: index('委託', z.array(commissionSchema).parse(raw.commissions)),
   };
   if (!pack.regions.has(MAIN_REGION)) throw new Error(`缺少主峰區域：${MAIN_REGION}`);
   for (const region of pack.regions.values()) {
@@ -78,6 +84,7 @@ export function buildContent(raw: RawContent): ContentPack {
     for (const b of Object.keys(l.bonuses.productionPct)) {
       if (!pack.buildings.has(b)) throw new Error(`傳承加成引用不存在的建築：${l.id} → ${b}`);
     }
+    for (const r of l.start.recipes) if (!pack.recipes.has(r)) throw new Error(`傳承引用不存在的配方：${l.id} → ${r}`);
     if (l.start.beast && !pack.beasts.has(l.start.beast)) throw new Error(`傳承引用不存在的靈獸：${l.id} → ${l.start.beast}`);
   }
 
@@ -101,9 +108,23 @@ export function buildContent(raw: RawContent): ContentPack {
     }
   }
   for (const b of pack.buildings.values()) {
+    for (const r of b.onlyRegions ?? []) {
+      if (!pack.regions.has(r)) throw new Error(`建築引用不存在的區域：${b.id} → ${r}`);
+      const allows = pack.regions.get(r)?.allows;
+      if (allows !== 'any' && !allows?.includes(b.id)) throw new Error(`建築限定的區域不允許蓋它：${b.id} → ${r}`);
+    }
     b.levels.forEach((lv, i) => {
       if (lv.level !== i + 1) throw new Error(`建築等級需從 1 連續編號：${b.id}`);
     });
+  }
+  for (const c of pack.commissions.values()) {
+    if (c.kind === 'labor' && !c.workers) throw new Error(`勞務委託缺少人數：${c.id}`);
+    if (c.kind === 'deliver' && !c.deliver) throw new Error(`交付委託缺少物資：${c.id}`);
+    if (c.kind === 'escort' && !c.enemies?.length) throw new Error(`護衛委託缺少敵人：${c.id}`);
+    for (const e of c.enemies ?? []) if (!pack.enemies.has(e)) throw new Error(`委託引用不存在的敵人：${c.id} → ${e}`);
+  }
+  if (![...pack.commissions.values()].some((c) => c.kind === 'labor' && c.minHall === 0)) {
+    throw new Error('至少需要一種不需任何建築的勞務委託（保底途徑）');
   }
   return pack;
 }
@@ -116,6 +137,7 @@ export const rawContent: RawContent = {
   secretRealms: [abandonedCave],
   regions,
   beasts: beastSpecies,
+  commissions,
 };
 
 export const content: ContentPack = buildContent(rawContent);

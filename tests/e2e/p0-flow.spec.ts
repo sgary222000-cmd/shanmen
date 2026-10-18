@@ -161,7 +161,7 @@ test('匯入存檔後煉丹與築基突破可在介面操作', async ({ page }) 
   const { toEnvelope } = await import('../../src/save/codec');
   // 佈置一個已發展的宗門：大殿 2 級、煉丹房、聚靈陣，主角煉氣九層修為已滿並持有築基丹
   const s = newGame(content, { sectName: '測試宗', protagonistName: '韓立', gender: 'male', lineage: 'lineage.sword', seed: 9 });
-  s.resources = { lingshi: 800, food: 400, stone: 300, wood: 300, herb: 80, pill_qi: 4, pill_heal: 4, pill_foundation: 1 };
+  s.resources = { ...s.resources, lingshi: 800, food: 400, stone: 300, wood: 300, herb: 80, pill_qi: 4, pill_heal: 4, pill_foundation: 1 };
   const hall = s.buildings.find((b) => b.defId === 'building.hall');
   if (hall) Object.assign(hall, { level: 2, status: 'active' });
   s.buildings.push(

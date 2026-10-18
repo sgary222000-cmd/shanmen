@@ -2,6 +2,20 @@ import type { EnemyDef } from '../schema';
 
 export const enemies: EnemyDef[] = [
   { id: 'enemy.cave_bat', name: '洞窟血蝠', hp: 34, atk: 11, def: 1, spd: 14, hit: 10, res: 6, row: 'front' },
+  { id: 'enemy.bandit', name: '山賊', hp: 48, atk: 12, def: 3, spd: 10, hit: 8, res: 4, row: 'front' },
+  { id: 'enemy.bandit_archer', name: '山賊弓手', hp: 36, atk: 13, def: 1, spd: 11, hit: 11, res: 3, row: 'back' },
+  {
+    id: 'enemy.bandit_leader',
+    name: '山賊頭目',
+    hp: 120,
+    atk: 16,
+    def: 5,
+    spd: 10,
+    hit: 9,
+    res: 5,
+    row: 'front',
+    skill: { name: '開山刀', multiplierPct: 160, cooldown: 3 },
+  },
   { id: 'enemy.wild_wolf', name: '山中妖狼', hp: 55, atk: 13, def: 3, spd: 12, hit: 8, res: 4, row: 'front' },
   {
     id: 'enemy.puppet_guard',
