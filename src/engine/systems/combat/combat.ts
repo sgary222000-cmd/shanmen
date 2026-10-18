@@ -1,5 +1,5 @@
 import { balance } from '../../../content/balance';
-import type { BeastSpeciesDef, EnemyDef, LineageDef } from '../../../content/schema';
+import type { BeastSpeciesDef, EnemyDef, EquipmentDef, LineageDef } from '../../../content/schema';
 import type { Beast, Character, CombatStrategy, Row } from '../../types';
 import { powerLevel } from '../characters/characters';
 
@@ -31,6 +31,8 @@ export interface BattleInput {
   healPills: number;
   /** 庫存的火符、護身符；策略開啟時戰鬥開始各用一張 */
   talismans?: { fire: number; guard: number };
+  /** 回春丹回復最大生命的百分比；未填用 balance.combat.healPct */
+  healPct?: number;
   /** 回傳 [0, n) 的整數 */
   randInt: (n: number) => number;
 }
@@ -46,10 +48,20 @@ export interface BattleOutcome {
   talismansUsed: { fire: number; guard: number };
 }
 
-export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, hp?: number): Unit {
+/** 人物戰力的額外來源：裝備的法器、功法領悟（百分比）。 */
+export interface UnitMods {
+  equip?: EquipmentDef | undefined;
+  techniquePct?: number;
+}
+
+/** 金丹修士的傳承招式威力提高 */
+const CORE_SKILL_BONUS_PCT = 30;
+
+export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, hp?: number, mods: UnitMods = {}): Unit {
   const L = powerLevel(c.realm);
   const cs = c.skills.combat;
-  const maxHp = 60 + 12 * L + 3 * cs;
+  const tech = 100 + (mods.techniquePct ?? 0);
+  const maxHp = Math.floor(((60 + 12 * L + 3 * cs) * tech) / 100) + (mods.equip?.hp ?? 0);
   return {
     key: c.id,
     name: c.name,
@@ -57,15 +69,15 @@ export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, h
     row,
     hp: Math.min(maxHp, hp ?? Math.floor((maxHp * c.health) / 100)),
     maxHp,
-    atk: Math.round(((10 + 3 * L + cs) * (100 + lineage.bonuses.combatAtkPct)) / 100),
-    def: Math.round(((3 + L) * (100 + lineage.bonuses.combatDefPct)) / 100),
+    atk: Math.round(((10 + 3 * L + cs) * (100 + lineage.bonuses.combatAtkPct) * tech) / 10000) + (mods.equip?.atk ?? 0),
+    def: Math.round(((3 + L) * (100 + lineage.bonuses.combatDefPct)) / 100) + (mods.equip?.def ?? 0),
     spd: 9 + Math.floor(L / 2) + Math.floor(cs / 2),
     hit: 8 + L,
     res: 4 + Math.floor(L / 2),
     mp: 20 + 2 * L,
     skill: {
       name: lineage.skill.name,
-      multiplierPct: lineage.skill.multiplierPct,
+      multiplierPct: lineage.skill.multiplierPct + (c.realm.major === 'core' ? CORE_SKILL_BONUS_PCT : 0),
       mpCost: lineage.skill.mpCost,
       piercePct: lineage.skill.piercePct,
     },
@@ -76,7 +88,8 @@ export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, h
 /** 靈獸隨主人出戰，能力依主人境界與御獸技藝換算。 */
 export function unitFromBeast(beast: Beast, species: BeastSpeciesDef, owner: Character, lineage: LineageDef, hp?: number): Unit {
   const base = unitFromCharacter(owner, species.row, lineage);
-  const bonus = 100 + owner.skills.beast * 3;
+  const grown = beast.stage === 'adult' ? species.adultPct : 100;
+  const bonus = Math.floor(((100 + owner.skills.beast * balance.beasts.ownerSkillPct) * grown) / 100);
   const maxHp = Math.floor((base.maxHp * species.hpPct * bonus) / 10000);
   return {
     key: beast.id,
@@ -137,7 +150,8 @@ export function runBattle(input: BattleInput): BattleOutcome {
   const highlights: string[] = [];
   let pills = input.healPills;
   let pillsUsed = 0;
-  const { maxRounds, healThresholdPct, healPct } = balance.combat;
+  const { maxRounds, healThresholdPct } = balance.combat;
+  const healPct = input.healPct ?? balance.combat.healPct;
   const talismansUsed = { fire: 0, guard: 0 };
 
   // 戰前用符：護身符提高全隊防禦，火符對每個敵人造成固定傷害

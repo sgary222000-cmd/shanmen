@@ -5,7 +5,20 @@ import { SaveStorage } from '../save/storage';
 
 // 畫面狀態。世界狀態只透過 dispatch（引擎指令）改變；畫面重繪不會改動世界。
 
-export type Page = 'overview' | 'build' | 'protagonist' | 'disciples' | 'industry' | 'market' | 'explore' | 'reports' | 'saves' | 'settings';
+export type Page =
+  | 'overview'
+  | 'build'
+  | 'protagonist'
+  | 'disciples'
+  | 'lineage'
+  | 'beasts'
+  | 'industry'
+  | 'market'
+  | 'explore'
+  | 'world'
+  | 'reports'
+  | 'saves'
+  | 'settings';
 export type Screen = 'title' | 'newgame' | 'game';
 
 interface Toast {

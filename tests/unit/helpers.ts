@@ -67,6 +67,9 @@ export function developed(seed = 1): GameState {
       schedule: 'cultivate',
       takePill: false,
       seat: 'region.main',
+      specialty: null,
+      insight: 0,
+      equipment: null,
     });
   });
 }

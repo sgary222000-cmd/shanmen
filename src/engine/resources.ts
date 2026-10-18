@@ -18,6 +18,8 @@ export const RESOURCE_IDS: ResourceId[] = [
   'talisman_fire',
   'talisman_guard',
   'artifact',
+  'beast_egg',
+  'pill_core',
 ];
 
 export const RESOURCE_NAMES: Record<ResourceId, string> = {
@@ -37,6 +39,8 @@ export const RESOURCE_NAMES: Record<ResourceId, string> = {
   talisman_fire: '火符',
   talisman_guard: '護身符',
   artifact: '法器',
+  beast_egg: '靈獸蛋',
+  pill_core: '結丹靈液',
 };
 
 export function emptyResources(): Resources {

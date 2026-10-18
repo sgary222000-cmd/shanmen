@@ -1,14 +1,59 @@
 import { useState } from 'react';
 import { balance } from '../../content/balance';
 import { hallLevel, innerLimit, outerCapacity } from '../../engine/systems/buildings/buildings';
-import { powerLevel } from '../../engine/systems/characters/characters';
+import { powerLevel, realmName } from '../../engine/systems/characters/characters';
 import { SCHEDULE_NAMES } from '../../engine/systems/characters/schedule';
 import { disciplePortrait } from '../art';
 import { Art } from '../components/Art';
 import { CharacterPanel } from '../components/CharacterPanel';
 import { content, useGame, useUi } from '../store';
+import { POSITION_IDS, POSITION_NAMES, POSITION_TEXT, positionEffectText, positionOf } from '../../engine/systems/talent/positions';
+import { SKILL_NAMES } from '../components/CharacterPanel';
+import type { Skills } from '../../engine';
 
-type SortKey = 'realm' | 'alchemy' | 'combat' | 'age';
+function Positions() {
+  const game = useGame();
+  const dispatch = useUi((s) => s.dispatch);
+  return (
+    <div className="panel" data-testid="positions">
+      <h3>職位</h3>
+      <p className="muted small">每職一人、一人只任一職，限內門弟子。任職不佔行程，但兼顧事務，當月修煉 −{balance.positions.xpPenaltyPct}%。效果隨任職者的技藝（傳功隨境界）提高。</p>
+      <table>
+        <tbody>
+          {POSITION_IDS.map((pos) => (
+            <tr key={pos}>
+              <td>
+                <b>{POSITION_NAMES[pos]}</b>
+                <div className="muted small">{POSITION_TEXT[pos]}</div>
+              </td>
+              <td>
+                <select
+                  value={game.positions[pos] ?? ''}
+                  data-testid={`position-${pos}`}
+                  onChange={(e) => dispatch({ type: 'setPosition', position: pos, characterId: e.target.value || null })}
+                >
+                  <option value="">（出缺）</option>
+                  {game.disciples.map((d) => {
+                    const other = positionOf(game, d.id);
+                    return (
+                      <option key={d.id} value={d.id} disabled={!!other && other !== pos}>
+                        {d.name}（{realmName(d.realm)}・煉丹 {d.skills.alchemy}・煉器 {d.skills.forging}・符陣 {d.skills.talisman}・庶務 {d.skills.affairs}）
+                        {other && other !== pos ? `・已任${POSITION_NAMES[other]}` : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+              </td>
+              <td className="small">{game.positions[pos] ? positionEffectText(game, pos) : <span className="muted">無</span>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+type SortKey = 'realm' | 'age' | keyof Skills;
 
 export function DisciplesPage() {
   const game = useGame();
@@ -57,8 +102,11 @@ export function DisciplesPage() {
             排序：
             <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
               <option value="realm">境界</option>
-              <option value="alchemy">煉丹</option>
-              <option value="combat">戰鬥</option>
+              {(Object.keys(SKILL_NAMES) as (keyof Skills)[]).map((k) => (
+                <option key={k} value={k}>
+                  {SKILL_NAMES[k]}
+                </option>
+              ))}
               <option value="age">年齡</option>
             </select>
             篩選：
@@ -74,6 +122,7 @@ export function DisciplesPage() {
           {game.disciples.map((d) => `${d.name}：${SCHEDULE_NAMES[d.schedule]}`).join('、')}
         </p>
       </div>
+      <Positions />
       <div className="grid two">
         {list.map((d) => (
           <div key={d.id} className="disciple-card">
@@ -82,7 +131,7 @@ export function DisciplesPage() {
           </div>
         ))}
       </div>
-      <p className="muted small">親傳、長老與職位（傳功、煉丹、庶務等）於 P1 開放。</p>
+      <p className="muted small">親傳弟子與長老會在 P2 開放。</p>
     </div>
   );
 }

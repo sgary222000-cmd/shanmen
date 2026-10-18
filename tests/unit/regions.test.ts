@@ -265,7 +265,7 @@ describe('四種傳承開局', () => {
   it('御獸的靈獸隨主人出戰，不佔隊伍名額', () => {
     let s = edit(developed(), (x) => {
       x.lineage = 'lineage.beast';
-      x.beasts = [{ id: 'beast1', speciesId: 'beast.cloud_ape', name: '雲紋靈猿', ownerId: 'c0' }];
+      x.beasts = [{ id: 'beast1', speciesId: 'beast.cloud_ape', name: '雲紋靈猿', ownerId: 'c0', stage: 'young', growth: 0, task: 'follow' }];
       x.protagonist.realm = { major: 'qi', stage: 6 };
     });
     s = run(s, { type: 'startExploration', realmId: 'secret.abandoned_cave', teamIds: ['c0'], rows: { c0: 'front' } });
@@ -293,7 +293,7 @@ describe('四種傳承開局', () => {
     const { state, negatives } = play(start(lineage), 40 * 12);
     expect(negatives).toBe(0);
     const p = state.protagonist;
-    expect(p.realm.major === 'foundation' || p.realm.stage >= 7).toBe(true);
+    expect(p.realm.major !== 'qi' || p.realm.stage >= 7).toBe(true);
     expect(state.buildings.filter((b) => b.level >= 1).length).toBeGreaterThanOrEqual(6);
   });
 });

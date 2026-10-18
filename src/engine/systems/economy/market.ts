@@ -5,6 +5,7 @@ import { RESOURCE_IDS, RESOURCE_NAMES } from '../../resources';
 import { rng } from '../../rng';
 import type { GameState, MarketGood, MarketState, ResourceId } from '../../types';
 import { effectsOf, isOperating, MARKET } from '../buildings/buildings';
+import { envoyDiscount } from '../talent/positions';
 
 // 坊市（山門區建築）：每種商品以「一批」為單位買賣，每月有限貨量與收購量。
 // 買價比賣價高約 25%，價格在基準價 ±30% 內每月浮動（亂數存在存檔裡，讀檔不會變）。
@@ -30,9 +31,9 @@ export function marketOpen(state: GameState, content: ContentPack): boolean {
   return marketStockPct(state, content) > 0;
 }
 
-/** 聲望帶來的買價折扣（百分比）。 */
+/** 聲望（最多 5%）與外事執事（最多 5%）帶來的買價折扣（百分比）。買價仍一定高於賣價，無法套利。 */
 export function discountPct(state: GameState): number {
-  return Math.min(M.maxDiscount, Math.floor(state.reputation / M.repPerDiscount));
+  return Math.min(M.maxDiscount, Math.floor(state.reputation / M.repPerDiscount)) + envoyDiscount(state);
 }
 
 /** 一批的賣出價（玩家賣給坊市可得的靈石）。 */

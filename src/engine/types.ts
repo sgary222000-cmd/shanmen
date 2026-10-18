@@ -17,7 +17,9 @@ export type ResourceId =
   | 'pill_peiyuan' // 培元丹（P1，築基期修煉用）
   | 'talisman_fire' // 火符（P1）
   | 'talisman_guard' // 護身符（P1）
-  | 'artifact'; // 法器（P1；批次 C 才能裝備）
+  | 'artifact' // 法器（P1；可裝備，見 equipment）
+  | 'beast_egg' // 靈獸蛋（P1 批次 C）
+  | 'pill_core'; // 結丹靈液（P1 批次 D）
 
 export type Resources = Record<ResourceId, number>;
 
@@ -26,15 +28,25 @@ export interface GameDate {
   month: number; // 1–12
 }
 
-export type RngStream = 'world' | 'recruit' | 'alchemy' | 'combat' | 'explore' | 'cultivation' | 'market' | 'commission';
+export type RngStream =
+  | 'world'
+  | 'recruit'
+  | 'alchemy'
+  | 'combat'
+  | 'explore'
+  | 'cultivation'
+  | 'market'
+  | 'commission'
+  | 'beast'
+  | 'sects';
 /** xoshiro128** 狀態，四個 32 位元無號整數。 */
 export type RngState = [number, number, number, number];
 
-export type MajorRealm = 'qi' | 'foundation';
+export type MajorRealm = 'qi' | 'foundation' | 'core';
 
 export interface Realm {
   major: MajorRealm;
-  /** 煉氣 1–9；築基 1–4（前期、中期、後期、圓滿） */
+  /** 煉氣 1–9；築基、金丹 1–4（前期、中期、後期、圓滿） */
   stage: number;
 }
 
@@ -66,7 +78,9 @@ export type ScheduleKind =
   | 'talisman' // 製符（P1）
   | 'heal' // 療傷
   | 'breakthrough' // 突破
-  | 'explore'; // 探索（由探索系統設定）
+  | 'research' // 研究功法（P1 批次 C，需藏經閣）
+  | 'explore' // 探索（由探索系統設定）
+  | 'dispatch'; // 秘境派遣（P1 批次 D，由派遣系統設定）
 
 export interface Seclusion {
   plannedMonths: number;
@@ -100,6 +114,12 @@ export interface Character {
   takePill: boolean;
   /** 修煉地點（區域 ID），佔用該區域的靈氣 */
   seat: string;
+  /** 專長技藝（招收時決定，起始較高、成長較快）；主角與舊存檔人物為 null */
+  specialty: keyof Skills | null;
+  /** 主修功法的領悟度（入門 0、小成 100、大成 300，見 balance.technique） */
+  insight: number;
+  /** 裝備的法器 ID（content.equipment）；null 表示沒有 */
+  equipment: string | null;
 }
 
 export interface Protagonist extends Character {
@@ -149,13 +169,103 @@ export interface RegionState {
   construction: { remainingMonths: number; paid: Partial<Resources> } | null;
 }
 
-/** 靈獸（P1 批次 A 只有御獸開局的一隻；完整靈獸系統於批次 C）。 */
+export type BeastTask = 'follow' | 'gather' | 'rest';
+
+/** 靈獸。由靈獸苑孵化，成長分幼年、成年。 */
 export interface Beast {
   id: string;
   speciesId: string;
   name: string;
-  /** 主人人物 ID；出戰時隨主人上場，不佔隊伍名額 */
-  ownerId: string;
+  /** 主人人物 ID；每人最多一隻。null 表示養在靈獸苑 */
+  ownerId: string | null;
+  stage: 'young' | 'adult';
+  /** 成長點數；達 balance.beasts.adultGrowth 時長為成年 */
+  growth: number;
+  /** follow：隨主人出戰（不佔隊伍名額）；gather：外出採集；rest：休養 */
+  task: BeastTask;
+}
+
+export type PositionId = 'mentor' | 'alchemy' | 'forge' | 'steward' | 'envoy';
+
+/** 傳承分支：開設後取得該傳承的專屬建築與基礎配方。 */
+export interface Branch {
+  lineageId: string;
+  /** 主持人（內門弟子） */
+  hostId: string;
+}
+
+/** 秘境派遣：已通關的秘境，派小隊自動結算。 */
+export interface Dispatch {
+  id: string;
+  realmId: string;
+  teamIds: string[];
+  monthsLeft: number;
+}
+
+export type SectTemperament = 'steady' | 'merchant' | 'warlike';
+export type SectGoal = 'build' | 'recruit' | 'train' | 'trade';
+
+/** 電腦宗門（P1 批次 E）。只做合法行動：缺料就不能建設。 */
+export interface SectState {
+  id: string;
+  resources: { lingshi: number; food: number; stone: number; wood: number };
+  population: number;
+  /** 建築總等級 */
+  buildings: number;
+  /** 綜合實力（決定大比出戰弟子的強弱） */
+  power: number;
+  /** 對我宗的好感 0–100 */
+  favor: number;
+  /** 今年已收的禮數（送禮效果遞減） */
+  giftsThisYear: number;
+  /** 本月已與我宗交易的批數 */
+  tradedThisMonth: number;
+  goal: SectGoal;
+  /** 本月想收購的物資 */
+  wants: ResourceId;
+}
+
+export interface IntelEntry {
+  date: GameDate;
+  sectId: string;
+  text: string;
+}
+
+export interface TournamentStanding {
+  sectId: string | null; // null 為我宗
+  name: string;
+  points: number;
+  duelWins: number;
+}
+
+/** 年度大比：每 3 年一次。 */
+export interface TournamentState {
+  year: number;
+  status: 'open' | 'done' | 'skipped';
+  standings: TournamentStanding[];
+  log: string[];
+  /** 我宗名次（1 起）；未參加為 null */
+  rank: number | null;
+}
+
+/** 靈脈競標。 */
+export interface AuctionState {
+  id: string;
+  name: string;
+  /** 得標後每月靈礦與持續年數 */
+  orePerMonth: number;
+  years: number;
+  /** 截止月份（monthIndex，該月月底開標） */
+  deadline: number;
+  /** 我宗出價（已預扣靈石，落標退還） */
+  playerBid: number;
+}
+
+export interface Vein {
+  name: string;
+  orePerMonth: number;
+  /** 最後一個有收入的月份（monthIndex） */
+  until: number;
 }
 
 export interface Furnace {
@@ -274,6 +384,7 @@ export interface Candidate {
   ageMonths: number;
   root: SpiritRoot;
   skills: Skills;
+  specialty?: keyof Skills;
   cost: number;
 }
 
@@ -348,6 +459,21 @@ export interface GameState {
   trade: { soldLingshi: number; boughtFood: number };
   /** 自動戰鬥策略 */
   strategy: CombatStrategy;
+  /** 職位（P1 批次 C）：職位 → 人物 ID */
+  positions: Record<PositionId, string | null>;
+  /** 庫房裡未裝備的獨特法器 ID（一般法器以資源 artifact 計數） */
+  armory: string[];
+  /** 關鍵物品：傳承典籍、馴獸法等 */
+  items: string[];
+  branches: Branch[];
+  dispatches: Dispatch[];
+  /** 電腦宗門（P1 批次 E） */
+  sects: SectState[];
+  /** 情報紀錄（新的在前） */
+  intel: IntelEntry[];
+  tournament: TournamentState | null;
+  auction: AuctionState | null;
+  veins: Vein[];
   /** 統計，用於驗收與平衡紀錄 */
   stats: { commands: number; monthsAdvanced: number; explorations: number };
 }

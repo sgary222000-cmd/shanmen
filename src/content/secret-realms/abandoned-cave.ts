@@ -11,11 +11,16 @@ export const abandonedCave: SecretRealmDef = {
   repeatLootPct: 50,
   retreatLootPct: 50,
   art: 'final/cave.webp',
+  recommend: '煉氣三層以上',
+  dispatch: { months: 1, power: 150, lootPct: [30, 50] },
   firstClear: {
     rewardId: 'reward.abandoned_cave.first_clear',
     recipes: ['recipe.foundation_pill'],
     resources: { lingshi: 80, herb: 10 },
     text: '石傀倒下後，石壁浮現前輩手書的《築基丹方》，並留有一匣靈石與藥材。',
+    items: [],
+    equipment: [],
+    insight: 0,
   },
   nodes: [
     {

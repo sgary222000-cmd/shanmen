@@ -19,6 +19,8 @@ export const resourceIds = [
   'talisman_fire',
   'talisman_guard',
   'artifact',
+  'beast_egg',
+  'pill_core',
 ] as const;
 
 export const stations = ['alchemy', 'forge', 'talisman'] as const;
@@ -53,6 +55,20 @@ export const buildingLevelSchema = z.object({
     alchemyBonusBp: z.number().int().optional(),
     qiCapacity: z.number().int().optional(),
     recruitOuterBonus: z.number().int().optional(),
+    /** 藏經閣：研究行程每月增加的領悟度 */
+    researchPerMonth: z.number().int().optional(),
+    /** 藏經閣：可開設傳承分支 */
+    allowBranches: z.boolean().optional(),
+    /** 演武場：日常修煉的內門每月戰鬥技藝 +1 的機率（萬分比） */
+    combatTrainBp: z.number().int().optional(),
+    /** 演武場：外門培養度每月額外增加 */
+    outerTraining: z.number().int().optional(),
+    /** 靈獸苑：可養靈獸數量、成長加成（百分比） */
+    beastCapacity: z.number().int().optional(),
+    beastGrowthPct: z.number().int().optional(),
+    /** 洞府：在此區閉關的修煉加成（百分比）、結丹成功率加成（萬分比） */
+    seclusionPct: z.number().int().optional(),
+    coreBonusBp: z.number().int().optional(),
   }),
   summary: z.string(),
 });
@@ -70,6 +86,8 @@ export const buildingSchema = z.object({
   perRegion: z.number().int().positive().optional(),
   /** 只能蓋在這些區域（優先於區域的 allows，例如坊市只能在山門） */
   onlyRegions: z.array(z.string()).optional(),
+  /** 傳承專屬建築：主傳承或分支為此傳承、或持有任一物品時才能建造 */
+  exclusive: z.object({ lineage: z.string(), items: z.array(z.string()).default([]) }).optional(),
   art: z.string(),
   /** 0 級（殘破）時改用的圖 */
   artRuined: z.string().optional(),
@@ -139,7 +157,23 @@ export const secretRealmSchema = z.object({
     recipes: z.array(z.string()),
     resources: resourceMap,
     text: z.string(),
+    /** 關鍵物品（傳承典籍、馴獸法等） */
+    items: z.array(z.string()).default([]),
+    /** 獨特法器 */
+    equipment: z.array(z.string()).default([]),
+    /** 首次通關直接開放的區域 */
+    openRegion: z.string().optional(),
+    /** 每位倖存隊員增加的功法領悟度 */
+    insight: z.number().int().nonnegative().default(0),
   }),
+  /** 通關後的派遣：花費月數、建議小隊實力（戰力估計總和）、收益為節點物資的百分比範圍 */
+  dispatch: z.object({
+    months: z.number().int().positive(),
+    power: z.number().int().positive(),
+    lootPct: z.tuple([z.number().int().positive(), z.number().int().positive()]),
+  }),
+  /** 建議實力說明，例如「煉氣後期」 */
+  recommend: z.string(),
   /** 已通關後再入，節點物資的百分比 */
   repeatLootPct: z.number().int().min(0).max(100),
   /** 撤退時保留物資的百分比 */
@@ -163,7 +197,18 @@ export const lineageSchema = z.object({
   skill: z.object({ name: z.string(), multiplierPct: z.number().int(), mpCost: z.number().int(), piercePct: z.number().int() }),
   /** 主角靈根屬性 */
   elements: z.array(z.enum(['metal', 'wood', 'water', 'fire', 'earth'])).min(1),
+  /** 主修功法 */
+  technique: z.string(),
+  /** 開設此傳承分支時，主持人需要的技藝 */
+  branchSkill: z.enum(skillKeys),
   bonuses: z.object({
+    /** 劍陣：同隊至少幾名人物時觸發，全隊攻擊加成（百分比）；0 表示沒有 */
+    formationMin: z.number().int().default(0),
+    formationAtkPct: z.number().int().default(0),
+    /** 回春丹在戰鬥中的回復量加成（百分比） */
+    healPillPct: z.number().int().default(0),
+    /** 靈獸採集產量加成（百分比） */
+    beastGatherPct: z.number().int().default(0),
     /** 我方戰鬥攻擊 / 防禦加成（百分比） */
     combatAtkPct: z.number().int().default(0),
     combatDefPct: z.number().int().default(0),
@@ -224,6 +269,50 @@ export const beastSpeciesSchema = z.object({
   spd: z.number().int().nonnegative(),
   row: z.enum(['front', 'back']),
   art: z.string().optional(),
+  /** 成年後的能力倍率（百分比） */
+  adultPct: z.number().int().positive().default(140),
+  /** 成年時每月採集所得（幼年減半） */
+  gather: resourceMap,
+  /** 每月食量（成年 +1） */
+  food: z.number().int().nonnegative(),
+  artAdult: z.string().optional(),
+});
+
+export const techniqueSchema = z.object({
+  id: z.string().regex(/^technique\.[a-z_]+$/),
+  name: z.string(),
+  lineage: z.string(),
+  description: z.string(),
+  /** 入門、小成、大成的說明 */
+  tierText: z.tuple([z.string(), z.string(), z.string()]),
+});
+
+export const equipmentSchema = z.object({
+  id: z.string().regex(/^equip\.[a-z_]+$/),
+  name: z.string(),
+  description: z.string(),
+  atk: z.number().int().nonnegative(),
+  def: z.number().int().nonnegative(),
+  hp: z.number().int().nonnegative(),
+});
+
+export const sectSchema = z.object({
+  id: z.string().regex(/^sect\.[a-z_]+$/),
+  name: z.string(),
+  lineage: z.string(),
+  temperament: z.enum(['steady', 'merchant', 'warlike']),
+  description: z.string(),
+  start: z.object({
+    lingshi: z.number().int().nonnegative(),
+    food: z.number().int().nonnegative(),
+    stone: z.number().int().nonnegative(),
+    wood: z.number().int().nonnegative(),
+    population: z.number().int().positive(),
+    buildings: z.number().int().nonnegative(),
+    power: z.number().int().positive(),
+    favor: z.number().int().min(0).max(100),
+  }),
+  art: z.string().optional(),
 });
 
 export const commissionSchema = z.object({
@@ -235,6 +324,8 @@ export const commissionSchema = z.object({
   weight: z.number().int().positive(),
   /** 出現所需的大殿等級 */
   minHall: z.number().int().nonnegative().default(0),
+  /** 出現所需：已通關的秘境 */
+  requiresClear: z.string().optional(),
   /** 掛在榜上的月數 */
   months: z.number().int().positive(),
   /** 勞務：最多派幾人（抽 [min, max]） */
@@ -260,3 +351,6 @@ export type RealmNodeDef = z.infer<typeof nodeSchema>;
 export type LineageDef = z.infer<typeof lineageSchema>;
 export type RegionDef = z.infer<typeof regionSchema>;
 export type BeastSpeciesDef = z.infer<typeof beastSpeciesSchema>;
+export type TechniqueDef = z.infer<typeof techniqueSchema>;
+export type EquipmentDef = z.infer<typeof equipmentSchema>;
+export type SectDef = z.infer<typeof sectSchema>;

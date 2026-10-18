@@ -18,6 +18,10 @@ export const MINE = 'building.mine';
 export const FORGE = 'building.forge';
 export const TALISMAN = 'building.talisman';
 export const MARKET = 'building.market';
+export const LIBRARY = 'building.library';
+export const TRAINING = 'building.training';
+export const CAVE_ABODE = 'building.cave_abode';
+export const BEAST_GARDEN = 'building.beast_garden';
 
 export const STATIONS: Station[] = ['alchemy', 'forge', 'talisman'];
 
@@ -85,17 +89,33 @@ export function innerLimit(state: GameState, content: ContentPack): number {
   return activeEffects(state, content, HALL)?.innerLimit ?? 0;
 }
 
-/** 區域的靈氣容量：區域本身 + 該區運作中的聚靈陣（符陣傳承另有加成）。 */
+/** 區域的靈氣容量：區域本身 + 該區運作中的聚靈陣（符陣傳承另有加成）+ 洞府等其他建築。 */
 export function qiCapacity(state: GameState, content: ContentPack, regionId: string = MAIN_REGION): number {
   const region = content.regions.get(regionId);
   if (!region) return 0;
   const arrayPct = 100 + lineageDef(state, content).bonuses.arrayQiPct;
   let fromArrays = 0;
+  let other = 0;
   for (const b of state.buildings) {
-    if (b.defId !== ARRAY || b.region !== regionId || !isOperating(b)) continue;
-    fromArrays += effectsOf(content, b)?.qiCapacity ?? 0;
+    if (b.region !== regionId || !isOperating(b)) continue;
+    const qi = effectsOf(content, b)?.qiCapacity ?? 0;
+    if (b.defId === ARRAY) fromArrays += qi;
+    else other += qi;
   }
-  return region.baseQi + Math.floor((fromArrays * arrayPct) / 100);
+  return region.baseQi + Math.floor((fromArrays * arrayPct) / 100) + other;
+}
+
+/** 是否擁有某傳承：主傳承或已開設的分支。 */
+export function hasLineage(state: GameState, lineageId: string): boolean {
+  return state.lineage === lineageId || state.branches.some((b) => b.lineageId === lineageId);
+}
+
+/** 傳承專屬建築不能建造的原因；undefined 表示可以。 */
+export function exclusiveBlocked(state: GameState, content: ContentPack, def: BuildingDef): string | undefined {
+  const ex = def.exclusive;
+  if (!ex || hasLineage(state, ex.lineage) || ex.items.some((i) => state.items.includes(i))) return undefined;
+  const name = content.lineages.get(ex.lineage)?.name ?? ex.lineage;
+  return `${name}傳承專屬：需要${name}主傳承或分支${ex.items.length ? '，或取得馴獸法' : ''}`;
 }
 
 /** 運作中的某種工坊建築，依建築順序排列；爐位依此順序編號。 */
@@ -197,7 +217,9 @@ export function newBuildOptions(state: GameState, content: ContentPack, regionId
     } else if (def.perRegion !== undefined && state.buildings.filter((b) => b.defId === def.id && b.region === regionId).length >= def.perRegion)
       blocked = `每個區域最多 ${def.perRegion} 座`;
     if (!blocked) {
-      if (!isRegionOpen(state, regionId)) blocked = `${region.name}尚未開放`;
+      const ex = exclusiveBlocked(state, content, def);
+      if (ex) blocked = ex;
+      else if (!isRegionOpen(state, regionId)) blocked = `${region.name}尚未開放`;
       else if (def.unlockHall > hall) blocked = `需要大殿 ${def.unlockHall} 級才開放`;
       else if (next.requiresHall > hall) blocked = `需要大殿 ${next.requiresHall} 級`;
       else if (usedSlots(state, regionId) >= region.slots) blocked = `${region.name}建築槽位已滿`;

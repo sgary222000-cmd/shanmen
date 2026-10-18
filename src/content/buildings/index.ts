@@ -1,7 +1,7 @@
 import type { BuildingDef } from '../schema';
 
-// 建築：十二種，依大殿等級逐步開放。P1 起靈田、採石場、靈木場可蓋多座（受區域槽位限制），煉丹房最多兩座，聚靈陣每區一座。
-// 批次 B 加入藥園、靈礦場、煉器坊、符陣閣、坊市。所有數值為暫定值（見 docs/暫定數值與決策.md）。
+// 建築：十六種，依大殿等級逐步開放。P1 起靈田、採石場、靈木場可蓋多座（受區域槽位限制），煉丹房最多兩座，聚靈陣每區一座。
+// 批次 B 加入藥園、靈礦場、煉器坊、符陣閣、坊市；批次 C 加入藏經閣、演武場、洞府、靈獸苑。所有數值為暫定值（見 docs/暫定數值與決策.md）。
 
 export const buildings: BuildingDef[] = [
   {
@@ -204,7 +204,7 @@ export const buildings: BuildingDef[] = [
     description: '細心照料的靈藥圃，由外門弟子打理，產出煉製培元丹所需的靈藥。只能開闢在靈泉谷或後山。',
     unlockHall: 1,
     onlyRegions: ['region.valley', 'region.back'],
-    art: 'placeholder/garden.svg',
+    art: 'final/garden.webp',
     levels: [
       {
         level: 1,
@@ -232,7 +232,7 @@ export const buildings: BuildingDef[] = [
     description: '開採含靈氣的礦石，供煉器坊使用。只能開在外山或地火峰（地火峰礦脈較富）。',
     unlockHall: 1,
     onlyRegions: ['region.outer', 'region.fire'],
-    art: 'placeholder/mine.svg',
+    art: 'final/mine.webp',
     levels: [
       {
         level: 1,
@@ -257,10 +257,10 @@ export const buildings: BuildingDef[] = [
   {
     id: 'building.forge',
     name: '煉器坊',
-    description: '以靈礦與靈木煉製法器，由主角或內門弟子掌爐。法器可出售或交付委託（批次 C 開放裝備）。',
+    description: '以靈礦與靈木煉製法器，由主角或內門弟子掌爐。法器可裝備（每人一件）、出售或交付委託。',
     unlockHall: 2,
     maxTotal: 2,
-    art: 'placeholder/forge.svg',
+    art: 'final/forge.webp',
     levels: [
       {
         level: 1,
@@ -288,7 +288,7 @@ export const buildings: BuildingDef[] = [
     description: '把靈木製成符紙，再畫成火符、護身符。由主角或內門弟子執筆。符籙可在戰鬥中使用、出售或交付委託。',
     unlockHall: 1,
     maxTotal: 2,
-    art: 'placeholder/talisman.svg',
+    art: 'final/talisman.webp',
     levels: [
       {
         level: 1,
@@ -317,7 +317,7 @@ export const buildings: BuildingDef[] = [
     unlockHall: 1,
     maxTotal: 1,
     onlyRegions: ['region.gate'],
-    art: 'placeholder/market.svg',
+    art: 'final/market.webp',
     levels: [
       {
         level: 1,
@@ -336,6 +336,121 @@ export const buildings: BuildingDef[] = [
         requiresHall: 2,
         effects: { marketStockPct: 160 },
         summary: '坊市擴建：每月貨量與收購量 +60%。',
+      },
+    ],
+  },
+  {
+    id: 'building.library',
+    name: '藏經閣',
+    description: '收藏功法典籍之處。人物可在此「研究」主修功法、提升領悟；2 級後可開設傳承分支。',
+    unlockHall: 1,
+    maxTotal: 1,
+    art: 'placeholder/library.svg',
+    levels: [
+      {
+        level: 1,
+        cost: { stone: 30, wood: 40, lingshi: 60 },
+        months: 2,
+        maintenance: { lingshi: 3 },
+        requiresHall: 1,
+        effects: { researchPerMonth: 8 },
+        summary: '開放「研究」行程：每月領悟 +16（基礎 8 + 藏經閣 8）。',
+      },
+      {
+        level: 2,
+        cost: { stone: 60, wood: 80, lingshi: 180 },
+        months: 3,
+        maintenance: { lingshi: 5 },
+        requiresHall: 2,
+        effects: { researchPerMonth: 14, allowBranches: true },
+        summary: '研究每月領悟 +22；可開設傳承分支（需典籍與主持人）。',
+      },
+    ],
+  },
+  {
+    id: 'building.training',
+    name: '演武場',
+    description: '劍修傳承的專屬建築。日常修煉的內門弟子會在此切磋，戰鬥技藝逐步成長；外門也跟著操練。',
+    unlockHall: 1,
+    maxTotal: 1,
+    exclusive: { lineage: 'lineage.sword', items: [] },
+    art: 'placeholder/training.svg',
+    levels: [
+      {
+        level: 1,
+        cost: { stone: 40, wood: 30, lingshi: 30 },
+        months: 2,
+        maintenance: { lingshi: 2 },
+        requiresHall: 1,
+        effects: { combatTrainBp: 3000, outerTraining: 1 },
+        summary: '日常修煉的內門每月有 30% 機會戰鬥技藝 +1；外門培養度每月 +1。',
+      },
+      {
+        level: 2,
+        cost: { stone: 80, wood: 60, lingshi: 100 },
+        months: 3,
+        maintenance: { lingshi: 4 },
+        requiresHall: 2,
+        effects: { combatTrainBp: 5000, outerTraining: 2 },
+        summary: '機會提高到 50%；外門培養度每月 +2。',
+      },
+    ],
+  },
+  {
+    id: 'building.cave_abode',
+    name: '洞府',
+    description: '後山深處開鑿的閉關洞府。提高後山靈氣，在後山閉關修煉更快，結丹時也更穩。只能開在後山。',
+    unlockHall: 2,
+    maxTotal: 1,
+    onlyRegions: ['region.back'],
+    art: 'placeholder/cave-abode.svg',
+    levels: [
+      {
+        level: 1,
+        cost: { stone: 80, wood: 40, lingshi: 120 },
+        months: 3,
+        maintenance: { lingshi: 6 },
+        requiresHall: 2,
+        effects: { qiCapacity: 10, seclusionPct: 20, coreBonusBp: 1000 },
+        summary: '後山靈氣容量 +10；在後山閉關修煉 +20%；在後山結丹成功率 +10%。',
+      },
+      {
+        level: 2,
+        cost: { stone: 140, wood: 80, lingshi: 300 },
+        months: 4,
+        maintenance: { lingshi: 10 },
+        requiresHall: 2,
+        effects: { qiCapacity: 15, seclusionPct: 30, coreBonusBp: 1500 },
+        summary: '後山靈氣容量 +15；閉關修煉 +30%；結丹成功率 +15%。',
+      },
+    ],
+  },
+  {
+    id: 'building.beast_garden',
+    name: '靈獸苑',
+    description: '御獸傳承的專屬建築（取得「馴獸法」的宗門也能蓋）。孵化靈獸蛋、餵養靈獸，靈獸可隨主人出戰或外出採集。',
+    unlockHall: 1,
+    maxTotal: 1,
+    exclusive: { lineage: 'lineage.beast', items: ['item.beast_taming'] },
+    art: 'placeholder/beast-garden.svg',
+    levels: [
+      {
+        level: 1,
+        cost: { stone: 30, wood: 40, lingshi: 40 },
+        months: 2,
+        maintenance: { lingshi: 2 },
+        requiresHall: 1,
+        effects: { beastCapacity: 3, beastGrowthPct: 0 },
+        summary: '可養 3 隻靈獸；能孵化靈獸蛋。',
+      },
+      {
+        level: 2,
+        cost: { stone: 60, wood: 80, lingshi: 120 },
+        months: 3,
+        maintenance: { lingshi: 4 },
+        requiresHall: 2,
+        effects: { beastCapacity: 5, beastGrowthPct: 50 },
+        summary: '可養 5 隻；幼獸成長速度 +50%。',
       },
     ],
   },

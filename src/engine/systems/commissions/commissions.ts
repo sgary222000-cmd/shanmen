@@ -10,8 +10,10 @@ import type { Commission, GameState, Resources, Row } from '../../types';
 import { releaseFurnace } from '../alchemy/alchemy';
 import { hallLevel } from '../buildings/buildings';
 import { findCharacter, outerCultivating } from '../characters/characters';
-import { runBattle, unitFromCharacter, unitFromEnemy } from '../combat/combat';
-import { canJoinExpedition, companions } from '../exploration/exploration';
+import { runBattle, unitFromEnemy } from '../combat/combat';
+import { allyUnit, applyFormation, companions, healPctFor } from '../combat/party';
+import { canJoinExpedition } from '../exploration/exploration';
+import { envoyRewardPct } from '../talent/positions';
 
 // 委託榜（企畫書 §8）：每月月底補到 3–5 件，榜上一定有一件勞務委託，只要有外門就能接。
 // 三種委託：勞務（派外門幫工）、交付（交出物資）、護衛（主角或內門出戰）。
@@ -21,7 +23,7 @@ export function reputationRecruitBonus(state: GameState): number {
   return Math.min(balance.reputation.recruitMax, Math.floor(state.reputation / balance.reputation.recruitPer));
 }
 
-/** 護衛類委託的報酬（劍修傳承靈石加成）。 */
+/** 委託報酬（護衛類有劍修傳承靈石加成；外事執事加成全部委託的靈石）。 */
 export function commissionReward(state: GameState, content: ContentPack, c: Commission, workers = 0): Partial<Resources> {
   const out: Partial<Resources> = {};
   for (const id of RESOURCE_IDS) {
@@ -29,7 +31,7 @@ export function commissionReward(state: GameState, content: ContentPack, c: Comm
     if (!v) continue;
     out[id] = c.kind === 'labor' ? v * workers : v;
   }
-  const pct = c.guard ? content.lineages.get(state.lineage)?.bonuses.guardRewardPct ?? 0 : 0;
+  const pct = (c.guard ? content.lineages.get(state.lineage)?.bonuses.guardRewardPct ?? 0 : 0) + envoyRewardPct(state);
   if (pct && out.lingshi) out.lingshi = Math.floor((out.lingshi * (100 + pct)) / 100);
   return out;
 }
@@ -94,7 +96,12 @@ export function refreshBoard(state: GameState, content: ContentPack): void {
   state.commissions = state.commissions.filter((c) => c.expires >= now);
   const hall = hallLevel(state);
   const available = () =>
-    [...content.commissions.values()].filter((d) => d.minHall <= hall && !state.commissions.some((c) => c.templateId === d.id));
+    [...content.commissions.values()].filter(
+      (d) =>
+        d.minHall <= hall &&
+        (!d.requiresClear || (state.realmClears[d.requiresClear] ?? 0) > 0) &&
+        !state.commissions.some((c) => c.templateId === d.id),
+    );
   if (!state.commissions.some((c) => c.kind === 'labor')) {
     const def = pickTemplate(state, available().filter((d) => d.kind === 'labor'));
     if (def) state.commissions.push(instantiate(state, def));
@@ -146,8 +153,6 @@ export function acceptCommission(state: GameState, content: ContentPack, id: str
   ensure(teamIds.length >= 1, '至少需要一名隊員');
   ensure(teamIds.length <= (c.maxTeam ?? 3), `隊伍最多 ${c.maxTeam ?? 3} 人`);
   ensure(new Set(teamIds).size === teamIds.length, '隊伍中有重複人物');
-  const lineage = content.lineages.get(state.lineage);
-  ensure(lineage, '傳承資料錯誤');
   const members = teamIds.map((cid) => {
     const m = findCharacter(state, cid);
     ensure(m, '找不到隊員');
@@ -155,8 +160,9 @@ export function acceptCommission(state: GameState, content: ContentPack, id: str
     ensure(!reason, reason?.replace('本月已探索過', '本月已外出') ?? '');
     return m;
   });
-  const allies = members.map((m, i) => unitFromCharacter(m, opts.rows?.[m.id] ?? (i === 0 ? 'front' : 'back'), lineage));
+  const allies = members.map((m, i) => allyUnit(state, content, m, opts.rows?.[m.id] ?? (i === 0 ? 'front' : 'back')));
   allies.push(...companions(state, content, teamIds));
+  const formation = applyFormation(state, content, allies);
   const enemies = (c.enemies ?? []).map((eid, i) => {
     const def = content.enemies.get(eid);
     ensure(def, `敵人資料錯誤：${eid}`);
@@ -169,8 +175,10 @@ export function acceptCommission(state: GameState, content: ContentPack, id: str
     strategy: state.strategy,
     healPills: state.resources.pill_heal,
     talismans: { fire: state.resources.talisman_fire, guard: state.resources.talisman_guard },
+    healPct: healPctFor(state, content),
     randInt: (n) => r.int(n),
   });
+  if (formation) outcome.highlights.unshift(formation);
   state.resources.pill_heal -= outcome.pillsUsed;
   state.resources.talisman_fire -= outcome.talismansUsed.fire;
   state.resources.talisman_guard -= outcome.talismansUsed.guard;

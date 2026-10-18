@@ -4,6 +4,9 @@ import { Nav } from './components/Nav';
 import { Toasts } from './components/Toasts';
 import { TopBar } from './components/TopBar';
 import { BuildPage } from './pages/Build';
+import { BeastsPage } from './pages/Beasts';
+import { LineagePage } from './pages/Lineage';
+import { WorldPage } from './pages/World';
 import { DisciplesPage } from './pages/Disciples';
 import { ExplorePage } from './pages/Explore';
 import { IndustryPage } from './pages/Industry';
@@ -32,9 +35,12 @@ function GameScreen() {
           {page === 'build' && <BuildPage />}
           {page === 'protagonist' && <ProtagonistPage />}
           {page === 'disciples' && <DisciplesPage />}
+          {page === 'lineage' && <LineagePage />}
+          {page === 'beasts' && <BeastsPage />}
           {page === 'industry' && <IndustryPage />}
           {page === 'market' && <MarketPage />}
           {page === 'explore' && <ExplorePage />}
+          {page === 'world' && <WorldPage />}
           {page === 'reports' && <ReportsPage />}
           {page === 'saves' && <SavesPage />}
           {page === 'settings' && <SettingsPage />}

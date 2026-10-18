@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="300" viewBox="0 0 480 300">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9e3d3"/><stop offset="1" stop-color="#b9c9bd"/></linearGradient></defs>
+<rect width="480" height="300" fill="url(#g)"/>
+<path d="M0 300 L0 60 Q240 -30 480 60 L480 300Z" fill="#3a3a36"/><ellipse cx="240" cy="225" rx="86.39999999999999" ry="96" fill="#141414"/>
+<rect x="8" y="8" width="150" height="28" rx="4" fill="#8b1e1e" opacity=".85"/>
+<text x="16" y="28" font-size="15" fill="#fff" font-family="sans-serif">臨時素材</text>
+<text x="240" y="286" font-size="26" fill="#1f2e2b" text-anchor="middle" font-family="serif">洞府</text>
+</svg>

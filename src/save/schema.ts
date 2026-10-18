@@ -10,8 +10,21 @@ export const FORMAT_VERSION = STATE_VERSION;
 const int = z.number().int();
 const nonneg = int.nonnegative();
 const resources = z.object(Object.fromEntries(resourceIds.map((id) => [id, nonneg])) as Record<(typeof resourceIds)[number], typeof nonneg>);
-const realm = z.object({ major: z.enum(['qi', 'foundation']), stage: int.min(1).max(9) });
-const schedule = z.enum(['cultivate', 'seclusion', 'teach', 'alchemy', 'forge', 'talisman', 'heal', 'breakthrough', 'explore']);
+const realm = z.object({ major: z.enum(['qi', 'foundation', 'core']), stage: int.min(1).max(9) });
+const schedule = z.enum([
+  'cultivate',
+  'seclusion',
+  'teach',
+  'alchemy',
+  'forge',
+  'talisman',
+  'heal',
+  'breakthrough',
+  'research',
+  'explore',
+  'dispatch',
+]);
+const skillKey = z.enum(['alchemy', 'farming', 'combat', 'forging', 'talisman', 'beast', 'affairs']);
 const furnace = z.object({ alchemistId: z.string().nullable(), recipeId: z.string().nullable(), repeat: z.boolean(), keep: nonneg.optional() });
 const marketGood = z.object({ pct: int.min(1), stock: nonneg, demand: nonneg, bought: nonneg, sold: nonneg });
 const character = z.object({
@@ -38,6 +51,9 @@ const character = z.object({
   schedule,
   takePill: z.boolean(),
   seat: z.string(),
+  specialty: skillKey.nullable(),
+  insight: nonneg,
+  equipment: z.string().nullable(),
 });
 
 /** 世界狀態的主要欄位驗證（未列出的欄位保留原樣）。 */
@@ -69,7 +85,17 @@ export const worldSchema = z
         construction: z.object({ remainingMonths: int, paid: z.record(z.string(), nonneg) }).nullable(),
       }),
     ),
-    beasts: z.array(z.object({ id: z.string(), speciesId: z.string(), name: z.string(), ownerId: z.string() })),
+    beasts: z.array(
+      z.object({
+        id: z.string(),
+        speciesId: z.string(),
+        name: z.string(),
+        ownerId: z.string().nullable(),
+        stage: z.enum(['young', 'adult']),
+        growth: nonneg,
+        task: z.enum(['follow', 'gather', 'rest']),
+      }),
+    ),
     furnaces: z.array(furnace),
     workshops: z.object({ forge: z.array(furnace), talisman: z.array(furnace) }),
     market: z.object({ goods: z.record(z.enum(resourceIds), marketGood), rumor: z.string().nullable() }),
@@ -98,6 +124,35 @@ export const worldSchema = z
     trade: z.object({ soldLingshi: nonneg, boughtFood: nonneg }),
     strategy: z.object({ useHealPill: z.boolean(), useTalismans: z.boolean(), focusLowest: z.boolean() }),
     stats: z.object({ commands: nonneg, monthsAdvanced: nonneg, explorations: nonneg }),
+    positions: z.object({
+      mentor: z.string().nullable(),
+      alchemy: z.string().nullable(),
+      forge: z.string().nullable(),
+      steward: z.string().nullable(),
+      envoy: z.string().nullable(),
+    }),
+    armory: z.array(z.string()),
+    items: z.array(z.string()),
+    branches: z.array(z.object({ lineageId: z.string(), hostId: z.string() })),
+    dispatches: z.array(z.object({ id: z.string(), realmId: z.string(), teamIds: z.array(z.string()), monthsLeft: nonneg })),
+    sects: z.array(
+      z
+        .object({
+          id: z.string(),
+          resources: z.object({ lingshi: nonneg, food: nonneg, stone: nonneg, wood: nonneg }),
+          population: nonneg,
+          buildings: nonneg,
+          power: nonneg,
+          favor: int.min(0).max(100),
+          giftsThisYear: nonneg,
+          tradedThisMonth: nonneg,
+        })
+        .passthrough(),
+    ),
+    intel: z.array(z.object({ sectId: z.string(), text: z.string() }).passthrough()),
+    tournament: z.object({ year: int, status: z.enum(['open', 'done', 'skipped']) }).passthrough().nullable(),
+    auction: z.object({ id: z.string(), playerBid: nonneg, deadline: int }).passthrough().nullable(),
+    veins: z.array(z.object({ name: z.string(), orePerMonth: nonneg, until: int })),
   })
   .passthrough();
 

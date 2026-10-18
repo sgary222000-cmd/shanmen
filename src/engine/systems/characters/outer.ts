@@ -4,6 +4,7 @@ import { ensure } from '../../errors';
 import type { GameState, OuterDisciples } from '../../types';
 import { FIELD, GARDEN, LUMBER, MINE, QUARRY, workerSlots } from '../buildings/buildings';
 import { outerCultivating } from './characters';
+import { stewardSatisfaction } from '../talent/positions';
 
 export const OUTER_JOB_NAMES = {
   field: '耕作（靈田）',
@@ -70,7 +71,7 @@ export function tickOuter(state: GameState, foodShortfall: number, lines: string
     lines.push(`⚠ 糧食不足，外門弟子挨餓（滿意度 ${o.satisfaction}）。`);
   } else {
     o.hungerMonths = 0;
-    o.satisfaction = Math.min(100, o.satisfaction + balance.outer.satisfactionRecovery);
+    o.satisfaction = Math.min(100, o.satisfaction + balance.outer.satisfactionRecovery + stewardSatisfaction(state));
   }
   if (o.hungerMonths >= 2 && o.satisfaction < balance.outer.leaveThreshold && o.count > 0) {
     const leaving = Math.min(o.count, 1 + Math.floor(o.hungerMonths / 2));

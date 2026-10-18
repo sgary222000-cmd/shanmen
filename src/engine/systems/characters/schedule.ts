@@ -7,6 +7,7 @@ import { breakthroughOdds } from '../cultivation/cultivation';
 import { isCraftSchedule, qiCapacity } from '../buildings/buildings';
 import { isRegionOpen } from '../regions/regions';
 import { findCharacter } from './characters';
+import { libraryResearch } from '../talent/techniques';
 
 export const SCHEDULE_NAMES: Record<ScheduleKind, string> = {
   cultivate: '日常修煉',
@@ -17,17 +18,19 @@ export const SCHEDULE_NAMES: Record<ScheduleKind, string> = {
   talisman: '製符',
   heal: '療傷',
   breakthrough: '突破',
+  research: '研究功法',
   explore: '探索',
+  dispatch: '秘境派遣',
 };
 
-/** 尚未開放的主角行程（企畫書 §5），介面需明確標示。 */
-export const LOCKED_SCHEDULES = ['研究', '交涉'] as const;
+/** 尚未開放的主角行程（企畫書 §5），介面需明確標示。「交涉」由外事執事與宗門往來頁代替。 */
+export const LOCKED_SCHEDULES: readonly string[] = [];
 
-/** 玩家可直接選擇的行程（煉丹、煉器、製符由產業頁的爐位指派；探索由探索系統設定）。 */
+/** 玩家可直接選擇的行程（煉丹、煉器、製符由產業頁的爐位指派；探索、派遣由各自系統設定）。 */
 export function selectableSchedules(c: Character): ScheduleKind[] {
   return c.role === 'protagonist'
-    ? ['cultivate', 'seclusion', 'teach', 'heal', 'breakthrough']
-    : ['cultivate', 'heal', 'breakthrough'];
+    ? ['cultivate', 'seclusion', 'teach', 'research', 'heal', 'breakthrough']
+    : ['cultivate', 'research', 'heal', 'breakthrough'];
 }
 
 export function seclusionInterruptCost(state: GameState): string {
@@ -50,6 +53,8 @@ export function setSchedule(
   ensure(c, '找不到這個人物');
   ensure(selectableSchedules(c).includes(schedule), `${c.name}不能直接安排「${SCHEDULE_NAMES[schedule]}」`);
   ensure(c.schedule !== 'explore', `${c.name}本月已出外探索，下月才能改變行程`);
+  ensure(c.schedule !== 'dispatch', `${c.name}正在秘境派遣中，回來後才能改變行程`);
+  if (schedule === 'research') ensure(libraryResearch(state, content) !== null, '需要運作中的藏經閣才能研究功法');
   if (c.role === 'protagonist') {
     ensure(!state.protagonist.seclusion, '主角閉關中，請先中斷閉關');
   }

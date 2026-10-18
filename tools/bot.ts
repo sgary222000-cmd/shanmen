@@ -11,6 +11,20 @@ import { jobCapacity } from '../src/engine/systems/characters/outer';
 import { seatOptions } from '../src/engine/systems/characters/schedule';
 import { breakthroughOdds } from '../src/engine/systems/cultivation/cultivation';
 import { canJoinExpedition } from '../src/engine/systems/exploration/exploration';
+import { dispatchBlocked, dispatchOdds } from '../src/engine/systems/exploration/dispatch';
+import { powerLevel, readyForFoundation, xpToNext } from '../src/engine/systems/characters/characters';
+import { hatchBlocked } from '../src/engine/systems/beasts/beasts';
+import { libraryResearch } from '../src/engine/systems/talent/techniques';
+import { tournamentBlocked } from '../src/engine/systems/world/tournament';
+import { COMMON_EQUIPMENT } from '../src/content/equipment';
+
+/** 自動玩家探索秘境的順序與主角最低綜合等級（煉氣 n 層 = n；築基前期 12、後期 18）。 */
+const REALM_PLAN: [string, number][] = [
+  ['secret.abandoned_cave', 4],
+  ['secret.underground_mine', 7],
+  ['secret.beast_valley', 12],
+  ['secret.ancient_ruins', 18],
+];
 
 // 自動玩家：用簡單規則代替人類操作，供模擬器與測試跑長時間遊戲。
 // 只透過 applyCommand 操作，與玩家介面走同一條路徑。
@@ -58,7 +72,7 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     paper: 12,
     spirit_herb: 12,
     beast_mat: 6,
-    artifact: 0,
+    artifact: 2,
     talisman_fire: 6,
     talisman_guard: 6,
     pill_qi: 12,
@@ -114,9 +128,13 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
 
   // 建設：先升級既有建築，再依偏好區域新建
   const reserve = 30;
+  // 準備結丹：主角築基後期起，靈石優先留給後山聚靈陣 2 級與洞府
+  const me0 = s.protagonist;
+  const coreFocus = me0.realm.major === 'foundation' && me0.realm.stage >= 3 && isRegionOpen(s, 'region.back') && qiCapacity(s, content, 'region.back') < 40;
   for (const b of s.buildings) {
+    if (coreFocus && !(b.region === 'region.back' && (b.defId === 'building.array' || b.defId === 'building.cave_abode'))) continue;
     const opt = upgradeOption(s, content, b);
-    if (!opt.blocked && (!opt.cost.lingshi || s.resources.lingshi - opt.cost.lingshi >= reserve)) {
+    if (!opt.blocked && (!opt.cost.lingshi || s.resources.lingshi - opt.cost.lingshi >= (coreFocus ? 0 : reserve))) {
       const before = s;
       s = tryCmd(s, content, { type: 'upgrade', buildingId: b.id });
       if (s !== before) note(`開工：${opt.def.name} → ${opt.next?.level} 級`);
@@ -130,10 +148,15 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     ['building.array', ['region.back', 'region.main'], isRegionOpen(s, 'region.back') ? 2 : 1],
     ['building.market', ['region.gate'], 1],
     ['building.garden', ['region.valley', 'region.back'], route === 'alchemy' ? 2 : 1],
+    ['building.library', ['region.main', 'region.gate', 'region.back'], 1],
+    ['building.cave_abode', ['region.back'], 1],
+    ['building.training', ['region.outer', 'region.main'], 1],
+    ['building.beast_garden', ['region.valley', 'region.back'], 1],
     ['building.talisman', ['region.back', 'region.main'], route === 'craft' ? 2 : 1],
     ['building.mine', ['region.fire', 'region.outer'], route === 'craft' ? 2 : 1],
     ['building.forge', ['region.fire', 'region.main'], route === 'craft' ? 1 : 0],
   ];
+  if (coreFocus) wanted.splice(0, wanted.length, ['building.cave_abode', ['region.back'], 1], ['building.array', ['region.back', 'region.main'], 2]);
   for (const [defId, prefer, count] of wanted) {
     if (allByDef(s, defId).length >= count) continue;
     for (const regionId of prefer) {
@@ -164,8 +187,10 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
   const cap = jobCapacity(s, content);
   const n = s.outer.count - s.outer.labor;
   const field = Math.min(cap.field, Math.max(0, Math.ceil(n / 3)));
-  const quarry = Math.min(cap.quarry, Math.max(0, Math.floor((n - field) / 4)));
-  const lumber = Math.min(cap.lumber, Math.max(0, Math.floor((n - field - quarry) / 4)));
+  // 準備結丹時石木夠用就改打零工，多攢靈石
+  const saving = coreFocus && s.resources.lingshi < 300;
+  const quarry = saving && s.resources.stone >= 150 ? 0 : Math.min(cap.quarry, Math.max(0, Math.floor((n - field) / 4)));
+  const lumber = saving && s.resources.wood >= 150 ? 0 : Math.min(cap.lumber, Math.max(0, Math.floor((n - field - quarry) / 4)));
   let rest = n - field - quarry - lumber;
   const garden = Math.min(cap.garden, Math.max(0, Math.floor(rest / 3)));
   rest -= garden;
@@ -220,12 +245,22 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
   const p = s.protagonist;
   const needFoundation =
     s.recipes.includes('recipe.foundation_pill') && p.realm.major === 'qi' && p.realm.stage >= 8 && s.resources.pill_foundation < 1;
-  const anyFoundation = [p, ...s.disciples].some((c) => c.realm.major === 'foundation');
-  const recipeId = needFoundation
+  const anyFoundation = [p, ...s.disciples].some((c) => c.realm.major !== 'qi' && !(c.realm.stage === 4 && c.xp >= xpToNext(c.realm)));
+  const needCore =
+    s.recipes.includes('recipe.core_liquid') && p.realm.major === 'foundation' && p.realm.stage >= 3 && s.resources.pill_core < 1;
+  // 主角結丹後，替煉氣圓滿的內門弟子備築基丹
+  const discipleFoundation =
+    p.realm.major === 'core' &&
+    s.recipes.includes('recipe.foundation_pill') &&
+    s.resources.pill_foundation < 1 &&
+    s.disciples.some((d) => readyForFoundation(d));
+  const recipeId = needFoundation || (discipleFoundation && s.resources.herb >= 10)
     ? 'recipe.foundation_pill'
+    : needCore && s.resources.spirit_herb >= 10 && s.resources.ore >= 5 && s.resources.lingshi >= 100
+      ? 'recipe.core_liquid'
     : s.resources.pill_heal < 4
       ? 'recipe.heal_pill'
-      : anyFoundation && s.recipes.includes('recipe.peiyuan_pill') && s.resources.spirit_herb >= 3 && s.resources.pill_peiyuan < 6
+      : anyFoundation && s.recipes.includes('recipe.peiyuan_pill') && s.resources.spirit_herb >= (needCore ? 13 : 3) && s.resources.pill_peiyuan < 6
         ? 'recipe.peiyuan_pill'
         : 'recipe.qi_pill';
   const keep = needFoundation || (p.realm.major === 'qi' && p.realm.stage >= 8) ? (recipeId === 'recipe.foundation_pill' ? 0 : 10) : 0;
@@ -234,7 +269,13 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
   }
 
   // 符案與器爐：再由閒置內門負責
-  if (benchCount(s, content, 'talisman') > 0) {
+  if (coreFocus || needCore) {
+    // 存靈石準備結丹：停掉符案與器爐
+    for (const station of ['talisman', 'forge'] as const) {
+      const cur = benchList(s, station)[0];
+      if (cur?.recipeId) s = tryCmd(s, content, { type: 'setFurnace', station, index: 0, alchemistId: null, recipeId: null, repeat: false, keep: 0 });
+    }
+  } else if (benchCount(s, content, 'talisman') > 0) {
     const cur = benchList(s, 'talisman')[0];
     const worker = cur?.alchemistId ? s.disciples.find((d) => d.id === cur.alchemistId) : free()[0];
     const tRecipe =
@@ -247,7 +288,7 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
       s = tryCmd(s, content, { type: 'setFurnace', station: 'talisman', index: 0, alchemistId: worker.id, recipeId: tRecipe, repeat: true, keep: 0 });
     }
   }
-  if (benchCount(s, content, 'forge') > 0) {
+  if (!coreFocus && !needCore && benchCount(s, content, 'forge') > 0) {
     const cur = benchList(s, 'forge')[0];
     const worker = cur?.alchemistId ? s.disciples.find((d) => d.id === cur.alchemistId) : free()[0];
     const fRecipe = s.recipes.includes('recipe.artifact_beast') && s.resources.beast_mat >= 2 ? 'recipe.artifact_beast' : 'recipe.artifact_ore';
@@ -258,7 +299,8 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
 
   // 丹藥
   for (const c of [s.protagonist, ...s.disciples]) {
-    const want = s.resources.pill_qi > 0 || (c.realm.major !== 'qi' && s.resources.pill_peiyuan > 0);
+    const capped = c.xp >= xpToNext(c.realm) && (c.realm.major === 'qi' ? c.realm.stage === 9 : c.realm.stage === 4);
+    const want = !capped && (s.resources.pill_qi > 0 || (c.realm.major !== 'qi' && s.resources.pill_peiyuan > 0));
     if (c.takePill !== want) s = tryCmd(s, content, { type: 'setTakePill', characterId: c.id, value: want });
   }
 
@@ -266,18 +308,32 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
   if (!breakthroughOdds(s, content, s.protagonist).blocked) {
     if (s.protagonist.seclusion) s = tryCmd(s, content, { type: 'interruptSeclusion' });
     s = tryCmd(s, content, { type: 'setSchedule', characterId: p.id, schedule: 'breakthrough' });
-    note('主角嘗試築基');
+    note('主角嘗試突破');
+  }
+  if (p.realm.major === 'core') {
+    for (const d of s.disciples) {
+      if (s.resources.pill_foundation < 1 || !readyForFoundation(d) || d.schedule !== 'cultivate') continue;
+      if (d.seat !== p.seat) s = tryCmd(s, content, { type: 'setSeat', characterId: d.id, regionId: p.seat });
+      if (breakthroughOdds(s, content, d).blocked) continue;
+      s = tryCmd(s, content, { type: 'setSchedule', characterId: d.id, schedule: 'breakthrough' });
+      note(`${d.name}嘗試築基`);
+      break;
+    }
   }
 
-  // 探索：主角煉氣三層以上、未通關或丹藥需求
+  // 探索：依序挑戰下一個未通關的秘境（主角達到建議實力時）
   const pro = s.protagonist;
-  const cleared = (s.realmClears['secret.abandoned_cave'] ?? 0) > 0;
-  if (!cleared && pro.realm.stage >= 4 && !s.exploredThisMonth && pro.schedule !== 'breakthrough') {
+  const nextRealm = REALM_PLAN.find(([id]) => !(s.realmClears[id] ?? 0));
+  const ready = nextRealm && powerLevel(pro.realm) >= nextRealm[1] && !(pro.realm.major === 'qi' && pro.realm.stage === 9 && pro.xp > 0);
+  if (nextRealm && ready && !s.exploredThisMonth && pro.schedule !== 'breakthrough' && !pro.injuryMonths && pro.health >= 80) {
     if (pro.seclusion) s = tryCmd(s, content, { type: 'interruptSeclusion' });
-    const team = [s.protagonist, ...s.disciples].filter((c) => !canJoinExpedition(s, c) && !isCraftSchedule(c.schedule));
-    if (team.length) {
-      const rows = Object.fromEntries(team.map((c, i) => [c.id, i === 0 ? 'front' : 'back'] as const));
-      let e = tryCmd(s, content, { type: 'startExploration', realmId: 'secret.abandoned_cave', teamIds: team.map((c) => c.id), rows });
+    const team = [s.protagonist, ...s.disciples]
+      .filter((c) => !canJoinExpedition(s, c) && !isCraftSchedule(c.schedule))
+      .sort((a, b) => powerLevel(b.realm) - powerLevel(a.realm))
+      .slice(0, 5);
+    if (team.length >= Math.min(3, 1 + s.disciples.length)) {
+      const rows = Object.fromEntries(team.map((c, i) => [c.id, i < 2 ? 'front' : 'back'] as const));
+      let e = tryCmd(s, content, { type: 'startExploration', realmId: nextRealm[0], teamIds: team.map((c) => c.id), rows });
       if (e !== s) {
         let guard = 0;
         while (e.exploration?.status === 'active' && guard++ < 20) {
@@ -291,13 +347,94 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
           if (!nxt) break;
           e = tryCmd(e, content, { type: 'exploreMove', nodeId: nxt });
         }
-        note(`探索荒廢洞府：${e.exploration?.status}`);
+        note(`探索${content.secretRealms.get(nextRealm[0])?.name}：${e.exploration?.status}`);
         s = tryCmd(e, content, { type: 'exploreClose' });
       }
     }
   }
 
-  // 主角閉關
+  // 派遣：閒置內門組隊去最難、成功率夠高的已通關秘境
+  const idle = s.disciples.filter((d) => d.schedule === 'cultivate' && !d.injuryMonths && !Object.values(s.positions).includes(d.id));
+  if (idle.length >= 2) {
+    for (const [realmId] of [...REALM_PLAN].reverse()) {
+      const teamIds = idle.slice(0, 3).map((d) => d.id);
+      if (dispatchBlocked(s, content, realmId, teamIds)) continue;
+      if (dispatchOdds(s, content, realmId, teamIds).bp < 7000) continue;
+      const before = s;
+      s = tryCmd(s, content, { type: 'dispatch', realmId, teamIds });
+      if (s !== before) {
+        note(`派遣${content.secretRealms.get(realmId)?.name}`);
+        break;
+      }
+    }
+  }
+
+  // 職位：煉丹執事給掌爐的人；庶務、外事給庶務最高的閒人；三人以上時設傳功
+  const holders = () => Object.values(s.positions).filter(Boolean) as string[];
+  const furnaceWorker = s.furnaces[0]?.alchemistId;
+  if (!s.positions.alchemy && furnaceWorker && s.disciples.some((d) => d.id === furnaceWorker) && !holders().includes(furnaceWorker)) {
+    s = tryCmd(s, content, { type: 'setPosition', position: 'alchemy', characterId: furnaceWorker });
+  }
+  for (const pos of ['steward', 'envoy', 'mentor'] as const) {
+    if (s.positions[pos] || (pos === 'mentor' && s.disciples.length < 4)) continue;
+    const pick = s.disciples
+      .filter((d) => !holders().includes(d.id))
+      .sort((a, b) => (pos === 'mentor' ? powerLevel(b.realm) - powerLevel(a.realm) : b.skills.affairs - a.skills.affairs))[0];
+    if (pick && (pos === 'mentor' || s.disciples.length >= 3)) s = tryCmd(s, content, { type: 'setPosition', position: pos, characterId: pick.id });
+  }
+
+  // 法器：獨特法器給主角，制式法器依序給沒有法器的人
+  for (const id of [...s.armory]) {
+    const def = content.equipment.get(id);
+    const cur = s.protagonist.equipment ? content.equipment.get(s.protagonist.equipment) : undefined;
+    const target = !cur || (def && def.atk + def.def > cur.atk + cur.def) ? s.protagonist : s.disciples.find((d) => !d.equipment || d.equipment === COMMON_EQUIPMENT);
+    if (target && !(s.exploration?.status === 'active')) s = tryCmd(s, content, { type: 'equip', characterId: target.id, itemId: id });
+  }
+  for (const c of [s.protagonist, ...s.disciples]) {
+    if (s.resources.artifact < 1) break;
+    if (!c.equipment) s = tryCmd(s, content, { type: 'equip', characterId: c.id, itemId: COMMON_EQUIPMENT });
+  }
+
+  // 靈獸：能孵就孵；沒有主人的去採集，沒有靈獸的人優先領養出戰
+  if (!hatchBlocked(s, content)) {
+    s = tryCmd(s, content, { type: 'hatchBeast' });
+    note('孵化靈獸');
+  }
+  for (const b of s.beasts) {
+    if (b.ownerId) continue;
+    const owner = [s.protagonist, ...s.disciples].find((c) => !s.beasts.some((x) => x.ownerId === c.id));
+    if (owner && b.stage === 'adult') s = tryCmd(s, content, { type: 'setBeast', beastId: b.id, ownerId: owner.id, task: 'follow' });
+    else if (b.task !== 'gather') s = tryCmd(s, content, { type: 'setBeast', beastId: b.id, ownerId: null, task: 'gather' });
+  }
+
+  // 大比：派最強的三人
+  if (s.tournament?.status === 'open') {
+    const team = [s.protagonist, ...s.disciples]
+      .filter((c) => !canJoinExpedition(s, c) && !isCraftSchedule(c.schedule) && c.schedule !== 'breakthrough')
+      .sort((a, b) => powerLevel(b.realm) - powerLevel(a.realm))
+      .slice(0, 3)
+      .map((c) => c.id);
+    if (!tournamentBlocked(s, team)) {
+      const r = applyCommand(s, content, { type: 'enterTournament', teamIds: team });
+      if (r.ok) {
+        s = r.state;
+        note(r.message ?? '參加大比');
+      }
+    }
+  }
+
+  // 靈脈競標：靈石寬裕時出價一次
+  if (s.auction && !s.auction.playerBid && s.resources.lingshi > 600) s = tryCmd(s, content, { type: 'bidAuction', amount: 200 });
+
+  // 主角：築基後功法未小成且有藏經閣時去研究，否則閉關
+  const me = s.protagonist;
+  const wantResearch = me.realm.major === 'foundation' && me.insight < 100 && libraryResearch(s, content) !== null;
+  if (wantResearch && (me.schedule === 'cultivate' || me.schedule === 'seclusion')) {
+    if (me.seclusion) s = tryCmd(s, content, { type: 'interruptSeclusion' });
+    s = tryCmd(s, content, { type: 'setSchedule', characterId: me.id, schedule: 'research' });
+  } else if (!wantResearch && me.schedule === 'research') {
+    s = tryCmd(s, content, { type: 'setSchedule', characterId: me.id, schedule: 'cultivate' });
+  }
   if (s.protagonist.schedule === 'cultivate' && !s.protagonist.injuryMonths) {
     s = tryCmd(s, content, { type: 'setSchedule', characterId: s.protagonist.id, schedule: 'seclusion', months: 6 });
   }
