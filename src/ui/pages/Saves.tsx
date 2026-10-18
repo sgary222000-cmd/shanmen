@@ -124,7 +124,7 @@ export function SavesPage() {
               e.target.value = '';
               if (!f) return;
               const r = await storage.importText(await f.text(), new Date().toISOString());
-              if (r.ok) toast('ok', `已匯入：${r.summary.sectName}・${r.summary.date}`);
+              if (r.ok) toast('ok', `已匯入：${r.summary.sectName}・${r.summary.date}${r.migratedFrom !== null ? `（已從舊版 v${r.migratedFrom} 升級，原檔案不受影響）` : ''}`);
               else toast('error', r.error);
               await refresh();
             }}

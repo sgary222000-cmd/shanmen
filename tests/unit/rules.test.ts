@@ -6,16 +6,16 @@ import { advance, content, developed, edit, fresh, run, tryRun } from './helpers
 describe('建築', () => {
   it('材料足夠才能開工，費用開工時付清', () => {
     const s = fresh();
-    const after = run(s, { type: 'build', defId: 'building.hall' });
+    const after = run(s, { type: 'upgrade', buildingId: 'b1' });
     expect(after.resources.stone).toBe(s.resources.stone - 40);
     const poor = edit(fresh(), (x) => {
       x.resources.stone = 0;
     });
-    expect(tryRun(poor, { type: 'build', defId: 'building.hall' }).ok).toBe(false);
+    expect(tryRun(poor, { type: 'upgrade', buildingId: 'b1' }).ok).toBe(false);
   });
 
   it('未修復大殿時不能建靈田', () => {
-    expect(tryRun(fresh(), { type: 'build', defId: 'building.field' }).ok).toBe(false);
+    expect(tryRun(fresh(), { type: 'build', defId: 'building.field', regionId: 'region.main' }).ok).toBe(false);
   });
 
   it('完工當月不運作，下月才產出', () => {
@@ -26,7 +26,7 @@ describe('建築', () => {
         hall.status = 'active';
       }
     });
-    s = run(s, { type: 'build', defId: 'building.quarry' }); // 1 個月
+    s = run(s, { type: 'build', defId: 'building.quarry', regionId: 'region.main' }); // 1 個月
     s = run(s, { type: 'setOuterJobs', jobs: { field: 0, quarry: 0, lumber: 0, errand: 0 } });
     const stoneBefore = s.resources.stone;
     s = advance(s); // 完工
@@ -39,7 +39,7 @@ describe('建築', () => {
   });
 
   it('取消施工退還一半材料', () => {
-    const s = run(fresh(), { type: 'build', defId: 'building.hall' });
+    const s = run(fresh(), { type: 'upgrade', buildingId: 'b1' });
     const hall = s.buildings.find((b) => b.defId === 'building.hall');
     const after = run(s, { type: 'cancelConstruction', buildingId: hall?.id ?? '' });
     expect(after.resources.stone).toBe(s.resources.stone + 20);
@@ -156,7 +156,7 @@ describe('招募與晉升', () => {
   });
 
   it('招生事件可收一名候選人', () => {
-    let s = run(fresh(), { type: 'build', defId: 'building.hall' });
+    let s = run(fresh(), { type: 'upgrade', buildingId: 'b1' });
     s = advance(s, 2);
     const ev = s.events.find((e) => e.kind === 'recruitment');
     expect(ev).toBeTruthy();

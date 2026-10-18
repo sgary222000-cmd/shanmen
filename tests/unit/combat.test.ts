@@ -32,7 +32,7 @@ describe('自動戰鬥', () => {
       const out = runBattle({
         allies,
         enemies,
-        strategy: { useHealPill: !!(r() % 2), focusLowest: !!(r() % 2) },
+        strategy: { useHealPill: !!(r() % 2), useTalismans: false, focusLowest: !!(r() % 2) },
         healPills: r() % 5,
         randInt: (n) => r() % n,
       });
@@ -49,7 +49,7 @@ describe('自動戰鬥', () => {
       return runBattle({
         allies: [randomUnit(() => 7, 'ally', 0)],
         enemies: [unitFromEnemy(golem, 0)],
-        strategy: { useHealPill: true, focusLowest: true },
+        strategy: { useHealPill: true, useTalismans: false, focusLowest: true },
         healPills: 2,
         randInt: (n) => nextUint32(s) % n,
       });

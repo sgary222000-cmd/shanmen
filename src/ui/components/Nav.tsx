@@ -6,6 +6,7 @@ const PAGES: [Page, string][] = [
   ['protagonist', '主角'],
   ['disciples', '弟子'],
   ['industry', '產業'],
+  ['market', '坊市與委託'],
   ['explore', '探索'],
   ['reports', '月報與戰報'],
   ['saves', '存檔'],

@@ -8,7 +8,7 @@ import { rng } from '../../rng';
 import type { BattleRecord, Character, ExplorationRun, GameState, Row } from '../../types';
 import { findCharacter, isInjured } from '../characters/characters';
 import { releaseFurnace } from '../alchemy/alchemy';
-import { runBattle, unitFromCharacter, unitFromEnemy } from '../combat/combat';
+import { runBattle, unitFromBeast, unitFromCharacter, unitFromEnemy, type Unit } from '../combat/combat';
 
 // 秘境探索在「安排階段」當場進行：進入時佔用隊員本月行程，
 // 取得的物資先放在探索紀錄，結束後轉入 pendingLoot，於月結算第 5 步入庫。
@@ -66,6 +66,7 @@ export function startExploration(
     fixedRows[c.id] = rows[c.id] ?? 'front';
     hp[c.id] = unitFromCharacter(c, fixedRows[c.id] ?? 'front', lineage).hp;
   }
+  for (const u of companions(state, content, teamIds, hp)) hp[u.key] = u.hp;
   state.exploration = {
     realmId,
     teamIds: [...teamIds],
@@ -81,6 +82,28 @@ export function startExploration(
     firstClear: !state.claimedRewards.includes(realm.firstClear.rewardId),
   };
   state.exploredThisMonth = true;
+}
+
+/** 隊員帶著的靈獸（不佔隊伍名額）。hp 給定時使用探索中的目前生命。 */
+export function companions(state: GameState, content: ContentPack, teamIds: string[], hp?: Record<string, number>): Unit[] {
+  const lineage = content.lineages.get(state.lineage);
+  if (!lineage) return [];
+  const out: Unit[] = [];
+  for (const beast of state.beasts) {
+    if (!teamIds.includes(beast.ownerId)) continue;
+    const owner = findCharacter(state, beast.ownerId);
+    const species = content.beasts.get(beast.speciesId);
+    if (!owner || !species) continue;
+    if (hp && (hp[owner.id] ?? 0) <= 0) continue; // 主人倒下，靈獸護主撤離
+    const u = unitFromBeast(beast, species, owner, lineage, hp?.[beast.id]);
+    if (u.hp > 0) out.push(u);
+  }
+  return out;
+}
+
+/** 撤退時保留物資的比例：秘境規定與傳承加成取較高者。 */
+export function retreatPct(state: GameState, content: ContentPack, realm: SecretRealmDef): number {
+  return Math.max(realm.retreatLootPct, content.lineages.get(state.lineage)?.bonuses.retreatLootPct ?? 0);
 }
 
 function lootPct(state: GameState, realm: SecretRealmDef): number {
@@ -101,6 +124,7 @@ function fight(state: GameState, content: ContentPack, realm: SecretRealmDef, no
     ensure(c, '找不到隊員');
     return unitFromCharacter(c, run.rows[id] ?? 'front', lineage, run.hp[id]);
   });
+  allies.push(...companions(state, content, aliveTeam(run), run.hp));
   const enemies = (node.enemies ?? []).map((eid, i) => {
     const def = content.enemies.get(eid);
     ensure(def, `敵人資料錯誤：${eid}`);
@@ -112,9 +136,12 @@ function fight(state: GameState, content: ContentPack, realm: SecretRealmDef, no
     enemies,
     strategy: state.strategy,
     healPills: state.resources.pill_heal,
+    talismans: { fire: state.resources.talisman_fire, guard: state.resources.talisman_guard },
     randInt: (n) => r.int(n),
   });
   state.resources.pill_heal -= outcome.pillsUsed;
+  state.resources.talisman_fire -= outcome.talismansUsed.fire;
+  state.resources.talisman_guard -= outcome.talismansUsed.guard;
   for (const u of outcome.allies) run.hp[u.key] = u.hp;
   const record: BattleRecord = {
     id: newId(state, 'battle'),
@@ -198,7 +225,7 @@ function finishRun(state: GameState, content: ContentPack, status: 'completed' |
   run.status = status;
 
   let kept = run.loot;
-  if (status === 'retreated') kept = scaleResources(run.loot, realm.retreatLootPct);
+  if (status === 'retreated') kept = scaleResources(run.loot, retreatPct(state, content, realm));
   if (status === 'defeated') kept = {};
   if (status === 'completed') {
     state.realmClears[realm.id] = (state.realmClears[realm.id] ?? 0) + 1;

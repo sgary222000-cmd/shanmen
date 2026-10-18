@@ -1,0 +1,1184 @@
+{
+ "format": "shanmen-save",
+ "formatVersion": 3,
+ "gameVersion": "0.2.0",
+ "savedAt": "2026-10-18T00:00:00.000Z",
+ "summary": {
+  "sectName": "玄符宗",
+  "protagonistName": "沈硯",
+  "realm": "煉氣七層",
+  "date": "第 9 年 1 月"
+ },
+ "checksum": "4f170bde",
+ "world": {
+  "version": 3,
+  "sectName": "玄符宗",
+  "lineage": "lineage.talisman",
+  "date": {
+   "year": 9,
+   "month": 1
+  },
+  "resources": {
+   "lingshi": 30,
+   "food": 305,
+   "stone": 163,
+   "wood": 159,
+   "herb": 2,
+   "pill_qi": 0,
+   "pill_heal": 4,
+   "pill_foundation": 0
+  },
+  "protagonist": {
+   "id": "c0",
+   "name": "沈硯",
+   "gender": "female",
+   "role": "protagonist",
+   "ageMonths": 312,
+   "realm": {
+    "major": "qi",
+    "stage": 7
+   },
+   "xp": 196,
+   "root": {
+    "grade": "mid",
+    "elements": [
+     "fire",
+     "earth"
+    ]
+   },
+   "health": 100,
+   "injuryMonths": 0,
+   "loyalty": 100,
+   "skills": {
+    "alchemy": 2,
+    "farming": 1,
+    "combat": 5,
+    "forging": 0,
+    "talisman": 4,
+    "beast": 0,
+    "affairs": 0
+   },
+   "schedule": "cultivate",
+   "takePill": false,
+   "seat": "region.main",
+   "seclusion": null
+  },
+  "disciples": [
+   {
+    "id": "c7",
+    "name": "秦長風",
+    "gender": "male",
+    "role": "inner",
+    "ageMonths": 346,
+    "realm": {
+     "major": "qi",
+     "stage": 4
+    },
+    "xp": 234,
+    "root": {
+     "grade": "low",
+     "elements": [
+      "wood",
+      "earth",
+      "water"
+     ]
+    },
+    "health": 100,
+    "injuryMonths": 0,
+    "loyalty": 70,
+    "skills": {
+     "alchemy": 8,
+     "farming": 2,
+     "combat": 4,
+     "forging": 0,
+     "talisman": 1,
+     "beast": 1,
+     "affairs": 1
+    },
+    "schedule": "alchemy",
+    "takePill": false,
+    "seat": "region.main"
+   },
+   {
+    "id": "c15",
+    "name": "江采薇",
+    "gender": "female",
+    "role": "inner",
+    "ageMonths": 280,
+    "realm": {
+     "major": "qi",
+     "stage": 5
+    },
+    "xp": 27,
+    "root": {
+     "grade": "mid",
+     "elements": [
+      "wood"
+     ]
+    },
+    "health": 100,
+    "injuryMonths": 0,
+    "loyalty": 70,
+    "skills": {
+     "alchemy": 0,
+     "farming": 5,
+     "combat": 6,
+     "forging": 3,
+     "talisman": 0,
+     "beast": 0,
+     "affairs": 0
+    },
+    "schedule": "cultivate",
+    "takePill": false,
+    "seat": "region.main"
+   },
+   {
+    "id": "c20",
+    "name": "蘇清遠",
+    "gender": "male",
+    "role": "inner",
+    "ageMonths": 310,
+    "realm": {
+     "major": "qi",
+     "stage": 4
+    },
+    "xp": 207,
+    "root": {
+     "grade": "mid",
+     "elements": [
+      "metal",
+      "earth"
+     ]
+    },
+    "health": 100,
+    "injuryMonths": 0,
+    "loyalty": 70,
+    "skills": {
+     "alchemy": 2,
+     "farming": 5,
+     "combat": 1,
+     "forging": 2,
+     "talisman": 3,
+     "beast": 3,
+     "affairs": 3
+    },
+    "schedule": "cultivate",
+    "takePill": false,
+    "seat": "region.main"
+   },
+   {
+    "id": "c31",
+    "name": "許靜姝",
+    "gender": "female",
+    "role": "inner",
+    "ageMonths": 274,
+    "realm": {
+     "major": "qi",
+     "stage": 4
+    },
+    "xp": 24,
+    "root": {
+     "grade": "low",
+     "elements": [
+      "wood",
+      "water"
+     ]
+    },
+    "health": 100,
+    "injuryMonths": 0,
+    "loyalty": 70,
+    "skills": {
+     "alchemy": 2,
+     "farming": 2,
+     "combat": 3,
+     "forging": 3,
+     "talisman": 2,
+     "beast": 3,
+     "affairs": 2
+    },
+    "schedule": "cultivate",
+    "takePill": false,
+    "seat": "region.main"
+   },
+   {
+    "id": "c36",
+    "name": "秦初晴",
+    "gender": "female",
+    "role": "inner",
+    "ageMonths": 268,
+    "realm": {
+     "major": "qi",
+     "stage": 3
+    },
+    "xp": 168,
+    "root": {
+     "grade": "low",
+     "elements": [
+      "metal",
+      "water",
+      "fire"
+     ]
+    },
+    "health": 100,
+    "injuryMonths": 0,
+    "loyalty": 70,
+    "skills": {
+     "alchemy": 1,
+     "farming": 3,
+     "combat": 2,
+     "forging": 1,
+     "talisman": 0,
+     "beast": 2,
+     "affairs": 3
+    },
+    "schedule": "cultivate",
+    "takePill": false,
+    "seat": "region.main"
+   },
+   {
+    "id": "c71",
+    "name": "江知秋",
+    "gender": "female",
+    "role": "inner",
+    "ageMonths": 208,
+    "realm": {
+     "major": "qi",
+     "stage": 2
+    },
+    "xp": 48,
+    "root": {
+     "grade": "low",
+     "elements": [
+      "water",
+      "earth"
+     ]
+    },
+    "health": 100,
+    "injuryMonths": 0,
+    "loyalty": 70,
+    "skills": {
+     "alchemy": 2,
+     "farming": 3,
+     "combat": 4,
+     "forging": 0,
+     "talisman": 2,
+     "beast": 0,
+     "affairs": 2
+    },
+    "schedule": "cultivate",
+    "takePill": false,
+    "seat": "region.main"
+   }
+  ],
+  "outer": {
+   "count": 26,
+   "jobs": {
+    "field": 9,
+    "quarry": 4,
+    "lumber": 3,
+    "errand": 8
+   },
+   "satisfaction": 100,
+   "training": 96,
+   "hungerMonths": 0
+  },
+  "buildings": [
+   {
+    "id": "b1",
+    "defId": "building.hall",
+    "region": "region.main",
+    "level": 2,
+    "status": "active",
+    "construction": null
+   },
+   {
+    "id": "b2",
+    "defId": "building.dorm",
+    "region": "region.main",
+    "level": 2,
+    "status": "active",
+    "construction": null
+   },
+   {
+    "id": "b8",
+    "defId": "building.field",
+    "region": "region.main",
+    "level": 2,
+    "status": "active",
+    "construction": null,
+    "crop": "food"
+   },
+   {
+    "id": "b9",
+    "defId": "building.quarry",
+    "region": "region.outer",
+    "level": 2,
+    "status": "active",
+    "construction": null
+   },
+   {
+    "id": "b10",
+    "defId": "building.lumber",
+    "region": "region.outer",
+    "level": 2,
+    "status": "active",
+    "construction": null
+   },
+   {
+    "id": "b37",
+    "defId": "building.alchemy",
+    "region": "region.main",
+    "level": 1,
+    "status": "active",
+    "construction": null
+   },
+   {
+    "id": "b50",
+    "defId": "building.field",
+    "region": "region.valley",
+    "level": 2,
+    "status": "active",
+    "construction": null,
+    "crop": "herb"
+   },
+   {
+    "id": "b72",
+    "defId": "building.array",
+    "region": "region.main",
+    "level": 1,
+    "status": "active",
+    "construction": null
+   }
+  ],
+  "regions": {
+   "region.main": {
+    "status": "open",
+    "construction": null
+   },
+   "region.outer": {
+    "status": "open",
+    "construction": null
+   },
+   "region.valley": {
+    "status": "open",
+    "construction": null
+   },
+   "region.fire": {
+    "status": "locked",
+    "construction": null
+   },
+   "region.back": {
+    "status": "locked",
+    "construction": null
+   },
+   "region.gate": {
+    "status": "locked",
+    "construction": null
+   }
+  },
+  "beasts": [],
+  "furnaces": [
+   {
+    "alchemistId": "c7",
+    "recipeId": "recipe.qi_pill",
+    "repeat": true
+   }
+  ],
+  "recipes": [
+   "recipe.qi_pill",
+   "recipe.heal_pill",
+   "recipe.foundation_pill"
+  ],
+  "exploration": null,
+  "exploredThisMonth": false,
+  "realmClears": {
+   "secret.abandoned_cave": 1
+  },
+  "claimedRewards": [
+   "reward.abandoned_cave.first_clear"
+  ],
+  "pendingLoot": {},
+  "events": [],
+  "reports": [
+   {
+    "date": {
+     "year": 8,
+     "month": 12
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "沈硯出關。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 8,
+     "month": 11
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 8,
+     "month": 10
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "江采薇晉升煉氣五層。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 8,
+     "month": 9
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "許靜姝晉升煉氣四層。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 8,
+     "month": 8
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "山門招生：外門 +0 人，有內門候選人等待決定。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 8,
+     "month": 7
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 8,
+     "month": 6
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "江知秋晉升煉氣二層。",
+     "沈硯出關。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 8,
+     "month": 5
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 8,
+     "month": 4
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 8,
+     "month": 3
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 8,
+     "month": 2
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "主峰聚靈陣完工，下月開始運作。",
+     "山門招生：外門 +0 人，有內門候選人等待決定。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 8,
+     "month": 1
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "沈硯晉升煉氣七層。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 7,
+     "month": 12
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "沈硯出關。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 7,
+     "month": 11
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 7,
+     "month": 10
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 7,
+     "month": 9
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 7,
+     "month": 8
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "山門招生：外門 +0 人，有內門候選人等待決定。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 7,
+     "month": 7
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 7,
+     "month": 6
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "沈硯出關。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 7,
+     "month": 5
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 7,
+     "month": 4
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 7,
+     "month": 3
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 7,
+     "month": 2
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "山門招生：外門 +0 人，有內門候選人等待決定。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 7,
+     "month": 1
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 6,
+     "month": 12
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "沈硯出關。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 6,
+     "month": 11
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 6,
+     "month": 10
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 16,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 6,
+     "month": 9
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 16,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 6,
+     "month": 8
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "靈泉谷靈田升至 2 級，下月開始運作。",
+     "蘇清遠晉升煉氣四層。",
+     "秦初晴晉升煉氣三層。",
+     "山門招生：外門 +0 人，有內門候選人等待決定。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 5,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 6,
+     "month": 7
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 5,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 6,
+     "month": 6
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "沈硯出關。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 5,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 6,
+     "month": 5
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 5,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 6,
+     "month": 4
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 5,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 6,
+     "month": 3
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 5,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 6,
+     "month": 2
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "山門招生：外門 +0 人，有內門候選人等待決定。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 5,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 6,
+     "month": 1
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "主峰靈田升至 2 級，下月開始運作。",
+     "許靜姝晉升煉氣三層。"
+    ],
+    "delta": {
+     "lingshi": 3,
+     "food": 2,
+     "stone": 12,
+     "wood": 9
+    }
+   }
+  ],
+  "battles": [
+   {
+    "id": "battle26",
+    "date": {
+     "year": 2,
+     "month": 12
+    },
+    "title": "荒廢洞府・主室",
+    "result": "win",
+    "rounds": 4,
+    "highlights": [
+     "第 3 回合：鎮府石傀倒下。",
+     "第 4 回合：弩機傀儡倒下。",
+     "第 4 回合獲勝。"
+    ],
+    "log": [
+     "── 第 1 回合 ──",
+     "沈硯施展雷符，鎮府石傀，造成 29 傷害。",
+     "江采薇施展雷符，鎮府石傀，造成 28 傷害。",
+     "秦長風施展雷符，鎮府石傀，造成 20 傷害。",
+     "蘇清遠施展雷符，鎮府石傀，造成 17 傷害。",
+     "弩機傀儡攻擊沈硯，造成 7 傷害。",
+     "鎮府石傀攻擊沈硯，造成 12 傷害。",
+     "── 第 2 回合 ──",
+     "沈硯施展雷符，鎮府石傀，造成 28 傷害。",
+     "江采薇施展雷符，鎮府石傀，造成 27 傷害。",
+     "秦長風施展雷符，鎮府石傀，造成 24 傷害。",
+     "蘇清遠施展雷符，鎮府石傀，造成 16 傷害。",
+     "弩機傀儡攻擊沈硯，造成 7 傷害。",
+     "鎮府石傀攻擊沈硯，造成 10 傷害。",
+     "── 第 3 回合 ──",
+     "沈硯攻擊鎮府石傀，造成 21 傷害。",
+     "江采薇攻擊鎮府石傀，造成 13 傷害。",
+     "秦長風攻擊鎮府石傀，造成 11 傷害。",
+     "鎮府石傀倒下。",
+     "蘇清遠攻擊弩機傀儡，造成 13 傷害。",
+     "弩機傀儡攻擊沈硯，造成 6 傷害。",
+     "── 第 4 回合 ──",
+     "沈硯攻擊弩機傀儡，造成 24 傷害。",
+     "江采薇攻擊弩機傀儡，造成 18 傷害。",
+     "弩機傀儡倒下。"
+    ],
+    "allies": [
+     {
+      "id": "c0",
+      "name": "沈硯",
+      "hp": 75,
+      "maxHp": 123
+     },
+     {
+      "id": "c7",
+      "name": "秦長風",
+      "hp": 96,
+      "maxHp": 96
+     },
+     {
+      "id": "c15",
+      "name": "江采薇",
+      "hp": 102,
+      "maxHp": 102
+     },
+     {
+      "id": "c20",
+      "name": "蘇清遠",
+      "hp": 87,
+      "maxHp": 87
+     }
+    ],
+    "enemies": [
+     {
+      "id": "enemy.stone_golem#0",
+      "name": "鎮府石傀",
+      "hp": 0,
+      "maxHp": 230
+     },
+     {
+      "id": "enemy.puppet_archer#1",
+      "name": "弩機傀儡",
+      "hp": 0,
+      "maxHp": 45
+     }
+    ]
+   },
+   {
+    "id": "battle25",
+    "date": {
+     "year": 2,
+     "month": 12
+    },
+    "title": "荒廢洞府・守衛廳",
+    "result": "win",
+    "rounds": 2,
+    "highlights": [
+     "第 1 回合：守洞傀儡倒下。",
+     "第 2 回合：弩機傀儡倒下。",
+     "第 2 回合獲勝。"
+    ],
+    "log": [
+     "── 第 1 回合 ──",
+     "沈硯施展雷符，守洞傀儡，造成 36 傷害。",
+     "江采薇施展雷符，守洞傀儡，造成 26 傷害。",
+     "秦長風施展雷符，守洞傀儡，造成 23 傷害。",
+     "守洞傀儡倒下。",
+     "蘇清遠施展雷符，弩機傀儡，造成 22 傷害。",
+     "弩機傀儡攻擊沈硯，造成 6 傷害。",
+     "── 第 2 回合 ──",
+     "沈硯施展雷符，弩機傀儡，造成 40 傷害。",
+     "弩機傀儡倒下。"
+    ],
+    "allies": [
+     {
+      "id": "c0",
+      "name": "沈硯",
+      "hp": 117,
+      "maxHp": 123
+     },
+     {
+      "id": "c7",
+      "name": "秦長風",
+      "hp": 96,
+      "maxHp": 96
+     },
+     {
+      "id": "c15",
+      "name": "江采薇",
+      "hp": 102,
+      "maxHp": 102
+     },
+     {
+      "id": "c20",
+      "name": "蘇清遠",
+      "hp": 87,
+      "maxHp": 87
+     }
+    ],
+    "enemies": [
+     {
+      "id": "enemy.puppet_guard#0",
+      "name": "守洞傀儡",
+      "hp": 0,
+      "maxHp": 80
+     },
+     {
+      "id": "enemy.puppet_archer#1",
+      "name": "弩機傀儡",
+      "hp": 0,
+      "maxHp": 45
+     }
+    ]
+   }
+  ],
+  "nextRecruitMonth": 98,
+  "rng": {
+   "world": [
+    997009978,
+    4066871838,
+    393949488,
+    466724920
+   ],
+   "recruit": [
+    2030803085,
+    428607223,
+    1635342361,
+    3421336192
+   ],
+   "alchemy": [
+    758191043,
+    494976545,
+    3545448609,
+    1103148558
+   ],
+   "combat": [
+    1309702332,
+    810594386,
+    4114332940,
+    746751662
+   ],
+   "explore": [
+    1670650873,
+    2912822696,
+    2845195130,
+    819045136
+   ],
+   "cultivation": [
+    1154408045,
+    3901274268,
+    829299136,
+    794200820
+   ]
+  },
+  "nextId": 81,
+  "tutorial": {
+   "skipped": false,
+   "viewedLedger": false,
+   "done": [
+    "assign",
+    "cultivate",
+    "month",
+    "hall",
+    "inner",
+    "explore",
+    "pills"
+   ]
+  },
+  "trade": {
+   "soldLingshi": 0,
+   "boughtFood": 0
+  },
+  "strategy": {
+   "useHealPill": true,
+   "focusLowest": true
+  },
+  "stats": {
+   "commands": 351,
+   "monthsAdvanced": 96,
+   "explorations": 1
+  }
+ }
+}

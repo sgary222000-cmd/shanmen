@@ -4,6 +4,8 @@ import { ensure } from '../../errors';
 import type { Character, GameState, ScheduleKind } from '../../types';
 import { releaseFurnace } from '../alchemy/alchemy';
 import { breakthroughOdds } from '../cultivation/cultivation';
+import { isCraftSchedule, qiCapacity } from '../buildings/buildings';
+import { isRegionOpen } from '../regions/regions';
 import { findCharacter } from './characters';
 
 export const SCHEDULE_NAMES: Record<ScheduleKind, string> = {
@@ -11,15 +13,17 @@ export const SCHEDULE_NAMES: Record<ScheduleKind, string> = {
   seclusion: '閉關',
   teach: '授課',
   alchemy: '煉丹',
+  forge: '煉器',
+  talisman: '製符',
   heal: '療傷',
   breakthrough: '突破',
   explore: '探索',
 };
 
 /** 尚未開放的主角行程（企畫書 §5），介面需明確標示。 */
-export const LOCKED_SCHEDULES = ['煉器', '研究', '交涉'] as const;
+export const LOCKED_SCHEDULES = ['研究', '交涉'] as const;
 
-/** 玩家可直接選擇的行程（煉丹由丹爐指派、探索由探索系統設定）。 */
+/** 玩家可直接選擇的行程（煉丹、煉器、製符由產業頁的爐位指派；探索由探索系統設定）。 */
 export function selectableSchedules(c: Character): ScheduleKind[] {
   return c.role === 'protagonist'
     ? ['cultivate', 'seclusion', 'teach', 'heal', 'breakthrough']
@@ -53,7 +57,7 @@ export function setSchedule(
     const odds = breakthroughOdds(state, content, c);
     ensure(!odds.blocked, odds.blocked ?? '');
   }
-  if (c.schedule === 'alchemy') releaseFurnace(state, c.id);
+  if (isCraftSchedule(c.schedule)) releaseFurnace(state, c.id);
   c.schedule = schedule;
   if (schedule === 'seclusion') {
     const m = months ?? 1;
@@ -75,4 +79,22 @@ export function setTakePill(state: GameState, characterId: string, value: boolea
   const c = findCharacter(state, characterId);
   ensure(c, '找不到這個人物');
   c.takePill = value;
+}
+
+/** 可以修煉的區域：已開放且有靈氣。 */
+export function seatOptions(state: GameState, content: ContentPack): string[] {
+  return [...content.regions.values()]
+    .filter((r) => isRegionOpen(state, r.id) && qiCapacity(state, content, r.id) > 0)
+    .map((r) => r.id);
+}
+
+/** 變更修煉地點。閉關中不能搬移。 */
+export function setSeat(state: GameState, content: ContentPack, characterId: string, regionId: string): void {
+  const c = findCharacter(state, characterId);
+  ensure(c, '找不到這個人物');
+  const region = content.regions.get(regionId);
+  ensure(region, '沒有這個區域');
+  ensure(seatOptions(state, content).includes(regionId), `${region.name}尚未開放或沒有靈氣，不能在此修煉`);
+  if (c.role === 'protagonist') ensure(!state.protagonist.seclusion, '主角閉關中，請先中斷閉關');
+  c.seat = regionId;
 }

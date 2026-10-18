@@ -1,0 +1,1256 @@
+{
+ "format": "shanmen-save",
+ "formatVersion": 2,
+ "gameVersion": "0.1.0",
+ "savedAt": "2026-10-18T00:00:00.000Z",
+ "summary": {
+  "sectName": "青雲宗",
+  "protagonistName": "林長風",
+  "realm": "築基前期",
+  "date": "第 17 年 1 月"
+ },
+ "checksum": "b74f62dd",
+ "world": {
+  "version": 2,
+  "sectName": "青雲宗",
+  "lineage": "lineage.sword",
+  "date": {
+   "year": 17,
+   "month": 1
+  },
+  "resources": {
+   "lingshi": 17,
+   "food": 100,
+   "stone": 162,
+   "wood": 160,
+   "herb": 58,
+   "pill_qi": 2,
+   "pill_heal": 4,
+   "pill_foundation": 0
+  },
+  "protagonist": {
+   "id": "c0",
+   "name": "林長風",
+   "gender": "male",
+   "role": "protagonist",
+   "ageMonths": 408,
+   "realm": {
+    "major": "foundation",
+    "stage": 1
+   },
+   "xp": 1093,
+   "root": {
+    "grade": "mid",
+    "elements": [
+     "metal",
+     "water"
+    ]
+   },
+   "health": 100,
+   "injuryMonths": 0,
+   "loyalty": 100,
+   "skills": {
+    "alchemy": 2,
+    "farming": 1,
+    "combat": 5
+   },
+   "schedule": "cultivate",
+   "takePill": true,
+   "seclusion": null
+  },
+  "disciples": [
+   {
+    "id": "c7",
+    "name": "林敬之",
+    "gender": "male",
+    "role": "inner",
+    "ageMonths": 454,
+    "realm": {
+     "major": "qi",
+     "stage": 9
+    },
+    "xp": 117,
+    "root": {
+     "grade": "low",
+     "elements": [
+      "water"
+     ]
+    },
+    "health": 100,
+    "injuryMonths": 0,
+    "loyalty": 70,
+    "skills": {
+     "alchemy": 20,
+     "farming": 3,
+     "combat": 3
+    },
+    "schedule": "alchemy",
+    "takePill": true
+   },
+   {
+    "id": "c15",
+    "name": "謝懷瑾",
+    "gender": "male",
+    "role": "inner",
+    "ageMonths": 436,
+    "realm": {
+     "major": "qi",
+     "stage": 6
+    },
+    "xp": 325,
+    "root": {
+     "grade": "low",
+     "elements": [
+      "earth",
+      "metal",
+      "fire"
+     ]
+    },
+    "health": 100,
+    "injuryMonths": 0,
+    "loyalty": 70,
+    "skills": {
+     "alchemy": 0,
+     "farming": 4,
+     "combat": 1
+    },
+    "schedule": "cultivate",
+    "takePill": true
+   },
+   {
+    "id": "c20",
+    "name": "白初晴",
+    "gender": "female",
+    "role": "inner",
+    "ageMonths": 346,
+    "realm": {
+     "major": "qi",
+     "stage": 6
+    },
+    "xp": 277,
+    "root": {
+     "grade": "low",
+     "elements": [
+      "fire",
+      "wood"
+     ]
+    },
+    "health": 100,
+    "injuryMonths": 0,
+    "loyalty": 70,
+    "skills": {
+     "alchemy": 5,
+     "farming": 0,
+     "combat": 4
+    },
+    "schedule": "cultivate",
+    "takePill": true
+   },
+   {
+    "id": "c31",
+    "name": "蘇元朗",
+    "gender": "male",
+    "role": "inner",
+    "ageMonths": 370,
+    "realm": {
+     "major": "qi",
+     "stage": 6
+    },
+    "xp": 198,
+    "root": {
+     "grade": "low",
+     "elements": [
+      "wood",
+      "earth",
+      "water"
+     ]
+    },
+    "health": 100,
+    "injuryMonths": 0,
+    "loyalty": 70,
+    "skills": {
+     "alchemy": 5,
+     "farming": 5,
+     "combat": 2
+    },
+    "schedule": "cultivate",
+    "takePill": true
+   },
+   {
+    "id": "c36",
+    "name": "蘇思齊",
+    "gender": "male",
+    "role": "inner",
+    "ageMonths": 400,
+    "realm": {
+     "major": "qi",
+     "stage": 6
+    },
+    "xp": 162,
+    "root": {
+     "grade": "low",
+     "elements": [
+      "metal",
+      "fire"
+     ]
+    },
+    "health": 100,
+    "injuryMonths": 0,
+    "loyalty": 70,
+    "skills": {
+     "alchemy": 5,
+     "farming": 5,
+     "combat": 5
+    },
+    "schedule": "cultivate",
+    "takePill": true
+   },
+   {
+    "id": "c41",
+    "name": "沈書瑤",
+    "gender": "female",
+    "role": "inner",
+    "ageMonths": 370,
+    "realm": {
+     "major": "qi",
+     "stage": 6
+    },
+    "xp": 132,
+    "root": {
+     "grade": "low",
+     "elements": [
+      "fire",
+      "wood"
+     ]
+    },
+    "health": 100,
+    "injuryMonths": 0,
+    "loyalty": 70,
+    "skills": {
+     "alchemy": 4,
+     "farming": 3,
+     "combat": 4
+    },
+    "schedule": "cultivate",
+    "takePill": true
+   }
+  ],
+  "outer": {
+   "count": 26,
+   "jobs": {
+    "field": 9,
+    "quarry": 4,
+    "lumber": 3,
+    "errand": 8
+   },
+   "satisfaction": 100,
+   "training": 100,
+   "hungerMonths": 0
+  },
+  "buildings": [
+   {
+    "id": "b1",
+    "defId": "building.hall",
+    "level": 2,
+    "status": "active",
+    "construction": null
+   },
+   {
+    "id": "b2",
+    "defId": "building.dorm",
+    "level": 2,
+    "status": "active",
+    "construction": null
+   },
+   {
+    "id": "b8",
+    "defId": "building.field",
+    "level": 2,
+    "status": "active",
+    "construction": null,
+    "crop": "food"
+   },
+   {
+    "id": "b9",
+    "defId": "building.quarry",
+    "level": 2,
+    "status": "active",
+    "construction": null
+   },
+   {
+    "id": "b10",
+    "defId": "building.lumber",
+    "level": 2,
+    "status": "active",
+    "construction": null
+   },
+   {
+    "id": "b50",
+    "defId": "building.alchemy",
+    "level": 1,
+    "status": "active",
+    "construction": null
+   },
+   {
+    "id": "b67",
+    "defId": "building.array",
+    "level": 1,
+    "status": "active",
+    "construction": null
+   }
+  ],
+  "furnaces": [
+   {
+    "alchemistId": "c7",
+    "recipeId": "recipe.qi_pill",
+    "repeat": true
+   }
+  ],
+  "recipes": [
+   "recipe.qi_pill",
+   "recipe.heal_pill",
+   "recipe.foundation_pill"
+  ],
+  "exploration": null,
+  "exploredThisMonth": false,
+  "realmClears": {
+   "secret.abandoned_cave": 1
+  },
+  "claimedRewards": [
+   "reward.abandoned_cave.first_clear"
+  ],
+  "pendingLoot": {},
+  "events": [],
+  "reports": [
+   {
+    "date": {
+     "year": 16,
+     "month": 12
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "林長風出關。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3
+    }
+   },
+   {
+    "date": {
+     "year": 16,
+     "month": 11
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": -29,
+     "stone": 12,
+     "wood": 9,
+     "herb": 15
+    }
+   },
+   {
+    "date": {
+     "year": 16,
+     "month": 10
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "林敬之的煉丹技藝提升至 20。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3
+    }
+   },
+   {
+    "date": {
+     "year": 16,
+     "month": 9
+    },
+    "lines": [
+     "聚靈陣維護費不足，本月停用。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "林敬之的煉丹技藝提升至 19。"
+    ],
+    "delta": {
+     "lingshi": 1,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3,
+     "pill_qi": 2
+    }
+   },
+   {
+    "date": {
+     "year": 16,
+     "month": 8
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "山門招生：外門 +0 人，有內門候選人等待決定。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 16,
+     "month": 7
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉製聚氣丹失敗，材料損耗。",
+     "林敬之的煉丹技藝提升至 18。",
+     "林敬之晉升煉氣九層。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3,
+     "pill_qi": -2
+    }
+   },
+   {
+    "date": {
+     "year": 16,
+     "month": 6
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "林長風出關。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": -29,
+     "stone": 12,
+     "wood": 9,
+     "herb": 15
+    }
+   },
+   {
+    "date": {
+     "year": 16,
+     "month": 5
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "林敬之的煉丹技藝提升至 17。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3
+    }
+   },
+   {
+    "date": {
+     "year": 16,
+     "month": 4
+    },
+    "lines": [
+     "聚靈陣維護費不足，本月停用。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。"
+    ],
+    "delta": {
+     "lingshi": 1,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3,
+     "pill_qi": 2
+    }
+   },
+   {
+    "date": {
+     "year": 16,
+     "month": 3
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "pill_qi": -2
+    }
+   },
+   {
+    "date": {
+     "year": 16,
+     "month": 2
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "山門招生：外門 +0 人，有內門候選人等待決定。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3
+    }
+   },
+   {
+    "date": {
+     "year": 16,
+     "month": 1
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": -29,
+     "stone": 12,
+     "wood": 9,
+     "herb": 15
+    }
+   },
+   {
+    "date": {
+     "year": 15,
+     "month": 12
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "林長風出關。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3
+    }
+   },
+   {
+    "date": {
+     "year": 15,
+     "month": 11
+    },
+    "lines": [
+     "聚靈陣維護費不足，本月停用。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。"
+    ],
+    "delta": {
+     "lingshi": 1,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3,
+     "pill_qi": 2
+    }
+   },
+   {
+    "date": {
+     "year": 15,
+     "month": 10
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "pill_qi": -2
+    }
+   },
+   {
+    "date": {
+     "year": 15,
+     "month": 9
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3
+    }
+   },
+   {
+    "date": {
+     "year": 15,
+     "month": 8
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "山門招生：外門 +0 人，有內門候選人等待決定。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": -29,
+     "stone": 12,
+     "wood": 9,
+     "herb": 15
+    }
+   },
+   {
+    "date": {
+     "year": 15,
+     "month": 7
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "林敬之的煉丹技藝提升至 16。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3
+    }
+   },
+   {
+    "date": {
+     "year": 15,
+     "month": 6
+    },
+    "lines": [
+     "聚靈陣維護費不足，本月停用。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "沈書瑤晉升煉氣六層。",
+     "林長風出關。"
+    ],
+    "delta": {
+     "lingshi": 1,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3,
+     "pill_qi": 2
+    }
+   },
+   {
+    "date": {
+     "year": 15,
+     "month": 5
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "pill_qi": -2
+    }
+   },
+   {
+    "date": {
+     "year": 15,
+     "month": 4
+    },
+    "lines": [
+     "林敬之煉成聚氣丹（聚氣丹 2）。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3,
+     "pill_qi": 2
+    }
+   },
+   {
+    "date": {
+     "year": 15,
+     "month": 3
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": -29,
+     "stone": 12,
+     "wood": 9,
+     "herb": 18,
+     "pill_qi": -2
+    }
+   },
+   {
+    "date": {
+     "year": 15,
+     "month": 2
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "蘇思齊晉升煉氣六層。",
+     "山門招生：外門 +0 人，有內門候選人等待決定。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3
+    }
+   },
+   {
+    "date": {
+     "year": 15,
+     "month": 1
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "林敬之的煉丹技藝提升至 15。",
+     "林敬之晉升煉氣八層。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3
+    }
+   },
+   {
+    "date": {
+     "year": 14,
+     "month": 12
+    },
+    "lines": [
+     "聚靈陣維護費不足，本月停用。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "林長風出關。"
+    ],
+    "delta": {
+     "lingshi": 1,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3,
+     "pill_qi": 2
+    }
+   },
+   {
+    "date": {
+     "year": 14,
+     "month": 11
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "pill_qi": -2
+    }
+   },
+   {
+    "date": {
+     "year": 14,
+     "month": 10
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": -29,
+     "stone": 12,
+     "wood": 9,
+     "herb": 15
+    }
+   },
+   {
+    "date": {
+     "year": 14,
+     "month": 9
+    },
+    "lines": [
+     "聚氣丹不足，謝懷瑾本月未服丹。",
+     "聚氣丹不足，白初晴本月未服丹。",
+     "聚氣丹不足，蘇元朗本月未服丹。",
+     "聚氣丹不足，蘇思齊本月未服丹。",
+     "聚氣丹不足，沈書瑤本月未服丹。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "蘇元朗晉升煉氣六層。"
+    ],
+    "delta": {
+     "lingshi": -9,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3
+    }
+   },
+   {
+    "date": {
+     "year": 14,
+     "month": 8
+    },
+    "lines": [
+     "聚靈陣維護費不足，本月停用。",
+     "林敬之煉成聚氣丹（聚氣丹 2）。",
+     "林敬之的煉丹技藝提升至 14。",
+     "山門招生：外門 +0 人，有內門候選人等待決定。"
+    ],
+    "delta": {
+     "lingshi": 1,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -3,
+     "pill_qi": 2
+    }
+   },
+   {
+    "date": {
+     "year": 14,
+     "month": 7
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 14,
+     "month": 6
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "★ 林長風突破成功，踏入築基前期！"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "pill_foundation": -1
+    }
+   },
+   {
+    "date": {
+     "year": 14,
+     "month": 5
+    },
+    "lines": [
+     "林敬之煉成築基丹（築基丹 1）。"
+    ],
+    "delta": {
+     "lingshi": -37,
+     "food": 7,
+     "stone": 12,
+     "wood": 9,
+     "herb": -10,
+     "pill_foundation": 1
+    }
+   },
+   {
+    "date": {
+     "year": 14,
+     "month": 4
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": -29,
+     "stone": 12,
+     "wood": 9,
+     "herb": 18
+    }
+   },
+   {
+    "date": {
+     "year": 14,
+     "month": 3
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "林長風出關。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 14,
+     "month": 2
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。",
+     "山門招生：外門 +0 人，有內門候選人等待決定。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   },
+   {
+    "date": {
+     "year": 14,
+     "month": 1
+    },
+    "lines": [
+     "丹爐 1：材料不足，停爐。"
+    ],
+    "delta": {
+     "lingshi": -7,
+     "food": 7,
+     "stone": 12,
+     "wood": 9
+    }
+   }
+  ],
+  "battles": [
+   {
+    "id": "battle26",
+    "date": {
+     "year": 2,
+     "month": 12
+    },
+    "title": "荒廢洞府・主室",
+    "result": "win",
+    "rounds": 3,
+    "highlights": [
+     "第 2 回合：鎮府石傀倒下。",
+     "第 3 回合：弩機傀儡倒下。",
+     "第 3 回合獲勝。"
+    ],
+    "log": [
+     "── 第 1 回合 ──",
+     "林長風施展破軍劍訣，鎮府石傀，造成 38 傷害。",
+     "白初晴施展破軍劍訣，鎮府石傀，造成 27 傷害。",
+     "林敬之施展破軍劍訣，鎮府石傀，造成 28 傷害。",
+     "謝懷瑾施展破軍劍訣，鎮府石傀，造成 26 傷害。",
+     "弩機傀儡攻擊林長風，造成 8 傷害。",
+     "鎮府石傀攻擊林長風，造成 13 傷害。",
+     "── 第 2 回合 ──",
+     "林長風施展破軍劍訣，鎮府石傀，造成 41 傷害。",
+     "白初晴施展破軍劍訣，鎮府石傀，造成 26 傷害。",
+     "林敬之施展破軍劍訣，鎮府石傀，造成 31 傷害。",
+     "謝懷瑾施展破軍劍訣，鎮府石傀，造成 24 傷害。",
+     "鎮府石傀倒下。",
+     "弩機傀儡攻擊林長風，造成 8 傷害。",
+     "── 第 3 回合 ──",
+     "林長風攻擊弩機傀儡，造成 26 傷害。",
+     "白初晴攻擊弩機傀儡，造成 17 傷害。",
+     "林敬之攻擊弩機傀儡，造成 16 傷害。",
+     "弩機傀儡倒下。"
+    ],
+    "allies": [
+     {
+      "id": "c0",
+      "name": "林長風",
+      "hp": 86,
+      "maxHp": 123
+     },
+     {
+      "id": "c7",
+      "name": "林敬之",
+      "hp": 93,
+      "maxHp": 93
+     },
+     {
+      "id": "c15",
+      "name": "謝懷瑾",
+      "hp": 87,
+      "maxHp": 87
+     },
+     {
+      "id": "c20",
+      "name": "白初晴",
+      "hp": 96,
+      "maxHp": 96
+     }
+    ],
+    "enemies": [
+     {
+      "id": "enemy.stone_golem#0",
+      "name": "鎮府石傀",
+      "hp": 0,
+      "maxHp": 230
+     },
+     {
+      "id": "enemy.puppet_archer#1",
+      "name": "弩機傀儡",
+      "hp": 0,
+      "maxHp": 45
+     }
+    ]
+   },
+   {
+    "id": "battle25",
+    "date": {
+     "year": 2,
+     "month": 12
+    },
+    "title": "荒廢洞府・守衛廳",
+    "result": "win",
+    "rounds": 2,
+    "highlights": [
+     "第 1 回合：守洞傀儡倒下。",
+     "第 2 回合：弩機傀儡倒下。",
+     "第 2 回合獲勝。"
+    ],
+    "log": [
+     "── 第 1 回合 ──",
+     "林長風施展破軍劍訣，守洞傀儡，造成 42 傷害。",
+     "白初晴施展破軍劍訣，被守洞傀儡閃過。",
+     "林敬之施展破軍劍訣，守洞傀儡，造成 31 傷害。",
+     "謝懷瑾施展破軍劍訣，守洞傀儡，造成 28 傷害。",
+     "守洞傀儡倒下。",
+     "弩機傀儡攻擊林長風，造成 8 傷害。",
+     "── 第 2 回合 ──",
+     "林長風施展破軍劍訣，弩機傀儡，造成 42 傷害。",
+     "白初晴施展破軍劍訣，弩機傀儡，造成 31 傷害。",
+     "弩機傀儡倒下。"
+    ],
+    "allies": [
+     {
+      "id": "c0",
+      "name": "林長風",
+      "hp": 115,
+      "maxHp": 123
+     },
+     {
+      "id": "c7",
+      "name": "林敬之",
+      "hp": 93,
+      "maxHp": 93
+     },
+     {
+      "id": "c15",
+      "name": "謝懷瑾",
+      "hp": 87,
+      "maxHp": 87
+     },
+     {
+      "id": "c20",
+      "name": "白初晴",
+      "hp": 96,
+      "maxHp": 96
+     }
+    ],
+    "enemies": [
+     {
+      "id": "enemy.puppet_guard#0",
+      "name": "守洞傀儡",
+      "hp": 0,
+      "maxHp": 80
+     },
+     {
+      "id": "enemy.puppet_archer#1",
+      "name": "弩機傀儡",
+      "hp": 0,
+      "maxHp": 45
+     }
+    ]
+   }
+  ],
+  "nextRecruitMonth": 194,
+  "rng": {
+   "world": [
+    3465754917,
+    1480055656,
+    2370939503,
+    2578516371
+   ],
+   "recruit": [
+    4006540526,
+    1219374146,
+    3976756822,
+    1371507690
+   ],
+   "alchemy": [
+    2027396361,
+    3086411063,
+    3724328529,
+    31591254
+   ],
+   "combat": [
+    3828928785,
+    3750072953,
+    850072797,
+    1881670056
+   ],
+   "explore": [
+    3656818445,
+    2356400239,
+    2716533504,
+    2435853914
+   ],
+   "cultivation": [
+    359936641,
+    2942685807,
+    1180540622,
+    640755685
+   ]
+  },
+  "nextId": 144,
+  "tutorial": {
+   "skipped": false,
+   "viewedLedger": false,
+   "done": [
+    "assign",
+    "cultivate",
+    "month",
+    "hall",
+    "inner",
+    "explore",
+    "pills"
+   ]
+  },
+  "trade": {
+   "soldLingshi": 0,
+   "boughtFood": 0
+  },
+  "strategy": {
+   "useHealPill": true,
+   "focusLowest": true
+  },
+  "stats": {
+   "commands": 1010,
+   "monthsAdvanced": 192,
+   "explorations": 1
+  }
+ }
+}

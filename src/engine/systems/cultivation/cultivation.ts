@@ -2,7 +2,8 @@ import { balance } from '../../../content/balance';
 import type { ContentPack } from '../../../content/registry';
 import { rng } from '../../rng';
 import type { Character, GameState } from '../../types';
-import { ARRAY, findByDef, qiCapacity } from '../buildings/buildings';
+import { MAIN_REGION } from '../../../content/registry';
+import { ARRAY, isOperating, qiCapacity } from '../buildings/buildings';
 import {
   allCharacters,
   atP0Cap,
@@ -13,11 +14,11 @@ import {
   xpToNext,
 } from '../characters/characters';
 
-/** 靈氣效率（百分比）：容量不足時所有修煉按比例降低。 */
-export function qiEfficiencyPct(state: GameState, content: ContentPack): number {
-  const demand = qiDemandOf(state);
+/** 某區域的靈氣效率（百分比）：容量不足時在此修煉的人按比例降低。 */
+export function qiEfficiencyPct(state: GameState, content: ContentPack, regionId: string = MAIN_REGION): number {
+  const demand = qiDemandOf(state, regionId);
   if (demand <= 0) return 100;
-  return Math.min(100, Math.floor((qiCapacity(state, content) * 100) / demand));
+  return Math.min(100, Math.floor((qiCapacity(state, content, regionId) * 100) / demand));
 }
 
 export interface XpBreakdown {
@@ -26,7 +27,7 @@ export interface XpBreakdown {
 }
 
 /** 計算人物本月修為；預覽與結算共用。 */
-export function monthlyXp(state: GameState, content: ContentPack, c: Character, tookPill: boolean): XpBreakdown {
+export function monthlyXp(state: GameState, content: ContentPack, c: Character, tookPill: boolean | 'peiyuan'): XpBreakdown {
   const parts: string[] = [];
   if (c.schedule === 'breakthrough') return { total: 0, parts: ['本月突破，不累積修為'] };
   let pct = balance.scheduleXpPct[c.schedule];
@@ -42,15 +43,24 @@ export function monthlyXp(state: GameState, content: ContentPack, c: Character, 
     pct += balance.teachBonusPct;
     parts.push(`掌門授課 +${balance.teachBonusPct}%`);
   }
+  const region = content.regions.get(c.seat);
+  const regionPct = region?.bonus.cultivationPct ?? 0;
+  if (regionPct) {
+    pct += regionPct;
+    parts.push(`${region?.name ?? ''} +${regionPct}%`);
+  }
   const rootPct = balance.rootMultiplierPct[c.root.grade];
-  const qiPct = qiEfficiencyPct(state, content);
-  parts.push(`靈根 ${rootPct}%`, `靈氣 ${qiPct}%`);
+  const qiPct = qiEfficiencyPct(state, content, c.seat);
+  parts.push(`靈根 ${rootPct}%`, `${region?.name ?? ''}靈氣 ${qiPct}%`);
   let total = Math.floor((balance.baseXpPerMonth * pct * rootPct * qiPct) / 1_000_000);
   if (isInjured(c)) {
     total = Math.floor((total * balance.injuredXpPct) / 100);
     parts.push(`受傷 ${balance.injuredXpPct}%`);
   }
-  if (tookPill) {
+  if (tookPill === 'peiyuan') {
+    total += balance.pillPeiyuanXp;
+    parts.push(`培元丹 +${balance.pillPeiyuanXp}`);
+  } else if (tookPill) {
     total += balance.pillQiXp;
     parts.push(`聚氣丹 +${balance.pillQiXp}`);
   }
@@ -94,8 +104,8 @@ export function breakthroughOdds(state: GameState, content: ContentPack, c: Char
     bp += rootBp;
     factors.push(`靈根 ${rootBp > 0 ? '+' : ''}${rootBp / 100}%`);
   }
-  const array = findByDef(state, ARRAY);
-  if (array && array.level >= 2 && array.status !== 'disabled') {
+  const array = state.buildings.find((x) => x.defId === ARRAY && x.region === c.seat && isOperating(x));
+  if (array && array.level >= 2) {
     bp += b.arrayLv2Bp;
     factors.push(`聚靈陣 2 級 +${b.arrayLv2Bp / 100}%`);
   }
@@ -108,8 +118,8 @@ export function breakthroughOdds(state: GameState, content: ContentPack, c: Char
   if (atP0Cap(c) || c.realm.major !== 'qi') blocked = '金丹突破於 P1 開放';
   else if (!readyForFoundation(c)) blocked = `需要煉氣九層且修為圓滿（目前 ${realmName(c.realm)}）`;
   else if (isInjured(c)) blocked = '受傷中不能突破';
-  else if (qiCapacity(state, content) < b.requiredQiCapacity)
-    blocked = `主峰靈氣容量需達 ${b.requiredQiCapacity}（建造聚靈陣）`;
+  else if (qiCapacity(state, content, c.seat) < b.requiredQiCapacity)
+    blocked = `修煉地點（${content.regions.get(c.seat)?.name ?? ''}）靈氣容量需達 ${b.requiredQiCapacity}（建造聚靈陣）`;
   else if (state.resources.pill_foundation < 1) blocked = '需要築基丹 1 顆';
   return {
     bp,

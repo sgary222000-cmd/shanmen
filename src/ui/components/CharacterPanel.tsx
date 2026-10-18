@@ -1,9 +1,27 @@
 import { useState } from 'react';
 import { formatAge, planMonth, type Character, type ScheduleKind } from '../../engine';
 import { realmName, rootName, xpToNext } from '../../engine/systems/characters/characters';
-import { LOCKED_SCHEDULES, SCHEDULE_NAMES, seclusionInterruptCost, selectableSchedules } from '../../engine/systems/characters/schedule';
+import { isCraftSchedule } from '../../engine/systems/buildings/buildings';
+import { LOCKED_SCHEDULES, SCHEDULE_NAMES, seatOptions, seclusionInterruptCost, selectableSchedules } from '../../engine/systems/characters/schedule';
 import { breakthroughOdds, monthlyXp } from '../../engine/systems/cultivation/cultivation';
 import { content, useGame, useUi } from '../store';
+
+export const SKILL_NAMES = {
+  alchemy: '煉丹',
+  farming: '耕作',
+  combat: '戰鬥',
+  forging: '煉器',
+  talisman: '符陣',
+  beast: '御獸',
+  affairs: '庶務',
+} as const;
+
+export function skillText(c: Character): string {
+  return (Object.keys(SKILL_NAMES) as (keyof typeof SKILL_NAMES)[])
+    .filter((k) => k === 'alchemy' || k === 'farming' || k === 'combat' || c.skills[k] > 0)
+    .map((k) => `${SKILL_NAMES[k]} ${c.skills[k]}`)
+    .join('／');
+}
 
 export function XpBar({ c }: { c: Character }) {
   const need = xpToNext(c.realm);
@@ -26,9 +44,14 @@ export function CharacterPanel({ c }: { c: Character }) {
   const isPro = c.role === 'protagonist';
   const seclusion = isPro ? game.protagonist.seclusion : null;
   const plan = planMonth(game, content);
-  const xp = monthlyXp(game, content, c, c.takePill && game.resources.pill_qi > 0);
+  const xp = monthlyXp(
+    game,
+    content,
+    c,
+    c.takePill && c.realm.major !== 'qi' && game.resources.pill_peiyuan > 0 ? 'peiyuan' : c.takePill && game.resources.pill_qi > 0,
+  );
   const odds = breakthroughOdds(game, content, c);
-  const locked = c.schedule === 'explore' || c.schedule === 'alchemy' || !!seclusion;
+  const locked = c.schedule === 'explore' || isCraftSchedule(c.schedule) || !!seclusion;
 
   return (
     <div className="panel" data-testid={`char-${c.id}`}>
@@ -37,9 +60,33 @@ export function CharacterPanel({ c }: { c: Character }) {
         {c.injuryMonths > 0 && <span className="tag neg">受傷 {c.injuryMonths} 個月</span>}
       </h3>
       <p className="small muted">
-        {formatAge(c.ageMonths)}・{rootName(c.root)}・健康 {c.health}・忠誠 {c.loyalty}・煉丹 {c.skills.alchemy}／耕作 {c.skills.farming}／戰鬥{' '}
-        {c.skills.combat}
+        {formatAge(c.ageMonths)}・{rootName(c.root)}・健康 {c.health}・忠誠 {c.loyalty}・{skillText(c)}
       </p>
+      {game.beasts
+        .filter((b) => b.ownerId === c.id)
+        .map((b) => (
+          <p key={b.id} className="small">
+            靈獸：<b>{b.name}</b>（{content.beasts.get(b.speciesId)?.description}）
+          </p>
+        ))}
+      {seatOptions(game, content).length > 1 && (
+        <label className="small row">
+          修煉地點：
+          <select
+            value={c.seat}
+            data-testid={`seat-${c.id}`}
+            disabled={!!seclusion}
+            onChange={(e) => dispatch({ type: 'setSeat', characterId: c.id, regionId: e.target.value })}
+          >
+            {seatOptions(game, content).map((id) => (
+              <option key={id} value={id}>
+                {content.regions.get(id)?.name}
+              </option>
+            ))}
+          </select>
+          {seclusion && <span className="muted">閉關中不能搬移</span>}
+        </label>
+      )}
       <XpBar c={c} />
       <p className="small">
         本月行程：<b>{SCHEDULE_NAMES[c.schedule]}</b>
@@ -47,8 +94,8 @@ export function CharacterPanel({ c }: { c: Character }) {
         ・預計修為 +{xp.total}
         <span className="muted">（{xp.parts.join('・')}）</span>
       </p>
-      {c.schedule === 'explore' && <p className="muted small">本月已出外探索，下月恢復。</p>}
-      {c.schedule === 'alchemy' && <p className="muted small">本月掌爐煉丹，可在「產業」頁更換掌爐者。</p>}
+      {c.schedule === 'explore' && <p className="muted small">本月已外出（探索或委託），下月恢復。</p>}
+      {isCraftSchedule(c.schedule) && <p className="muted small">本月在工坊{SCHEDULE_NAMES[c.schedule]}，可在「產業」頁更換人選。</p>}
       {seclusion ? (
         <div className="row">
           <button className="btn small danger" onClick={() => dispatch({ type: 'interruptSeclusion' })}>
@@ -96,7 +143,9 @@ export function CharacterPanel({ c }: { c: Character }) {
       )}
       <label className="small row" style={{ marginTop: '.4rem' }}>
         <input type="checkbox" checked={c.takePill} onChange={(e) => dispatch({ type: 'setTakePill', characterId: c.id, value: e.target.checked })} />
-        每月服用聚氣丹（修為 +30，庫存 {game.resources.pill_qi}）
+        {c.realm.major === 'qi'
+          ? `每月服用聚氣丹（修為 +30，庫存 ${game.resources.pill_qi}）`
+          : `每月服用培元丹（修為 +120，庫存 ${game.resources.pill_peiyuan}；沒有時改服聚氣丹 +30，庫存 ${game.resources.pill_qi}）`}
         {c.takePill && !plan.pillTakers.includes(c.id) && <span className="neg">本月丹藥不足</span>}
       </label>
       {c.realm.major === 'qi' && c.realm.stage === 9 && (

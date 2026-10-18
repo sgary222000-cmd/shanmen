@@ -84,12 +84,14 @@ describe('秘境探索', () => {
     expect(s.date.month).toBe(4);
   });
 
-  it('撤退保留一半物資', () => {
-    let s = enter(strongTeam());
-    s = run(s, { type: 'exploreMove', nodeId: 'fork' });
-    s = run(s, { type: 'exploreMove', nodeId: 'herb_garden' });
-    const loot = s.exploration?.loot.herb ?? 0;
-    s = run(s, { type: 'exploreRetreat' });
-    expect(s.pendingLoot.herb).toBe(Math.floor(loot / 2));
+  it('撤退保留一半物資；劍修保留 70%', () => {
+    for (const [lineage, pct] of [['lineage.alchemy', 50], ['lineage.sword', 70]] as const) {
+      let s = enter(edit(strongTeam(), (x) => (x.lineage = lineage)));
+      s = run(s, { type: 'exploreMove', nodeId: 'fork' });
+      s = run(s, { type: 'exploreMove', nodeId: 'herb_garden' });
+      const loot = s.exploration?.loot.herb ?? 0;
+      s = run(s, { type: 'exploreRetreat' });
+      expect(s.pendingLoot.herb).toBe(Math.floor((loot * pct) / 100));
+    }
   });
 });

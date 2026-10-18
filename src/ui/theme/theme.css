@@ -78,6 +78,7 @@ p { margin: .25rem 0 .75rem; }
 .grid { display: grid; gap: 1rem; }
 .grid.two { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
 .grid.three { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.grid.three.fill { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 .row { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
 .muted { color: var(--muted); font-size: .92rem; }
 .small { font-size: .88rem; }

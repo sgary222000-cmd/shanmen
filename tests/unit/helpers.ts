@@ -1,10 +1,11 @@
+import { emptyResources } from '../../src/engine/resources';
 import { content } from '../../src/content/registry';
 import { applyCommand, monthIndex, newGame, type Command, type GameState } from '../../src/engine';
 
 export { content };
 
-export function fresh(seed = 1): GameState {
-  return newGame(content, { sectName: '青雲宗', protagonistName: '林長風', gender: 'male', lineage: 'lineage.sword', seed });
+export function fresh(seed = 1, lineage = 'lineage.sword'): GameState {
+  return newGame(content, { sectName: '青雲宗', protagonistName: '林長風', gender: 'male', lineage, seed });
 }
 
 /** 執行指令，失敗時讓測試失敗。 */
@@ -40,7 +41,7 @@ export function edit(state: GameState, fn: (s: GameState) => void): GameState {
 /** 佈置一個已建好大殿 2 級、煉丹房、聚靈陣的宗門。 */
 export function developed(seed = 1): GameState {
   return edit(fresh(seed), (s) => {
-    s.resources = { lingshi: 2000, food: 1000, stone: 1000, wood: 1000, herb: 300, pill_qi: 20, pill_heal: 10, pill_foundation: 0 };
+    s.resources = { ...emptyResources(), lingshi: 2000, food: 1000, stone: 1000, wood: 1000, herb: 300, pill_qi: 20, pill_heal: 10 };
     const hall = s.buildings.find((b) => b.defId === 'building.hall');
     if (hall) {
       hall.level = 2;
@@ -48,7 +49,7 @@ export function developed(seed = 1): GameState {
     }
     let n = 100;
     for (const defId of ['building.field', 'building.quarry', 'building.lumber', 'building.alchemy', 'building.array']) {
-      s.buildings.push({ id: `b${n++}`, defId, level: 1, status: 'active', construction: null, ...(defId === 'building.field' ? { crop: 'food' as const } : {}) });
+      s.buildings.push({ id: `b${n++}`, defId, region: 'region.main', level: 1, status: 'active', construction: null, ...(defId === 'building.field' ? { crop: 'food' as const } : {}) });
     }
     s.disciples.push({
       id: 'c50',
@@ -62,9 +63,10 @@ export function developed(seed = 1): GameState {
       health: 100,
       injuryMonths: 0,
       loyalty: 70,
-      skills: { alchemy: 3, farming: 1, combat: 3 },
+      skills: { alchemy: 3, farming: 1, combat: 3, forging: 0, talisman: 0, beast: 0, affairs: 0 },
       schedule: 'cultivate',
       takePill: false,
+      seat: 'region.main',
     });
   });
 }

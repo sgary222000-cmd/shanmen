@@ -30,7 +30,7 @@ export function TitlePage() {
     if (!storage) return;
     const r = await storage.importText(await file.text(), new Date().toISOString());
     if (r.ok) {
-      toast('ok', `已匯入到 ${r.slot}：${r.summary.sectName}・${r.summary.date}`);
+      toast('ok', `已匯入到 ${r.slot}：${r.summary.sectName}・${r.summary.date}${r.migratedFrom !== null ? `（已從舊版 v${r.migratedFrom} 升級，原檔案不受影響）` : ''}`);
       await refresh();
     } else toast('error', r.error);
   };

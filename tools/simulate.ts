@@ -3,15 +3,18 @@ import { applyCommand, formatDate, monthIndex, newGame } from '../src/engine';
 import { RESOURCE_IDS } from '../src/engine/resources';
 import { hallLevel } from '../src/engine/systems/buildings/buildings';
 import { realmName } from '../src/engine/systems/characters/characters';
-import { botTurn, type BotLog } from './bot';
+import { botTurn, type BotLog, type BotRoute } from './bot';
 
 // 無畫面模擬器：自動玩 N 年，檢查不變條件並輸出平衡指標。
-// 用法：npm run simulate -- [年數] [種子]
+// 用法：npm run simulate -- [年數] [種子] [傳承，例如 lineage.alchemy] [路線 alchemy|craft|commission]
 
 const years = Number(process.argv[2] ?? 100);
 const seed = Number(process.argv[3] ?? 12345);
+const lineage = process.argv[4]?.startsWith('lineage.') ? process.argv[4] : 'lineage.sword';
+const route = (['alchemy', 'craft', 'commission'].includes(process.argv[5] ?? '') ? process.argv[5] : 'alchemy') as BotRoute;
+const income = { 坊市賣出: 0, 坊市買入: 0 };
 
-let state = newGame(content, { sectName: '青雲宗', protagonistName: '測試', gender: 'male', lineage: 'lineage.sword', seed });
+let state = newGame(content, { sectName: '青雲宗', protagonistName: '測試', gender: 'male', lineage, seed });
 const log: BotLog[] = [];
 const milestones: Record<string, string> = {};
 const mark = (key: string) => {
@@ -21,7 +24,18 @@ const minRes: Record<string, number> = {};
 let violations = 0;
 
 for (let i = 0; i < years * 12; i++) {
-  state = botTurn(state, content, log);
+  const before = state;
+  state = botTurn(state, content, log, route);
+  const done = before.commissions.filter((c) => !state.commissions.some((x) => x.id === c.id));
+  if (done.length) mark('第一件委託');
+  for (const id of Object.keys(state.market.goods) as (keyof typeof state.market.goods)[]) {
+    const a = before.market.goods[id];
+    const b = state.market.goods[id];
+    if (a && b) {
+      income.坊市賣出 += b.sold - a.sold;
+      income.坊市買入 += b.bought - a.bought;
+    }
+  }
   const r = applyCommand(state, content, { type: 'advanceMonth', expectMonth: monthIndex(state.date) });
   if (!r.ok) {
     console.error(`推進失敗（${formatDate(state.date)}）：${r.error}`);
@@ -39,19 +53,26 @@ for (let i = 0; i < years * 12; i++) {
   if (state.buildings.some((b) => b.defId === 'building.alchemy' && b.level >= 1)) mark('煉丹房完工');
   if (state.stats.explorations) mark('首次探索');
   if (state.realmClears['secret.abandoned_cave']) mark('荒廢洞府通關');
+  if (state.buildings.some((b) => b.defId === 'building.market' && b.level >= 1)) mark('坊市完工');
+  if (state.buildings.some((b) => b.defId === 'building.talisman' && b.level >= 1)) mark('符陣閣完工');
+  if (state.buildings.some((b) => b.defId === 'building.forge' && b.level >= 1)) mark('煉器坊完工');
+  if (state.reputation >= 20) mark('聲望 20');
+  if (state.reputation >= 60) mark('聲望 60');
   const p = state.protagonist;
   if (p.realm.major === 'qi' && p.realm.stage >= 5) mark('主角煉氣五層');
   if (p.realm.major === 'qi' && p.realm.stage >= 9) mark('主角煉氣九層');
   if (p.realm.major === 'foundation') mark('主角築基');
+  for (const [id, r] of Object.entries(state.regions)) if (r.status === 'open' && content.regions.get(id)?.unlock) mark(`開放${content.regions.get(id)?.name}`);
 }
 
-console.log(`=== 模擬 ${years} 年（種子 ${seed}）===`);
+console.log(`=== 模擬 ${years} 年（種子 ${seed}、${content.lineages.get(lineage)?.name}、路線 ${route}）===`);
 console.log(`結束時間：${formatDate(state.date)}；主角 ${realmName(state.protagonist.realm)}`);
 console.log(`內門：${state.disciples.map((d) => `${d.name} ${realmName(d.realm)}`).join('、') || '無'}`);
 console.log(`外門：${state.outer.count} 人，滿意度 ${state.outer.satisfaction}`);
 console.log('里程碑：');
 for (const [k, v] of Object.entries(milestones)) console.log(`  ${k}：${v}`);
 console.log('最終資源：', JSON.stringify(state.resources));
+console.log(`聲望 ${state.reputation}；坊市成交批數：賣 ${income.坊市賣出}、買 ${income.坊市買入}；已學配方：${state.recipes.length}`);
 console.log('期間最低資源：', JSON.stringify(minRes));
 console.log(`戰鬥 ${state.battles.length} 場（保留最近 30 場）：${state.battles.slice(0, 5).map((b) => `${b.title} ${b.result}`).join('；')}`);
 console.log(`不變條件違反次數（資源為負或非整數）：${violations}`);

@@ -7,9 +7,17 @@ export type ResourceId =
   | 'stone' // 石材
   | 'wood' // 靈木
   | 'herb' // 藥草
+  | 'spirit_herb' // 靈藥（P1）
+  | 'ore' // 靈礦（P1）
+  | 'paper' // 符紙（P1）
+  | 'beast_mat' // 獸材（P1）
   | 'pill_qi' // 聚氣丹
   | 'pill_heal' // 回春丹
-  | 'pill_foundation'; // 築基丹
+  | 'pill_foundation' // 築基丹
+  | 'pill_peiyuan' // 培元丹（P1，築基期修煉用）
+  | 'talisman_fire' // 火符（P1）
+  | 'talisman_guard' // 護身符（P1）
+  | 'artifact'; // 法器（P1；批次 C 才能裝備）
 
 export type Resources = Record<ResourceId, number>;
 
@@ -18,7 +26,7 @@ export interface GameDate {
   month: number; // 1–12
 }
 
-export type RngStream = 'world' | 'recruit' | 'alchemy' | 'combat' | 'explore' | 'cultivation';
+export type RngStream = 'world' | 'recruit' | 'alchemy' | 'combat' | 'explore' | 'cultivation' | 'market' | 'commission';
 /** xoshiro128** 狀態，四個 32 位元無號整數。 */
 export type RngState = [number, number, number, number];
 
@@ -39,9 +47,13 @@ export interface SpiritRoot {
 }
 
 export interface Skills {
-  alchemy: number; // 0–20
-  farming: number;
-  combat: number;
+  alchemy: number; // 煉丹 0–20
+  farming: number; // 耕作
+  combat: number; // 戰鬥
+  forging: number; // 煉器（P1）
+  talisman: number; // 符陣（P1）
+  beast: number; // 御獸（P1）
+  affairs: number; // 庶務（P1）
 }
 
 /** 主角行程與具名弟子的本月工作。 */
@@ -50,6 +62,8 @@ export type ScheduleKind =
   | 'seclusion' // 閉關（主角，可多月）
   | 'teach' // 授課（主角）
   | 'alchemy' // 煉丹
+  | 'forge' // 煉器（P1）
+  | 'talisman' // 製符（P1）
   | 'heal' // 療傷
   | 'breakthrough' // 突破
   | 'explore'; // 探索（由探索系統設定）
@@ -84,6 +98,8 @@ export interface Character {
   schedule: ScheduleKind;
   /** 本月是否服用聚氣丹 */
   takePill: boolean;
+  /** 修煉地點（區域 ID），佔用該區域的靈氣 */
+  seat: string;
 }
 
 export interface Protagonist extends Character {
@@ -91,7 +107,7 @@ export interface Protagonist extends Character {
   seclusion: Seclusion | null;
 }
 
-export type OuterJob = 'field' | 'quarry' | 'lumber' | 'errand' | 'cultivate';
+export type OuterJob = 'field' | 'quarry' | 'lumber' | 'garden' | 'mine' | 'errand' | 'cultivate';
 
 export interface OuterDisciples {
   count: number;
@@ -103,6 +119,8 @@ export interface OuterDisciples {
   training: number;
   /** 連續缺糧月數 */
   hungerMonths: number;
+  /** 本月接了勞務委託、外出幫工的人數（月底歸零） */
+  labor: number;
 }
 
 export type BuildingStatus = 'active' | 'constructing' | 'disabled' | 'ruined';
@@ -110,6 +128,8 @@ export type BuildingStatus = 'active' | 'constructing' | 'disabled' | 'ruined';
 export interface Building {
   id: string;
   defId: string;
+  /** 所在區域 ID */
+  region: string;
   /** 已完成的等級；殘破建築為 0 */
   level: number;
   status: BuildingStatus;
@@ -121,12 +141,78 @@ export interface Building {
   disabledReason?: string;
 }
 
+export type RegionStatus = 'locked' | 'opening' | 'open';
+
+export interface RegionState {
+  status: RegionStatus;
+  /** 開路施工中：剩餘月數與已付費用 */
+  construction: { remainingMonths: number; paid: Partial<Resources> } | null;
+}
+
+/** 靈獸（P1 批次 A 只有御獸開局的一隻；完整靈獸系統於批次 C）。 */
+export interface Beast {
+  id: string;
+  speciesId: string;
+  name: string;
+  /** 主人人物 ID；出戰時隨主人上場，不佔隊伍名額 */
+  ownerId: string;
+}
+
 export interface Furnace {
   /** 負責人物 ID；null 表示閒置 */
   alchemistId: string | null;
   recipeId: string | null;
   /** 重複煉製；false 時煉完一次即清除配方 */
   repeat: boolean;
+  /** 庫存保留量：做完後任何材料（靈石除外）會低於此數就停工；未設或 0 表示不保留 */
+  keep?: number;
+}
+
+/** 工坊種類：煉丹房的丹爐、煉器坊的器爐、符陣閣的符案。 */
+export type Station = 'alchemy' | 'forge' | 'talisman';
+
+/** 坊市某商品本月的行情。價格以「一批」計，見 balance.market。 */
+export interface MarketGood {
+  /** 本月價格相對基準價的百分比（70–130） */
+  pct: number;
+  /** 本月可買批數（坊市 1 級時；等級越高越多） */
+  stock: number;
+  /** 本月收購批數 */
+  demand: number;
+  /** 本月已買、已賣批數 */
+  bought: number;
+  sold: number;
+}
+
+export interface MarketState {
+  goods: Partial<Record<ResourceId, MarketGood>>;
+  /** 本月行情消息，例如某宗大量收購丹藥 */
+  rumor: string | null;
+}
+
+export type CommissionKind = 'labor' | 'deliver' | 'escort';
+
+/** 委託榜上的一件委託。 */
+export interface Commission {
+  id: string;
+  templateId: string;
+  title: string;
+  text: string;
+  kind: CommissionKind;
+  /** 勞務：最多派幾名外門；報酬依人數 */
+  workers?: number;
+  /** 交付：需要交出的物資 */
+  deliver?: Partial<Resources>;
+  /** 護衛：會遇到的敵人與隊伍上限 */
+  enemies?: string[];
+  maxTeam?: number;
+  /** 報酬；勞務委託為每人報酬 */
+  reward: Partial<Resources>;
+  reputation: number;
+  /** 護衛類委託（劍修報酬加成） */
+  guard: boolean;
+  /** 最後一個可接的月份（monthIndex） */
+  expires: number;
 }
 
 export interface CombatUnitSnapshot {
@@ -141,6 +227,8 @@ export type ExplorationStatus = 'active' | 'completed' | 'retreated' | 'defeated
 export interface CombatStrategy {
   /** 生命低於門檻時服用回春丹 */
   useHealPill: boolean;
+  /** 戰鬥開始時使用護身符、火符（各一張） */
+  useTalismans: boolean;
   /** 優先攻擊生命最低的敵人；關閉時依站位順序攻擊 */
   focusLowest: boolean;
 }
@@ -225,7 +313,18 @@ export interface GameState {
   disciples: Character[];
   outer: OuterDisciples;
   buildings: Building[];
+  /** 各區域的開放狀態 */
+  regions: Record<string, RegionState>;
+  beasts: Beast[];
   furnaces: Furnace[];
+  /** 煉器坊的器爐與符陣閣的符案（P1 批次 B） */
+  workshops: { forge: Furnace[]; talisman: Furnace[] };
+  /** 坊市行情（每月月底更新） */
+  market: MarketState;
+  /** 委託榜 */
+  commissions: Commission[];
+  /** 聲望：進度指標，不能花用；影響招生與坊市折扣 */
+  reputation: number;
   /** 已學會的配方 */
   recipes: string[];
   exploration: ExplorationRun | null;

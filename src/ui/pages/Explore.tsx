@@ -1,7 +1,8 @@
+import { isCraftSchedule } from '../../engine/systems/buildings/buildings';
 import { useState } from 'react';
 import type { BattleRecord, Row } from '../../engine';
 import { allCharacters, realmName } from '../../engine/systems/characters/characters';
-import { canJoinExpedition } from '../../engine/systems/exploration/exploration';
+import { canJoinExpedition, retreatPct } from '../../engine/systems/exploration/exploration';
 import { Art } from '../components/Art';
 import { ResList } from '../components/Res';
 import { content, useGame, useUi } from '../store';
@@ -108,7 +109,7 @@ function ActiveRun() {
           ・回春丹 {game.resources.pill_heal}
         </div>
         <p className="small">
-          目前收穫：<ResList value={run.loot} />（撤退保留 {realm.retreatLootPct}%，戰敗全部失去）
+          目前收穫：<ResList value={run.loot} />（撤退保留 {retreatPct(game, content, realm)}%，戰敗全部失去）
         </p>
         {!finished && (
           <div className="row">
@@ -216,13 +217,13 @@ function Prepare() {
                       <option value="back">後排</option>
                     </select>
                   </td>
-                  <td className="muted small">{reason ?? (c.schedule === 'alchemy' ? '出發後會離開丹爐' : '')}</td>
+                  <td className="muted small">{reason ?? (isCraftSchedule(c.schedule) ? '出發後會離開工坊' : '')}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-        <p className="muted small">前排有人時，敵人只能攻擊前排。出發的人本月行程改為探索，不能閉關或煉丹。</p>
+        <p className="muted small">前排有人時，敵人只能攻擊前排。出發的人本月行程改為探索，不能閉關或在工坊工作。</p>
         <div className="row">
           <label>
             <input
@@ -239,6 +240,17 @@ function Prepare() {
               onChange={(e) => dispatch({ type: 'setStrategy', useHealPill: game.strategy.useHealPill, focusLowest: e.target.checked })}
             />{' '}
             優先攻擊生命最低的敵人
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={game.strategy.useTalismans}
+              data-testid="use-talismans"
+              onChange={(e) =>
+                dispatch({ type: 'setStrategy', useHealPill: game.strategy.useHealPill, focusLowest: game.strategy.focusLowest, useTalismans: e.target.checked })
+              }
+            />{' '}
+            每場戰鬥開始各用一張護身符、火符（庫存 {game.resources.talisman_guard}／{game.resources.talisman_fire}）
           </label>
         </div>
         <button

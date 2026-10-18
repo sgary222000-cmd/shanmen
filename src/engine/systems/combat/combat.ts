@@ -1,6 +1,6 @@
 import { balance } from '../../../content/balance';
-import type { EnemyDef, LineageDef } from '../../../content/schema';
-import type { Character, CombatStrategy, Row } from '../../types';
+import type { BeastSpeciesDef, EnemyDef, LineageDef } from '../../../content/schema';
+import type { Beast, Character, CombatStrategy, Row } from '../../types';
 import { powerLevel } from '../characters/characters';
 
 // 自動回合戰鬥。純函式：同樣的輸入與亂數序列一定得到同樣的結果。
@@ -20,6 +20,8 @@ export interface Unit {
   mp: number;
   skill?: { name: string; multiplierPct: number; mpCost?: number; piercePct?: number; cooldown?: number };
   turns: number;
+  /** 靈獸等隨行者：全隊只剩隨行者時視為落敗 */
+  companion?: boolean;
 }
 
 export interface BattleInput {
@@ -27,6 +29,8 @@ export interface BattleInput {
   enemies: Unit[];
   strategy: CombatStrategy;
   healPills: number;
+  /** 庫存的火符、護身符；策略開啟時戰鬥開始各用一張 */
+  talismans?: { fire: number; guard: number };
   /** 回傳 [0, n) 的整數 */
   randInt: (n: number) => number;
 }
@@ -39,6 +43,7 @@ export interface BattleOutcome {
   allies: Unit[];
   enemies: Unit[];
   pillsUsed: number;
+  talismansUsed: { fire: number; guard: number };
 }
 
 export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, hp?: number): Unit {
@@ -52,8 +57,8 @@ export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, h
     row,
     hp: Math.min(maxHp, hp ?? Math.floor((maxHp * c.health) / 100)),
     maxHp,
-    atk: 10 + 3 * L + cs,
-    def: 3 + L,
+    atk: Math.round(((10 + 3 * L + cs) * (100 + lineage.bonuses.combatAtkPct)) / 100),
+    def: Math.round(((3 + L) * (100 + lineage.bonuses.combatDefPct)) / 100),
     spd: 9 + Math.floor(L / 2) + Math.floor(cs / 2),
     hit: 8 + L,
     res: 4 + Math.floor(L / 2),
@@ -65,6 +70,29 @@ export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, h
       piercePct: lineage.skill.piercePct,
     },
     turns: 0,
+  };
+}
+
+/** 靈獸隨主人出戰，能力依主人境界與御獸技藝換算。 */
+export function unitFromBeast(beast: Beast, species: BeastSpeciesDef, owner: Character, lineage: LineageDef, hp?: number): Unit {
+  const base = unitFromCharacter(owner, species.row, lineage);
+  const bonus = 100 + owner.skills.beast * 3;
+  const maxHp = Math.floor((base.maxHp * species.hpPct * bonus) / 10000);
+  return {
+    key: beast.id,
+    name: beast.name,
+    side: 'ally',
+    row: species.row,
+    hp: Math.min(maxHp, hp ?? maxHp),
+    maxHp,
+    atk: Math.floor((base.atk * species.atkPct * bonus) / 10000),
+    def: base.def,
+    spd: species.spd + Math.floor(owner.skills.beast / 2),
+    hit: base.hit,
+    res: base.res,
+    mp: 0,
+    turns: 0,
+    companion: true,
   };
 }
 
@@ -110,6 +138,26 @@ export function runBattle(input: BattleInput): BattleOutcome {
   let pills = input.healPills;
   let pillsUsed = 0;
   const { maxRounds, healThresholdPct, healPct } = balance.combat;
+  const talismansUsed = { fire: 0, guard: 0 };
+
+  // 戰前用符：護身符提高全隊防禦，火符對每個敵人造成固定傷害
+  if (input.strategy.useTalismans && input.talismans) {
+    if (input.talismans.guard > 0) {
+      talismansUsed.guard = 1;
+      for (const u of allies) u.def += balance.talismanCombat.guardDef;
+      const line = `祭出護身符，全隊防禦 +${balance.talismanCombat.guardDef}。`;
+      log.push(line);
+      highlights.push(line);
+    }
+    if (input.talismans.fire > 0) {
+      talismansUsed.fire = 1;
+      for (const u of enemies) u.hp = Math.max(0, u.hp - balance.talismanCombat.fireDamage);
+      const line = `打出火符，每個敵人受到 ${balance.talismanCombat.fireDamage} 傷害。`;
+      log.push(line);
+      highlights.push(line);
+      for (const u of enemies) if (u.hp === 0) log.push(`${u.name}倒下。`);
+    }
+  }
 
   const order = [...allies, ...enemies].sort((a, b) => {
     if (b.spd !== a.spd) return b.spd - a.spd;
@@ -118,8 +166,8 @@ export function runBattle(input: BattleInput): BattleOutcome {
   });
 
   let round = 0;
-  let result: BattleOutcome['result'] = 'draw';
-  outer: for (round = 1; round <= maxRounds; round++) {
+  let result: BattleOutcome['result'] = alive(enemies).length ? 'draw' : 'win';
+  outer: for (round = 1; result === 'draw' && round <= maxRounds; round++) {
     log.push(`── 第 ${round} 回合 ──`);
     for (const actor of order) {
       if (actor.hp <= 0) continue;
@@ -189,7 +237,7 @@ export function runBattle(input: BattleInput): BattleOutcome {
         result = 'win';
         break outer;
       }
-      if (!alive(allies).length) {
+      if (!alive(allies).some((u) => !u.companion)) {
         result = 'lose';
         break outer;
       }
@@ -200,5 +248,5 @@ export function runBattle(input: BattleInput): BattleOutcome {
   if (result === 'win') highlights.push(`第 ${rounds} 回合獲勝。`);
   if (result === 'lose') highlights.push(`第 ${rounds} 回合，我方全員倒下。`);
   if (pillsUsed) highlights.push(`使用回春丹 ${pillsUsed} 顆。`);
-  return { result, rounds, log, highlights, allies, enemies, pillsUsed };
+  return { result, rounds, log, highlights, allies, enemies, pillsUsed, talismansUsed };
 }

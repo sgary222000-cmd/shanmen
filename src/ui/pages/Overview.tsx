@@ -4,6 +4,7 @@ import { hallLevel, innerLimit, outerCapacity, qiCapacity } from '../../engine/s
 import { qiDemandOf, realmName } from '../../engine/systems/characters/characters';
 import { qiEfficiencyPct } from '../../engine/systems/cultivation/cultivation';
 import { currentStep, TUTORIAL_STEPS } from '../../engine/systems/tutorial';
+import { regionState } from '../../engine/systems/regions/regions';
 import { AlertList } from '../components/Alerts';
 import { Art } from '../components/Art';
 import { ResList } from '../components/Res';
@@ -56,9 +57,11 @@ export function OverviewPage() {
         {[...content.buildings.values()].map((def) => {
           const pos = SPOTS[def.id];
           if (!pos) return null;
-          const b = game.buildings.find((x) => x.defId === def.id);
+          // 全景圖畫的是主峰一帶；同種建築有多座時顯示座數
+          const all = game.buildings.filter((x) => x.defId === def.id);
+          const b = all.find((x) => x.region === 'region.main') ?? all[0];
           const label = b
-            ? `${def.name}${b.level ? ` ${b.level}級` : '（殘破）'}${b.construction ? '・施工中' : ''}${b.status === 'disabled' ? '・停用' : ''}`
+            ? `${def.name}${all.length > 1 ? ` ×${all.length}` : b.level ? ` ${b.level}級` : b.construction ? '' : '（殘破）'}${b.construction ? '・施工中' : ''}${b.status === 'disabled' ? '・停用' : ''}`
             : `${def.name}（未建）`;
           return (
             <button
@@ -104,11 +107,34 @@ export function OverviewPage() {
                 </td>
               </tr>
               <tr>
-                <th>主峰靈氣</th>
+                <th>傳承</th>
+                <td>{content.lineages.get(game.lineage)?.name}</td>
+              </tr>
+              <tr>
+                <th>聲望</th>
                 <td>
-                  容量 {qiCapacity(game, content)}・需求 {qiDemandOf(game)}・修煉效率 {qiEfficiencyPct(game, content)}%
+                  {game.reputation}・委託榜 {game.commissions.length} 件
+                  {game.market.rumor && <span className="muted small">・坊市消息：{game.market.rumor}</span>}
                 </td>
               </tr>
+              <tr>
+                <th>區域</th>
+                <td>
+                  {[...content.regions.values()]
+                    .map((r) => `${r.name}${regionState(game, r.id).status === 'open' ? '' : regionState(game, r.id).status === 'opening' ? '（施工中）' : '（未開放）'}`)
+                    .join('、')}
+                </td>
+              </tr>
+              {[...content.regions.values()]
+                .filter((r) => qiCapacity(game, content, r.id) > 0 && regionState(game, r.id).status === 'open')
+                .map((r) => (
+                  <tr key={r.id}>
+                    <th>{r.name}靈氣</th>
+                    <td>
+                      容量 {qiCapacity(game, content, r.id)}・需求 {qiDemandOf(game, r.id)}・修煉效率 {qiEfficiencyPct(game, content, r.id)}%
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>

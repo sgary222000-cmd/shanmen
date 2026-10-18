@@ -16,7 +16,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'assign',
     title: '指派生產',
     hint: '在「產業」頁替外門弟子分工，例如派人下山接委託賺靈石。',
-    check: (s) => s.outer.jobs.field + s.outer.jobs.quarry + s.outer.jobs.lumber + s.outer.jobs.errand > 0,
+    check: (s) => Object.values(s.outer.jobs).some((n) => n > 0),
   },
   {
     id: 'cultivate',

@@ -7,6 +7,8 @@ import { rng } from '../../rng';
 import type { GameState } from '../../types';
 import { activeEffects, hallLevel, HALL, innerLimit, outerCapacity } from '../buildings/buildings';
 import { characterFromCandidate, rollCandidate, realmName } from '../characters/characters';
+import { trimJobs } from '../characters/outer';
+import { reputationRecruitBonus } from '../commissions/commissions';
 
 /** 月結算第 7 步：到期時產生山門招生事件（需處理才能繼續推進）。 */
 export function maybeRecruitment(state: GameState, content: ContentPack, lines: string[]): void {
@@ -18,7 +20,8 @@ export function maybeRecruitment(state: GameState, content: ContentPack, lines: 
   const r = rng(state, 'recruit');
   const bonus = activeEffects(state, content, HALL)?.recruitOuterBonus ?? 0;
   const room = Math.max(0, outerCapacity(state, content) - state.outer.count);
-  const joined = Math.min(room, r.range(balance.recruit.outerMin, balance.recruit.outerMax) + bonus);
+  const repBonus = reputationRecruitBonus(state);
+  const joined = Math.min(room, r.range(balance.recruit.outerMin, balance.recruit.outerMax) + bonus + repBonus);
   state.outer.count += joined;
 
   const candidates = Array.from({ length: balance.recruit.candidates }, () => rollCandidate(state, 0));
@@ -28,6 +31,7 @@ export function maybeRecruitment(state: GameState, content: ContentPack, lines: 
     title: '山門招生',
     text:
       `本次招生有 ${joined} 人加入外門` +
+      (repBonus ? `（宗門聲望多吸引了 ${repBonus} 人）` : '') +
       (room < balance.recruit.outerMin ? '（弟子居所將滿）' : '') +
       `。另有 ${candidates.length} 名資質較佳的少年求入內門，最多收一人，需支付安置靈石。`,
     blocking: true,
@@ -60,6 +64,7 @@ export function resolveRecruitment(
 export function promoteOuter(state: GameState, content: ContentPack): string {
   ensure(hallLevel(state) >= 1, '需要先修復宗門大殿');
   ensure(state.outer.count > 0, '沒有外門弟子');
+  ensure(state.outer.count > state.outer.labor, '外門弟子都外出做委託了，下月再選拔');
   ensure(state.disciples.length < innerLimit(state, content), '內門人數已達大殿上限');
   ensure(state.resources.lingshi >= balance.recruit.promoteCost, `靈石不足（需要 ${balance.recruit.promoteCost}）`);
   state.resources.lingshi -= balance.recruit.promoteCost;
@@ -69,13 +74,7 @@ export function promoteOuter(state: GameState, content: ContentPack): string {
   state.disciples.push(c);
   state.outer.count -= 1;
   // 若人數減少導致分工超額，從修煉以外的分工中依序扣回
-  let over = state.outer.jobs.field + state.outer.jobs.quarry + state.outer.jobs.lumber + state.outer.jobs.errand - state.outer.count;
-  for (const job of ['errand', 'lumber', 'quarry', 'field'] as const) {
-    if (over <= 0) break;
-    const cut = Math.min(over, state.outer.jobs[job]);
-    state.outer.jobs[job] -= cut;
-    over -= cut;
-  }
+  trimJobs(state);
   state.outer.training = Math.max(0, state.outer.training - 10);
   return `${c.name}（${realmName(c.realm)}）晉升內門。`;
 }

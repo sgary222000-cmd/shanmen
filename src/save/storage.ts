@@ -123,7 +123,10 @@ export class SaveStorage {
   }
 
   /** 匯入存檔到第一個空的手動欄位；沒有空欄位時拒絕，不覆蓋現有存檔。 */
-  async importText(text: string, savedAt: string): Promise<{ ok: true; slot: string; summary: SaveSummary } | { ok: false; error: string }> {
+  async importText(
+    text: string,
+    savedAt: string,
+  ): Promise<{ ok: true; slot: string; summary: SaveSummary; migratedFrom: number | null } | { ok: false; error: string }> {
     const result = parseText(text);
     if (!result.ok) return result;
     const used = new Set((await this.db.getAllKeys('saves')).map(String));
@@ -131,7 +134,7 @@ export class SaveStorage {
     if (!empty) return { ok: false, error: '手動存檔欄位已滿，請先刪除一個手動存檔再匯入' };
     const envelope = toEnvelope(result.state, savedAt);
     await this.put(empty, envelope);
-    return { ok: true, slot: empty, summary: envelope.summary };
+    return { ok: true, slot: empty, summary: envelope.summary, migratedFrom: result.migratedFrom };
   }
 
   close(): void {

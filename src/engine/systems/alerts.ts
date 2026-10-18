@@ -26,8 +26,10 @@ export function computeAlerts(state: GameState, content: ContentPack): Alert[] {
     alerts.push({ level: 'danger', text: `${content.buildings.get(b?.defId ?? '')?.name ?? id}維護費不足，將停用` });
   }
   if (state.outer.satisfaction < 30) alerts.push({ level: 'warning', text: `外門滿意度偏低（${state.outer.satisfaction}）` });
-  const qi = qiEfficiencyPct(state, content);
-  if (qi < 100) alerts.push({ level: 'info', text: `靈氣不足，修煉效率 ${qi}%` });
+  for (const r of content.regions.values()) {
+    const qi = qiEfficiencyPct(state, content, r.id);
+    if (qi < 100) alerts.push({ level: 'info', text: `${r.name}靈氣不足，在此修煉效率 ${qi}%` });
+  }
   for (const c of allCharacters(state)) if (isInjured(c)) alerts.push({ level: 'info', text: `${c.name}受傷（${c.injuryMonths} 個月）` });
   for (const f of plan.furnaces) if (!f.runs && f.reason) alerts.push({ level: 'warning', text: `丹爐 ${f.index + 1}：${f.reason}` });
   return alerts;
