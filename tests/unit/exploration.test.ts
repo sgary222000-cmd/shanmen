@@ -9,7 +9,7 @@ function walk(state: GameState): GameState {
   while (s.exploration?.status === 'active' && guard++ < 20) {
     const realm = content.secretRealms.get(s.exploration.realmId);
     const node = realm?.nodes.find((n) => n.id === s.exploration?.nodeId);
-    if (node?.choices && !s.exploration.log.some((l) => l.startsWith(`[${node.id}]`))) {
+    if (node?.choices && !s.exploration.choices[node.id]) {
       s = run(s, { type: 'exploreChoice', choiceId: node.choices[0]?.id ?? '' });
       continue;
     }

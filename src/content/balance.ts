@@ -8,7 +8,7 @@ export const balance = {
       lingshi: 300,
       food: 200,
       stone: 80,
-      wood: 60,
+      wood: 80,
       herb: 20,
       pill_qi: 0,
       pill_heal: 0,

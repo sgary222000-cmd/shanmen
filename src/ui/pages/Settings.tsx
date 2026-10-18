@@ -1,0 +1,62 @@
+import { useState } from 'react';
+import { useUi } from '../store';
+
+const KEY = 'shanmen.fontScale';
+
+function readScale(): number {
+  try {
+    const v = Number(localStorage.getItem(KEY));
+    return v >= 0.85 && v <= 1.4 ? v : 1;
+  } catch {
+    return 1;
+  }
+}
+
+export function applyFontScale(scale = readScale()): void {
+  document.documentElement.style.setProperty('--font-scale', String(scale));
+}
+
+export function SettingsPage() {
+  const [scale, setScale] = useState(readScale());
+  const persisted = useUi((s) => s.persisted);
+  const change = (v: number) => {
+    setScale(v);
+    applyFontScale(v);
+    try {
+      localStorage.setItem(KEY, String(v));
+    } catch {
+      // 無法保存偏好時仍可使用
+    }
+  };
+  return (
+    <div>
+      <h2>設定</h2>
+      <div className="panel">
+        <h3>字體大小</h3>
+        <div className="row">
+          {[0.9, 1, 1.1, 1.25].map((v) => (
+            <button key={v} className={`btn small ${scale === v ? '' : 'secondary'}`} onClick={() => change(v)}>
+              {Math.round(v * 100)}%
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="panel">
+        <h3>存檔保護</h3>
+        <p>
+          瀏覽器持久保存：{persisted ? <span className="pos">已啟用</span> : <span className="muted">未啟用（瀏覽器可能在空間不足時清除資料，請定期匯出備份）</span>}
+        </p>
+      </div>
+      <div className="panel">
+        <h3>尚未開放的設定</h3>
+        <div className="row">
+          {['音量', '加速結算', '連續推進與自動停止條件', '通知', '離線加成'].map((x) => (
+            <span key={x} className="tag locked">
+              {x}（P1 起）
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

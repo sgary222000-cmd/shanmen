@@ -122,7 +122,7 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[]): 
         while (e.exploration?.status === 'active' && guard++ < 20) {
           const realm = content.secretRealms.get(e.exploration.realmId);
           const node = realm?.nodes.find((x) => x.id === e.exploration?.nodeId);
-          if (node?.choices && !e.exploration.log.some((l) => l.startsWith(`[${node.id}]`))) {
+          if (node?.choices && !e.exploration.choices[node.id]) {
             e = tryCmd(e, content, { type: 'exploreChoice', choiceId: node.choices[0]?.id ?? '' });
             continue;
           }

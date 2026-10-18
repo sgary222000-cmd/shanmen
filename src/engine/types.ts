@@ -160,6 +160,8 @@ export interface ExplorationRun {
   /** 本次解鎖的配方（完成時才生效） */
   unlocks: string[];
   status: ExplorationStatus;
+  /** 事件節點已做的選擇：節點 ID → 選項 ID */
+  choices: Record<string, string>;
   log: string[];
   /** 是否為首次通關的路線（決定首領獎勵） */
   firstClear: boolean;

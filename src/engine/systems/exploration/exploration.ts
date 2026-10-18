@@ -76,6 +76,7 @@ export function startExploration(
     loot: {},
     unlocks: [],
     status: 'active',
+    choices: {},
     log: [`補給：${formatResources(realm.supplies)}。進入${realm.name}。`],
     firstClear: !state.claimedRewards.includes(realm.firstClear.rewardId),
   };
@@ -138,7 +139,7 @@ export function moveTo(state: GameState, content: ContentPack, nextId: string): 
   const realm = realmDef(content, run.realmId);
   const current = nodeDef(realm, run.nodeId);
   ensure(current.next.includes(nextId), '無法前往該處');
-  ensure(!current.choices || run.log.some((l) => l.startsWith(`[${current.id}]`)), '請先決定如何處理此處');
+  ensure(!current.choices || run.choices[current.id], '請先決定如何處理此處');
   const node = nodeDef(realm, nextId);
   run.nodeId = nextId;
   run.visited.push(nextId);
@@ -167,8 +168,9 @@ export function chooseEvent(state: GameState, content: ContentPack, choiceId: st
   const node = nodeDef(realm, run.nodeId);
   const choice = node.choices?.find((c) => c.id === choiceId);
   ensure(choice, '沒有這個選項');
-  ensure(!run.log.some((l) => l.startsWith(`[${node.id}]`)), '已經做過選擇');
-  run.log.push(`[${node.id}] ${choice.label}：${choice.result}`);
+  ensure(!run.choices[node.id], '已經做過選擇');
+  run.choices[node.id] = choice.id;
+  run.log.push(`${choice.label}：${choice.result}`);
   if (choice.hpLossPct) {
     const lineage = content.lineages.get(state.lineage);
     for (const id of aliveTeam(run)) {
