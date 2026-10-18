@@ -40,7 +40,7 @@ export function TitlePage() {
       <h1>山門長生錄</h1>
       <p className="muted">單機修仙宗門經營・P0 核心試玩版（暫名）</p>
       <div className="box">
-        <Art path="placeholder/panorama.svg" alt="宗門全景" />
+        <Art path="final/panorama.webp" alt="宗門全景" />
       </div>
       <div className="box stack">
         {storageError && <p className="neg">{storageError}</p>}

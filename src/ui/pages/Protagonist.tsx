@@ -9,7 +9,7 @@ export function ProtagonistPage() {
     <div>
       <h2>主角</h2>
       <div className="grid" style={{ gridTemplateColumns: '220px 1fr' }}>
-        <Art path={p.gender === 'female' ? 'placeholder/portrait-female.svg' : 'placeholder/portrait-male.svg'} alt={p.name} />
+        <Art path={p.gender === 'female' ? 'final/portrait-female.webp' : 'final/portrait-male.webp'} alt={p.name} />
         <CharacterPanel c={p} />
       </div>
       <p className="muted small">
