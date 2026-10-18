@@ -76,12 +76,12 @@ function act(state: GameState, def: SectDef, sect: SectState, goal: SectGoal): b
   const res = sect.resources;
   if (goal === 'build') {
     const c = S.buildCost;
-    if (res.stone < c.stone || res.wood < c.wood || res.lingshi < c.lingshi) return false;
+    if (sect.buildings >= S.maxBuildings || res.stone < c.stone || res.wood < c.wood || res.lingshi < c.lingshi) return false;
     res.stone -= c.stone;
     res.wood -= c.wood;
     res.lingshi -= c.lingshi;
     sect.buildings += 1;
-    sect.power = Math.min(S.maxPower, sect.power + 2);
+    sect.power = Math.min(S.maxPower, sect.power + 1);
     intel(state, sect.id, `${def.name}擴建山門（建築共 ${sect.buildings} 級）。`);
     return true;
   }
@@ -99,7 +99,7 @@ function act(state: GameState, def: SectDef, sect: SectState, goal: SectGoal): b
   if (goal === 'train') {
     if (res.lingshi < S.trainCost || sect.power >= S.maxPower) return false;
     res.lingshi -= S.trainCost;
-    const n = r.range(2, 4);
+    const n = r.range(1, 2);
     sect.power = Math.min(S.maxPower, sect.power + n);
     intel(state, sect.id, `${def.name}閉門操練弟子，實力提升。`);
     return true;
@@ -121,6 +121,11 @@ function act(state: GameState, def: SectDef, sect: SectState, goal: SectGoal): b
   }
   if (!state.market.rumor) state.market.rumor = state.intel[0]?.text ?? null;
   return true;
+}
+
+function capSect(sect: SectState): void {
+  const res = sect.resources;
+  for (const k of Object.keys(S.resourceCap) as (keyof typeof S.resourceCap)[]) res[k] = Math.min(res[k], S.resourceCap[k]);
 }
 
 /** 月結算第 6 步：各宗門收支與行動。在坊市行情更新之後執行，行動才會影響下個月的行情。 */
@@ -154,6 +159,7 @@ export function tickSects(state: GameState, content: ContentPack): void {
     for (let i = 0; i < actions; i++) {
       if (!act(state, def, sect, sect.goal) && sect.goal !== 'train') act(state, def, sect, 'train');
     }
+    capSect(sect);
   }
 }
 

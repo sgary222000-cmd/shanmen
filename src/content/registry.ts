@@ -152,6 +152,7 @@ export function buildContent(raw: RawContent): ContentPack {
     if (c.kind === 'deliver' && !c.deliver) throw new Error(`交付委託缺少物資：${c.id}`);
     if (c.kind === 'escort' && !c.enemies?.length) throw new Error(`護衛委託缺少敵人：${c.id}`);
     for (const e of c.enemies ?? []) if (!pack.enemies.has(e)) throw new Error(`委託引用不存在的敵人：${c.id} → ${e}`);
+    if (c.requiresClear && !pack.secretRealms.has(c.requiresClear)) throw new Error(`委託引用不存在的秘境：${c.id} → ${c.requiresClear}`);
   }
   if (![...pack.commissions.values()].some((c) => c.kind === 'labor' && c.minHall === 0)) {
     throw new Error('至少需要一種不需任何建築的勞務委託（保底途徑）');

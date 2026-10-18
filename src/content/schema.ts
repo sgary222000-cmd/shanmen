@@ -324,6 +324,8 @@ export const commissionSchema = z.object({
   weight: z.number().int().positive(),
   /** 出現所需的大殿等級 */
   minHall: z.number().int().nonnegative().default(0),
+  /** 出現所需：已通關的秘境 */
+  requiresClear: z.string().optional(),
   /** 掛在榜上的月數 */
   months: z.number().int().positive(),
   /** 勞務：最多派幾人（抽 [min, max]） */

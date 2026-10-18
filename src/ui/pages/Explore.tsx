@@ -3,6 +3,8 @@ import { useState } from 'react';
 import type { BattleRecord, Row } from '../../engine';
 import { allCharacters, realmName } from '../../engine/systems/characters/characters';
 import { canJoinExpedition, retreatPct } from '../../engine/systems/exploration/exploration';
+import { dispatchBlocked, dispatchOdds, realmNodeLoot } from '../../engine/systems/exploration/dispatch';
+import { scaleResources } from '../../engine/resources';
 import { Art } from '../components/Art';
 import { ResList } from '../components/Res';
 import { content, useGame, useUi } from '../store';
@@ -161,10 +163,66 @@ function ActiveRun() {
   );
 }
 
+function Dispatches() {
+  const game = useGame();
+  if (!game.dispatches.length) return null;
+  return (
+    <div className="panel" data-testid="dispatch-list">
+      <h3>派遣中的小隊</h3>
+      {game.dispatches.map((d) => (
+        <p key={d.id} className="small">
+          {content.secretRealms.get(d.realmId)?.name}：
+          {d.teamIds.map((id) => allCharacters(game).find((c) => c.id === id)?.name).join('、')}，還要 {d.monthsLeft} 個月回來
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function DispatchPanel({ realmId, team }: { realmId: string; team: string[] }) {
+  const game = useGame();
+  const dispatch = useUi((s) => s.dispatch);
+  const realm = content.secretRealms.get(realmId);
+  if (!realm || !(game.realmClears[realmId] ?? 0)) return null;
+  const blocked = dispatchBlocked(game, content, realmId, team);
+  const odds = team.length ? dispatchOdds(game, content, realmId, team) : null;
+  const loot = realmNodeLoot(game, content, realmId);
+  const [lo, hi] = realm.dispatch.lootPct;
+  return (
+    <div className="panel" data-testid="dispatch-panel">
+      <h3>派遣小隊（已通關，自動結算）</h3>
+      <p className="small">
+        花 {realm.dispatch.months} 個月與補給 <ResList value={realm.supplies} />，帶回節點物資的 {lo}–{hi}%（約 <ResList value={scaleResources(loot, lo)} /> 到{' '}
+        <ResList value={scaleResources(loot, hi)} />）。沒有首次通關獎勵。小隊實力不足時可能失手：收穫打折、隊員負傷 1 個月。
+      </p>
+      <p className="small">
+        建議小隊實力 {realm.dispatch.power}
+        {odds && (
+          <>
+            ・目前勾選的小隊實力 <b>{odds.power}</b>・成功率 <b>{odds.bp / 100}%</b>
+          </>
+        )}
+      </p>
+      <button
+        className="btn"
+        data-testid="dispatch-start"
+        disabled={!!blocked}
+        title={blocked}
+        onClick={() => dispatch({ type: 'dispatch', realmId, teamIds: team })}
+      >
+        派遣勾選的隊員
+      </button>
+      {blocked && team.length > 0 && <span className="small neg"> {blocked}</span>}
+      <p className="muted small">派遣用上面同一份勾選名單；派遣不算本月的探索，同月還能親自探索別的秘境。</p>
+    </div>
+  );
+}
+
 function Prepare() {
   const game = useGame();
   const dispatch = useUi((s) => s.dispatch);
-  const realm = content.secretRealms.get('secret.abandoned_cave');
+  const [realmId, setRealmId] = useState('secret.abandoned_cave');
+  const realm = content.secretRealms.get(realmId);
   const [team, setTeam] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, Row>>({});
   if (!realm) return null;
@@ -173,6 +231,20 @@ function Prepare() {
   const toggle = (id: string) => setTeam(team.includes(id) ? team.filter((x) => x !== id) : [...team, id].slice(0, realm.maxTeam));
   return (
     <div>
+      <div className="row" style={{ marginBottom: '.5rem' }}>
+        {[...content.secretRealms.values()].map((r) => (
+          <button
+            key={r.id}
+            className={`btn small ${r.id === realmId ? '' : 'secondary'}`}
+            data-testid={`realm-tab-${r.id}`}
+            onClick={() => setRealmId(r.id)}
+          >
+            {r.name}
+            {(game.realmClears[r.id] ?? 0) > 0 ? '（已通關）' : ''}
+          </button>
+        ))}
+      </div>
+      <Dispatches />
       <div className="grid two">
         <Art path={realm.art} alt={realm.name} />
         <div className="panel">
@@ -180,12 +252,23 @@ function Prepare() {
             {realm.name} {clears > 0 && <span className="tag gold">已通關 {clears} 次</span>}
           </h3>
           <p className="small">{realm.description}</p>
+          <p className="small">
+            建議實力：<b>{realm.recommend}</b>
+          </p>
           <p className="small">已知風險：{realm.risk}</p>
+          <p className="small">
+            首次通關：{realm.firstClear.recipes.map((r) => `丹方「${content.recipes.get(r)?.name}」`).join('、')}
+            {realm.firstClear.openRegion ? `開放${content.regions.get(realm.firstClear.openRegion)?.name}、` : ''}
+            {realm.firstClear.equipment.map((e) => `法器「${content.equipment.get(e)?.name}」`).join('、')}
+            {realm.firstClear.items.length ? '、珍貴典籍或秘法' : ''}
+            {realm.firstClear.insight ? `、隊員功法領悟 +${realm.firstClear.insight}` : ''}
+            {game.claimedRewards.includes(realm.firstClear.rewardId) && <span className="tag">已領取</span>}
+          </p>
           <p className="small">
             補給：<ResList value={realm.supplies} />
             ・隊伍最多 {realm.maxTeam} 人
           </p>
-          {clears > 0 && <p className="small muted">再次進入時節點物資減為 {realm.repeatLootPct}%，首次通關獎勵不會重複。秘境派遣於 P1 開放。</p>}
+          {clears > 0 && <p className="small muted">再次進入時節點物資減為 {realm.repeatLootPct}%，首次通關獎勵不會重複。也可以派小隊自動結算（見下方）。</p>}
         </div>
       </div>
       <div className="panel">
@@ -263,7 +346,7 @@ function Prepare() {
           出發探索
         </button>
       </div>
-      <p className="muted small">其他秘境（古修遺跡、靈獸山谷、地下靈礦等）於 P1 開放。</p>
+      <DispatchPanel realmId={realm.id} team={team} />
     </div>
   );
 }

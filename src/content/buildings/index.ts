@@ -1,6 +1,6 @@
 import type { BuildingDef } from '../schema';
 
-// 建築：十二種，依大殿等級逐步開放。P1 起靈田、採石場、靈木場可蓋多座（受區域槽位限制），煉丹房最多兩座，聚靈陣每區一座。
+// 建築：十六種，依大殿等級逐步開放。P1 起靈田、採石場、靈木場可蓋多座（受區域槽位限制），煉丹房最多兩座，聚靈陣每區一座。
 // 批次 B 加入藥園、靈礦場、煉器坊、符陣閣、坊市；批次 C 加入藏經閣、演武場、洞府、靈獸苑。所有數值為暫定值（見 docs/暫定數值與決策.md）。
 
 export const buildings: BuildingDef[] = [
@@ -257,7 +257,7 @@ export const buildings: BuildingDef[] = [
   {
     id: 'building.forge',
     name: '煉器坊',
-    description: '以靈礦與靈木煉製法器，由主角或內門弟子掌爐。法器可出售或交付委託（批次 C 開放裝備）。',
+    description: '以靈礦與靈木煉製法器，由主角或內門弟子掌爐。法器可裝備（每人一件）、出售或交付委託。',
     unlockHall: 2,
     maxTotal: 2,
     art: 'final/forge.webp',

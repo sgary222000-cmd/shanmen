@@ -28,6 +28,24 @@ const items: [string, string, number, number, string][] = [
   ['forge', '煉器坊', 480, 300, 'building'],
   ['talisman', '符陣閣', 480, 300, 'building'],
   ['market', '坊市', 480, 300, 'building'],
+  // P1 批次 C：建築與靈獸
+  ['library', '藏經閣', 480, 300, 'building'],
+  ['training', '演武場', 480, 300, 'circle'],
+  ['cave-abode', '洞府', 480, 300, 'cave'],
+  ['beast-garden', '靈獸苑', 480, 300, 'tree'],
+  ['beast-cloud-ape-adult', '雲紋靈猿（成年）', 240, 300, 'person'],
+  ['beast-fire-fox', '赤焰狐（幼年）', 240, 300, 'person'],
+  ['beast-fire-fox-adult', '赤焰狐（成年）', 240, 300, 'person'],
+  ['beast-black-turtle', '玄甲龜（幼年）', 240, 300, 'person'],
+  ['beast-black-turtle-adult', '玄甲龜（成年）', 240, 300, 'person'],
+  // P1 批次 D：秘境
+  ['realm-mine', '地下靈礦', 800, 360, 'cave'],
+  ['realm-valley', '靈獸山谷', 800, 360, 'tree'],
+  ['realm-ruins', '古修遺跡', 800, 360, 'building'],
+  // P1 批次 E：電腦宗門
+  ['sect-qingmu', '青木宗', 480, 300, 'mountains'],
+  ['sect-chixia', '赤霞門', 480, 300, 'mountains'],
+  ['sect-luoyun', '落雲谷', 480, 300, 'mountains'],
 ];
 
 function motif(kind: string, w: number, h: number): string {

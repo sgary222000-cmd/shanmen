@@ -498,7 +498,7 @@ describe('v3 存檔升級到 v4', () => {
 
 describe('經營路線（模擬 100 年不卡死）', () => {
   for (const route of ['craft', 'commission'] as BotRoute[]) {
-    it(`${route} 路線：100 年資源不為負，主角能築基，工坊或委託實際有在運作`, () => {
+    it(`${route} 路線：100 年資源不為負，主角能結丹，工坊或委託實際有在運作`, () => {
       let s = fresh(2468, 'lineage.sword');
       let crafted = 0;
       let jobs = 0;
@@ -512,7 +512,7 @@ describe('經營路線（模擬 100 年不卡死）', () => {
         s = r.state;
         expect(nonNegative(s)).toBe(true);
       }
-      expect(s.protagonist.realm.major).toBe('foundation');
+      expect(s.protagonist.realm.major).toBe('core');
       if (route === 'craft') expect(crafted).toBeGreaterThan(50);
       else expect(jobs).toBeGreaterThan(200);
     }, 60_000);

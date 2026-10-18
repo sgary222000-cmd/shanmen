@@ -248,8 +248,12 @@ export const balance = {
     buildCost: { stone: 40, wood: 30, lingshi: 60 },
     recruitCost: { food: 40, lingshi: 20 },
     trainCost: 40,
-    maxPower: 220,
+    /** 實力上限 150（約等於築基圓滿的弟子出戰）；擴建 +1、招收 +1、操練 +1–2 */
+    maxPower: 150,
     maxPopulation: 80,
+    /** 建築總級數上限與資源存量上限，避免百年後帳本無限膨脹 */
+    maxBuildings: 30,
+    resourceCap: { lingshi: 3000, food: 1500, stone: 1000, wood: 1000 },
     favorNeutral: 30,
     intelKeep: 30,
   },

@@ -96,7 +96,12 @@ export function refreshBoard(state: GameState, content: ContentPack): void {
   state.commissions = state.commissions.filter((c) => c.expires >= now);
   const hall = hallLevel(state);
   const available = () =>
-    [...content.commissions.values()].filter((d) => d.minHall <= hall && !state.commissions.some((c) => c.templateId === d.id));
+    [...content.commissions.values()].filter(
+      (d) =>
+        d.minHall <= hall &&
+        (!d.requiresClear || (state.realmClears[d.requiresClear] ?? 0) > 0) &&
+        !state.commissions.some((c) => c.templateId === d.id),
+    );
   if (!state.commissions.some((c) => c.kind === 'labor')) {
     const def = pickTemplate(state, available().filter((d) => d.kind === 'labor'));
     if (def) state.commissions.push(instantiate(state, def));

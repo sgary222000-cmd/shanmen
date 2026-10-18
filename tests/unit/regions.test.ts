@@ -293,7 +293,7 @@ describe('四種傳承開局', () => {
     const { state, negatives } = play(start(lineage), 40 * 12);
     expect(negatives).toBe(0);
     const p = state.protagonist;
-    expect(p.realm.major === 'foundation' || p.realm.stage >= 7).toBe(true);
+    expect(p.realm.major !== 'qi' || p.realm.stage >= 7).toBe(true);
     expect(state.buildings.filter((b) => b.level >= 1).length).toBeGreaterThanOrEqual(6);
   });
 });

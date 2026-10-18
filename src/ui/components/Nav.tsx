@@ -5,15 +5,18 @@ const PAGES: [Page, string][] = [
   ['build', '建設'],
   ['protagonist', '主角'],
   ['disciples', '弟子'],
+  ['lineage', '傳承與功法'],
+  ['beasts', '靈獸苑'],
   ['industry', '產業'],
   ['market', '坊市與委託'],
   ['explore', '探索'],
+  ['world', '宗門往來'],
   ['reports', '月報與戰報'],
   ['saves', '存檔'],
   ['settings', '設定'],
 ];
 
-const LOCKED = ['藏經與研究', '世界地圖', '外交'];
+const LOCKED = ['世界地圖'];
 
 export function Nav() {
   const page = useUi((s) => s.page);
@@ -32,7 +35,7 @@ export function Nav() {
         尚未開放：
         {LOCKED.map((l) => (
           <div key={l}>
-            <span className="tag locked">{l}（P1 起）</span>
+            <span className="tag locked">{l}（P2 起）</span>
           </div>
         ))}
       </div>

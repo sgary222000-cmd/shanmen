@@ -38,7 +38,8 @@ export function openBranch(state: GameState, content: ContentPack, lineageId: st
   state.recipes.push(...learned);
   const host = state.disciples.find((d) => d.id === hostId);
   const recipes = learned.map((r) => content.recipes.get(r)?.name ?? r);
-  return `開設${lineage.name}分支，由${host?.name ?? ''}主持。${recipes.length ? `習得配方：${recipes.join('、')}。` : ''}可建造${lineage.name}專屬建築。`;
+  const exclusive = [...content.buildings.values()].filter((b) => b.exclusive?.lineage === lineageId).map((b) => b.name);
+  return `開設${lineage.name}分支，由${host?.name ?? ''}主持。${recipes.length ? `習得配方：${recipes.join('、')}。` : ''}${exclusive.length ? `可建造${exclusive.join('、')}。` : ''}`;
 }
 
 export function scriptureBlocked(state: GameState, content: ContentPack, lineageId: string): string | undefined {

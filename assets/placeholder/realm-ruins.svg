@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="360" viewBox="0 0 800 360">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9e3d3"/><stop offset="1" stop-color="#b9c9bd"/></linearGradient></defs>
+<rect width="800" height="360" fill="url(#g)"/>
+<path d="M290 189.2 L400 129.2 L510 189.2Z" fill="#7a4b2a"/><rect x="310" y="189.2" width="180" height="70" fill="#c9b48a"/><rect x="380" y="214.2" width="40" height="45" fill="#5a3a22"/>
+<rect x="8" y="8" width="150" height="28" rx="4" fill="#8b1e1e" opacity=".85"/>
+<text x="16" y="28" font-size="15" fill="#fff" font-family="sans-serif">臨時素材</text>
+<text x="400" y="346" font-size="26" fill="#1f2e2b" text-anchor="middle" font-family="serif">古修遺跡</text>
+</svg>

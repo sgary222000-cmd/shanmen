@@ -61,7 +61,17 @@ for (let i = 0; i < years * 12; i++) {
   const p = state.protagonist;
   if (p.realm.major === 'qi' && p.realm.stage >= 5) mark('主角煉氣五層');
   if (p.realm.major === 'qi' && p.realm.stage >= 9) mark('主角煉氣九層');
-  if (p.realm.major === 'foundation') mark('主角築基');
+  if (p.realm.major !== 'qi') mark('主角築基');
+  if (p.realm.major === 'foundation' && p.realm.stage === 4) mark('主角築基圓滿');
+  if (p.insight >= 100) mark('主角功法小成');
+  if (p.realm.major === 'core') mark('主角結丹');
+  for (const realm of content.secretRealms.values()) if (state.realmClears[realm.id]) mark(`${realm.name}通關`);
+  if (state.dispatches.length) mark('首次派遣');
+  if (Object.values(state.positions).some(Boolean)) mark('首位執事');
+  if (state.beasts.length > (lineage === 'lineage.beast' ? 1 : 0)) mark('孵化靈獸');
+  if (state.branches.length) mark('開設分支');
+  if (state.tournament?.status === 'done') mark(`首次大比（第 ${state.tournament.rank} 名）`);
+  if (state.veins.length) mark('標得靈脈');
   for (const [id, r] of Object.entries(state.regions)) if (r.status === 'open' && content.regions.get(id)?.unlock) mark(`開放${content.regions.get(id)?.name}`);
 }
 
@@ -74,6 +84,9 @@ for (const [k, v] of Object.entries(milestones)) console.log(`  ${k}：${v}`);
 console.log('最終資源：', JSON.stringify(state.resources));
 console.log(`聲望 ${state.reputation}；坊市成交批數：賣 ${income.坊市賣出}、買 ${income.坊市買入}；已學配方：${state.recipes.length}`);
 console.log('期間最低資源：', JSON.stringify(minRes));
+console.log(
+  `電腦宗門：${state.sects.map((x) => `${content.sects.get(x.id)?.name} 實力 ${x.power}、${x.population} 人、好感 ${x.favor}、靈石 ${x.resources.lingshi}`).join('；')}`,
+);
 console.log(`戰鬥 ${state.battles.length} 場（保留最近 30 場）：${state.battles.slice(0, 5).map((b) => `${b.title} ${b.result}`).join('；')}`);
 console.log(`不變條件違反次數（資源為負或非整數）：${violations}`);
 console.log(`指令數：${state.stats.commands}；推進月數：${state.stats.monthsAdvanced}`);
