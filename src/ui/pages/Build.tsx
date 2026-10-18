@@ -22,7 +22,7 @@ export function BuildPage() {
           const locked = !existing && def.unlockHall > (game.buildings.find((b) => b.defId === 'building.hall')?.level ?? 0);
           const action = !existing ? '建造' : existing.level === 0 ? (def.id === 'building.hall' ? '修復' : '建造') : '升級';
           return (
-            <div key={def.id} className="panel" style={{ opacity: locked ? 0.6 : 1 }} data-testid={`building-${def.id}`}>
+            <div key={def.id} className={`panel${locked ? ' locked' : ''}`} data-testid={`building-${def.id}`}>
               <Art path={def.art} alt={def.name} />
               <h3 style={{ marginTop: '.5rem' }}>
                 {def.name}{' '}
