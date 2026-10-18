@@ -8,7 +8,7 @@ export const buildings: BuildingDef[] = [
     name: '宗門大殿',
     description: '宗門中樞。修復後可招收弟子並開放更多建設；等級決定其他建築的上限。',
     unlockHall: 0,
-    art: 'placeholder/hall.svg',
+    art: 'final/hall.webp',
     levels: [
       {
         level: 1,
@@ -35,7 +35,7 @@ export const buildings: BuildingDef[] = [
     name: '弟子居所',
     description: '外門弟子起居之處，決定外門人數上限。',
     unlockHall: 0,
-    art: 'placeholder/dorm.svg',
+    art: 'final/dorm.webp',
     levels: [
       {
         level: 1,
@@ -62,7 +62,7 @@ export const buildings: BuildingDef[] = [
     name: '靈田',
     description: '由外門弟子耕作，可切換種植糧食或藥草。',
     unlockHall: 1,
-    art: 'placeholder/field.svg',
+    art: 'final/field.webp',
     levels: [
       {
         level: 1,
@@ -89,7 +89,7 @@ export const buildings: BuildingDef[] = [
     name: '採石場',
     description: '開採山石，供建設使用。',
     unlockHall: 1,
-    art: 'placeholder/quarry.svg',
+    art: 'final/quarry.webp',
     levels: [
       {
         level: 1,
@@ -116,7 +116,7 @@ export const buildings: BuildingDef[] = [
     name: '靈木場',
     description: '伐取與培育靈木。',
     unlockHall: 1,
-    art: 'placeholder/lumber.svg',
+    art: 'final/lumber.webp',
     levels: [
       {
         level: 1,
@@ -143,7 +143,7 @@ export const buildings: BuildingDef[] = [
     name: '煉丹房',
     description: '以藥草與靈石煉製丹藥，由主角或內門弟子掌爐。煉丹是宗門通用功能，不限傳承。',
     unlockHall: 2,
-    art: 'placeholder/alchemy.svg',
+    art: 'final/alchemy.webp',
     levels: [
       {
         level: 1,
@@ -170,7 +170,7 @@ export const buildings: BuildingDef[] = [
     name: '聚靈陣',
     description: '匯聚天地靈氣，提高主峰靈氣容量。修煉效率與築基都需要足夠靈氣。',
     unlockHall: 2,
-    art: 'placeholder/array.svg',
+    art: 'final/array.webp',
     levels: [
       {
         level: 1,

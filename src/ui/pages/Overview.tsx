@@ -9,15 +9,15 @@ import { Art } from '../components/Art';
 import { ResList } from '../components/Res';
 import { content, useGame, useUi } from '../store';
 
-// 宗門主畫面的可點擊區域位置（百分比），對應臨時全景圖。
+// 宗門主畫面的可點擊區域位置（百分比），對應 assets/final/panorama.webp 的建築位置。
 const SPOTS: Record<string, [number, number]> = {
-  'building.hall': [50, 30],
-  'building.dorm': [26, 58],
-  'building.field': [72, 70],
-  'building.quarry': [12, 40],
-  'building.lumber': [86, 42],
-  'building.alchemy': [62, 48],
-  'building.array': [38, 40],
+  'building.hall': [53, 41],
+  'building.dorm': [28, 77],
+  'building.field': [80, 88],
+  'building.quarry': [12, 54],
+  'building.lumber': [90, 57],
+  'building.alchemy': [74, 60],
+  'building.array': [33, 47],
 };
 
 function TutorialCard() {
@@ -52,7 +52,7 @@ export function OverviewPage() {
       <h2>宗門總覽</h2>
       <TutorialCard />
       <div className="panel panorama">
-        <Art path="placeholder/panorama.svg" alt="宗門全景" />
+        <Art path="final/panorama.webp" alt="宗門全景" />
         {[...content.buildings.values()].map((def) => {
           const pos = SPOTS[def.id];
           if (!pos) return null;

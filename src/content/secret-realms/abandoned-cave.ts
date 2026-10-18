@@ -10,7 +10,7 @@ export const abandonedCave: SecretRealmDef = {
   startNode: 'entrance',
   repeatLootPct: 50,
   retreatLootPct: 50,
-  art: 'placeholder/cave.svg',
+  art: 'final/cave.webp',
   firstClear: {
     rewardId: 'reward.abandoned_cave.first_clear',
     recipes: ['recipe.foundation_pill'],
