@@ -11,6 +11,7 @@ import { runBattle, unitFromCharacter, type Unit } from '../combat/combat';
 import { allyUnit } from '../combat/party';
 import { canJoinExpedition } from '../exploration/exploration';
 import { releaseFurnace } from '../alchemy/alchemy';
+import { sectPowerCap } from './sects';
 
 // 年度大比（每 3 年 9 月）：各宗派三名弟子一對一切磋，三戰兩勝為勝一場。
 // 我宗與三個電腦宗門循環對戰，依勝場排名，名次決定聲望與獎品。切磋點到為止，不會受傷。
@@ -152,7 +153,7 @@ export function enterTournament(state: GameState, content: ContentPack, teamIds:
   state.reputation += reputation;
   for (const s of state.sects) {
     const place = order.findIndex((x) => x.sectId === s.id);
-    s.power = Math.min(balance.sects.maxPower, s.power + Math.max(0, 3 - place));
+    s.power = Math.max(s.power, Math.min(sectPowerCap(state, content, s), s.power + Math.max(0, 3 - place)));
   }
   state.tournament = { year: t.year, status: 'done', standings: order, log, rank };
   state.events.push({

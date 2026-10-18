@@ -5,6 +5,7 @@ import { ensure } from '../../errors';
 import { newId } from '../../ids';
 import { rng } from '../../rng';
 import type { GameState } from '../../types';
+import { sectPowerCap } from './sects';
 
 // 靈脈競標：偶爾出現無主靈脈，各宗出價，得標者若干年內每月有靈礦收入。
 // 我宗的出價先預扣靈石，落標全數退還。電腦宗門的出價在開標時才決定，事前看不到。
@@ -61,7 +62,7 @@ export function resolveAuction(state: GameState, content: ContentPack, lines: st
     const name = winner ? content.sects.get(winner.id)?.name ?? '' : '';
     if (winner && best) {
       winner.resources.lingshi -= best.bid;
-      winner.power = Math.min(balance.sects.maxPower, winner.power + 3);
+      winner.power = Math.max(winner.power, Math.min(sectPowerCap(state, content, winner), winner.power + 3));
       state.intel.unshift({ date: { ...state.date }, sectId: winner.id, text: `${name}以 ${best.bid} 靈石標得${a.name}。` });
     }
     lines.push(`${a.name}由${name || '他人'}得標${a.playerBid > 0 ? `，我宗出價 ${a.playerBid} 靈石已退還` : ''}。`);

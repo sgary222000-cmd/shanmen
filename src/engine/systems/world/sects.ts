@@ -41,6 +41,12 @@ export function initialSects(content: ContentPack): SectState[] {
   }));
 }
 
+/** 本年的實力上限：開局實力 + 每年放寬，最多 maxPower。 */
+export function sectPowerCap(state: GameState, content: ContentPack, sect: SectState): number {
+  const start = content.sects.get(sect.id)?.start.power ?? 0;
+  return Math.min(S.maxPower, Math.max(start, start + S.powerPerYear * (state.date.year - 1)));
+}
+
 export function sectDef(content: ContentPack, id: string): SectDef {
   const d = content.sects.get(id);
   ensure(d, '沒有這個宗門');
@@ -71,8 +77,9 @@ function intel(state: GameState, sectId: string, text: string): void {
 }
 
 /** 嘗試一件行動；不合法（缺料）時回傳 false。 */
-function act(state: GameState, def: SectDef, sect: SectState, goal: SectGoal): boolean {
+function act(state: GameState, content: ContentPack, def: SectDef, sect: SectState, goal: SectGoal): boolean {
   const r = rng(state, 'sects');
+  const cap = sectPowerCap(state, content, sect);
   const res = sect.resources;
   if (goal === 'build') {
     const c = S.buildCost;
@@ -81,7 +88,7 @@ function act(state: GameState, def: SectDef, sect: SectState, goal: SectGoal): b
     res.wood -= c.wood;
     res.lingshi -= c.lingshi;
     sect.buildings += 1;
-    sect.power = Math.min(S.maxPower, sect.power + 1);
+    sect.power = Math.max(sect.power, Math.min(cap, sect.power + 1));
     intel(state, sect.id, `${def.name}擴建山門（建築共 ${sect.buildings} 級）。`);
     return true;
   }
@@ -92,15 +99,15 @@ function act(state: GameState, def: SectDef, sect: SectState, goal: SectGoal): b
     res.lingshi -= c.lingshi;
     const n = Math.min(S.maxPopulation - sect.population, r.range(3, 6));
     sect.population += n;
-    sect.power = Math.min(S.maxPower, sect.power + 1);
+    sect.power = Math.max(sect.power, Math.min(cap, sect.power + 1));
     intel(state, sect.id, `${def.name}招收 ${n} 名弟子（共 ${sect.population} 人）。`);
     return true;
   }
   if (goal === 'train') {
-    if (res.lingshi < S.trainCost || sect.power >= S.maxPower) return false;
+    if (res.lingshi < S.trainCost || sect.power >= cap) return false;
     res.lingshi -= S.trainCost;
     const n = r.range(1, 2);
-    sect.power = Math.min(S.maxPower, sect.power + n);
+    sect.power = Math.min(cap, sect.power + n);
     intel(state, sect.id, `${def.name}閉門操練弟子，實力提升。`);
     return true;
   }
@@ -157,7 +164,7 @@ export function tickSects(state: GameState, content: ContentPack): void {
     }
     const actions = rng(state, 'sects').chance(5000) ? 2 : 1;
     for (let i = 0; i < actions; i++) {
-      if (!act(state, def, sect, sect.goal) && sect.goal !== 'train') act(state, def, sect, 'train');
+      if (!act(state, content, def, sect, sect.goal) && sect.goal !== 'train') act(state, content, def, sect, 'train');
     }
     capSect(sect);
   }

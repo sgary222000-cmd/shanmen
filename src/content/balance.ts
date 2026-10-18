@@ -248,8 +248,10 @@ export const balance = {
     buildCost: { stone: 40, wood: 30, lingshi: 60 },
     recruitCost: { food: 40, lingshi: 20 },
     trainCost: 40,
-    /** 實力上限 150（約等於築基圓滿的弟子出戰）；擴建 +1、招收 +1、操練 +1–2 */
+    /** 實力上限 150（約等於築基圓滿的弟子出戰）；擴建 +1、招收 +1、操練 +1–2。
+     *  另有隨年份放寬的上限：開局實力 + 每年 2，約第 50 年才到 150，免得前期大比就遇上築基圓滿 */
     maxPower: 150,
+    powerPerYear: 2,
     maxPopulation: 80,
     /** 建築總級數上限與資源存量上限，避免百年後帳本無限膨脹 */
     maxBuildings: 30,

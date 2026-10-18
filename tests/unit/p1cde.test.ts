@@ -10,7 +10,7 @@ import { buyPriceAt } from '../../src/engine/systems/economy/market';
 import { dispatchOdds } from '../../src/engine/systems/exploration/dispatch';
 import { insightGain, techniqueTier } from '../../src/engine/systems/talent/techniques';
 import { mentorPct } from '../../src/engine/systems/talent/positions';
-import { giftFavor, sectTradePrice, tickSects } from '../../src/engine/systems/world/sects';
+import { giftFavor, sectPowerCap, sectTradePrice, tickSects } from '../../src/engine/systems/world/sects';
 import { decode } from '../../src/save/codec';
 import { advance, content, developed, edit, run, tryRun } from './helpers';
 
@@ -266,10 +266,12 @@ describe('新秘境與派遣', () => {
 });
 
 describe('電腦宗門', () => {
-  it('百年內資源不為負、不超過上限，實力不超過上限', () => {
+  it('百年內資源不為負、不超過上限，實力隨年份慢慢成長、不超過上限', () => {
     const s = developed();
     for (let m = 0; m < 1200; m++) {
       tickSects(s, content);
+      for (const x of s.sects) expect(x.power).toBeLessThanOrEqual(sectPowerCap(s, content, x));
+      if (s.date.year === 10 && s.date.month === 12) for (const x of s.sects) expect(x.power).toBeLessThan(100);
       s.date = s.date.month === 12 ? { year: s.date.year + 1, month: 1 } : { year: s.date.year, month: s.date.month + 1 };
       for (const x of s.sects) {
         for (const [k, v] of Object.entries(x.resources)) {
