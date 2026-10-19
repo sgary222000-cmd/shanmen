@@ -100,7 +100,8 @@ export function refreshBoard(state: GameState, content: ContentPack): void {
       (d) =>
         d.minHall <= hall &&
         (!d.requiresClear || (state.realmClears[d.requiresClear] ?? 0) > 0) &&
-        !state.commissions.some((c) => c.templateId === d.id),
+        !state.commissions.some((c) => c.templateId === d.id) &&
+        (d.kind !== 'escort' || state.commissions.filter((c) => c.kind === 'escort').length < balance.commissions.maxEscortOnBoard),
     );
   if (!state.commissions.some((c) => c.kind === 'labor')) {
     const def = pickTemplate(state, available().filter((d) => d.kind === 'labor'));

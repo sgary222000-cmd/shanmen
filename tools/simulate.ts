@@ -49,6 +49,10 @@ for (let i = 0; i < years * 12; i++) {
   }
   if (hallLevel(state) >= 1) mark('大殿修復');
   if (hallLevel(state) >= 2) mark('大殿 2 級');
+  if (hallLevel(state) >= 3) mark('大殿 3 級');
+  if (state.outer.count >= 40) mark('外門 40 人');
+  if (state.outer.count >= 60) mark('外門 60 人');
+  if (i % 120 === 119) console.log(`第 ${(i + 1) / 12} 年：靈石 ${state.resources.lingshi}、外門 ${state.outer.count}、內門 ${state.disciples.length}、打零工 ${state.outer.jobs.errand}`);
   if (state.disciples.length) mark('第一位內門');
   if (state.buildings.some((b) => b.defId === 'building.alchemy' && b.level >= 1)) mark('煉丹房完工');
   if (state.stats.explorations) mark('首次探索');
