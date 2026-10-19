@@ -22,6 +22,7 @@ const mark = (key: string) => {
 };
 const minRes: Record<string, number> = {};
 let violations = 0;
+let deaths = 0;
 
 for (let i = 0; i < years * 12; i++) {
   const before = state;
@@ -42,6 +43,13 @@ for (let i = 0; i < years * 12; i++) {
     break;
   }
   state = r.state;
+  for (const l of r.report?.lines ?? []) {
+    if (l.startsWith('✝ 掌門')) mark(`掌門繼承（第 ${(state.ancestors ?? []).length} 代）`);
+    else if (l.startsWith('✝ ')) {
+      deaths++;
+      mark('首位弟子坐化');
+    }
+  }
   for (const id of RESOURCE_IDS) {
     const v = state.resources[id];
     if (v < 0 || !Number.isInteger(v)) violations++;
@@ -60,6 +68,7 @@ for (let i = 0; i < years * 12; i++) {
   if (state.buildings.some((b) => b.defId === 'building.market' && b.level >= 1)) mark('坊市完工');
   if (state.buildings.some((b) => b.defId === 'building.talisman' && b.level >= 1)) mark('符陣閣完工');
   if (state.buildings.some((b) => b.defId === 'building.forge' && b.level >= 1)) mark('煉器坊完工');
+  if (state.buildings.some((b) => b.defId === 'building.ancestral' && b.level >= 1)) mark('祖師殿完工');
   if (state.beasts.some((b) => b.guardian)) mark('護宗神獸晉升');
   if (state.beasts.some((b) => (b.guardian?.level ?? 0) >= 3)) mark('護宗神獸 3 級');
   if (state.reputation >= 20) mark('聲望 20');
@@ -94,6 +103,7 @@ console.log(
   `電腦宗門：${state.sects.map((x) => `${content.sects.get(x.id)?.name} 實力 ${x.power}、${x.population} 人、好感 ${x.favor}、靈石 ${x.resources.lingshi}`).join('；')}`,
 );
 console.log(`戰鬥 ${state.battles.length} 場（保留最近 30 場）：${state.battles.slice(0, 5).map((b) => `${b.title} ${b.result}`).join('；')}`);
+console.log(`弟子坐化 ${deaths} 人；歷代掌門：${(state.ancestors ?? []).map((a) => `${a.name}（${realmName(a.realm)}、${Math.floor(a.ageMonths / 12)} 歲）`).join('、') || '無'}；現任掌門 ${state.protagonist.name}（${Math.floor(state.protagonist.ageMonths / 12)} 歲）`);
 console.log(`不變條件違反次數（資源為負或非整數）：${violations}`);
 console.log(`指令數：${state.stats.commands}；推進月數：${state.stats.monthsAdvanced}`);
 if (process.argv.includes('--log')) for (const l of log) console.log(`  [${l.month}] ${l.text}`);

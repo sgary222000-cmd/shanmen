@@ -20,6 +20,7 @@ export const RESOURCE_IDS: ResourceId[] = [
   'artifact',
   'beast_egg',
   'pill_core',
+  'pill_life',
 ];
 
 export const RESOURCE_NAMES: Record<ResourceId, string> = {
@@ -41,6 +42,7 @@ export const RESOURCE_NAMES: Record<ResourceId, string> = {
   artifact: '法器',
   beast_egg: '靈獸蛋',
   pill_core: '結丹靈液',
+  pill_life: '延壽丹',
 };
 
 export function emptyResources(): Resources {

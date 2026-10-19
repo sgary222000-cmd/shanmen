@@ -20,6 +20,6 @@ export function disciplePortrait(c: { id: string; gender: 'male' | 'female' }): 
 
 /** 任何人物的肖像：掌門用主角立繪，內門弟子用肖像庫。 */
 export function portraitOf(c: { id: string; gender: 'male' | 'female'; role: string }): string {
-  if (c.role === 'protagonist') return c.gender === 'female' ? 'final/portrait-female.webp' : 'final/portrait-male.webp';
+  if (c.role === 'protagonist' && c.id === 'c0') return c.gender === 'female' ? 'final/portrait-female.webp' : 'final/portrait-male.webp';
   return disciplePortrait(c);
 }

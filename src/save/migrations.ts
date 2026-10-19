@@ -112,6 +112,11 @@ export const migrations: Record<number, (w: World) => World> = {
       },
     };
   },
+  // v5 → v6（P2 批次 A）：新資源延壽丹；壽元、親傳弟子、歷代掌門都是選填欄位，舊存檔不需要補。
+  5: (w) => {
+    const resources = Object.fromEntries(RESOURCE_IDS.map((id) => [id, (w.resources as Record<string, number>)[id] ?? 0]));
+    return { ...w, version: 6, resources, heirId: null, ancestors: [] };
+  },
 };
 
 export function migrate(world: World, from: number, to: number): World {

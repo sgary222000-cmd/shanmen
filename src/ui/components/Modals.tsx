@@ -1,6 +1,7 @@
 import { formatAge, formatDate } from '../../engine';
 import { realmName, rootName } from '../../engine/systems/characters/characters';
 import { innerLimit } from '../../engine/systems/buildings/buildings';
+import { lifespanText } from '../../engine/systems/characters/lifespan';
 import { content, useGame, useUi } from '../store';
 import { ResList } from './Res';
 
@@ -16,6 +17,44 @@ export function EventModal() {
       <div className="modal" role="dialog" aria-label={ev.title}>
         <h2>{ev.title}</h2>
         <p>{ev.text}</p>
+        {ev.successors && (
+          <table data-testid="successors">
+            <thead>
+              <tr>
+                <th>姓名</th>
+                <th>年齡</th>
+                <th>境界</th>
+                <th>靈根</th>
+                <th>壽元</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {ev.successors.map((id) => {
+                const c = [game.protagonist, ...game.disciples].find((x) => x.id === id);
+                if (!c) return null;
+                return (
+                  <tr key={id}>
+                    <td>{c.name}</td>
+                    <td>{formatAge(c.ageMonths)}</td>
+                    <td>{realmName(c.realm)}</td>
+                    <td>{rootName(c.root)}</td>
+                    <td>{lifespanText(c)}</td>
+                    <td>
+                      <button
+                        className="btn small"
+                        data-testid={`successor-${id}`}
+                        onClick={() => dispatch({ type: 'resolveSuccession', eventId: ev.id, characterId: id })}
+                      >
+                        {id === game.protagonist.id ? '確認接任' : '改立此人'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
         {ev.candidates && (
           <>
             {full && <p className="neg">內門人數已達大殿上限，這次無法收人。</p>}
@@ -58,21 +97,23 @@ export function EventModal() {
             <p className="muted small">內門弟子每兩人每月消耗糧食 1，並佔用靈氣 2。目前靈石 {game.resources.lingshi}。</p>
           </>
         )}
-        <div className="row" style={{ marginTop: '.75rem' }}>
-          <button
-            className="btn secondary"
-            data-testid="event-skip"
-            onClick={() =>
-              dispatch(
-                ev.kind === 'recruitment'
-                  ? { type: 'resolveRecruitment', eventId: ev.id, candidateId: null }
-                  : { type: 'dismissEvent', eventId: ev.id },
-              )
-            }
-          >
-            {ev.kind === 'recruitment' ? '這次不收內門' : '知道了'}
-          </button>
-        </div>
+        {ev.kind !== 'succession' && (
+          <div className="row" style={{ marginTop: '.75rem' }}>
+            <button
+              className="btn secondary"
+              data-testid="event-skip"
+              onClick={() =>
+                dispatch(
+                  ev.kind === 'recruitment'
+                    ? { type: 'resolveRecruitment', eventId: ev.id, candidateId: null }
+                    : { type: 'dismissEvent', eventId: ev.id },
+                )
+              }
+            >
+              {ev.kind === 'recruitment' ? '這次不收內門' : '知道了'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -82,12 +123,18 @@ export function EventModal() {
 export function ReportModal() {
   const report = useUi((s) => s.lastReport);
   const close = useUi((s) => s.closeReport);
+  const summary = useUi((s) => s.runSummary);
   const game = useGame();
   if (!report || game.events.some((e) => e.blocking)) return null;
   return (
     <div className="modal-back" onClick={close}>
       <div className="modal" role="dialog" aria-label="月報" onClick={(e) => e.stopPropagation()}>
         <h2>{formatDate(report.date)} 月報</h2>
+        {summary && (
+          <p className="run-summary" data-testid="run-summary">
+            {summary}
+          </p>
+        )}
         <p>
           資源變化：<ResList value={report.delta} signed />
         </p>

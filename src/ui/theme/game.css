@@ -59,6 +59,20 @@
 }
 .game .topbar .advance:hover:not(:disabled) { transform: scale(1.05); background: radial-gradient(circle at 35% 30%, #e57a5f, #b8402f 60%, #7c2419); }
 .game .topbar .advance:disabled { animation: none; filter: grayscale(.6); }
+/* 連續推進：朱印上方的小按鈕，展開後選月數 */
+.advance-multi {
+  position: fixed; right: 1.6rem; bottom: 8.3rem; z-index: 30; width: 6.2rem;
+  display: flex; flex-direction: column; align-items: stretch; gap: .35rem;
+}
+.advance-multi > .btn { width: 100%; padding: .3rem .2rem; white-space: normal; line-height: 1.2; }
+.advance-multi .menu {
+  position: absolute; right: 0; bottom: calc(100% + .35rem); width: 11rem;
+  display: flex; flex-direction: column; gap: .3rem; padding: .5rem;
+  background: rgba(17,33,31,.92); border: 1px solid rgba(220,196,139,.5); border-radius: 4px;
+  box-shadow: 0 8px 22px -8px rgba(0,0,0,.6);
+}
+.advance-multi .menu .muted { color: #cfc3a6; }
+.run-summary { background: var(--paper-2); border-left: 3px solid var(--gold); padding: .4rem .6rem; }
 @keyframes breathe { 50% { box-shadow: 0 6px 26px rgba(201,88,63,.75), inset 0 0 0 4px rgba(255,230,200,.25); } }
 
 /* ── 浮動資訊卡（半透明墨色） ── */
@@ -393,6 +407,7 @@ h3.sec::after { content: ''; flex: 1; height: 1px; background: linear-gradient(9
   .dock button { width: 3.3rem; font-size: .7rem; }
   .dock .seal { width: 2.1rem; height: 2.1rem; font-size: 1rem; }
   .game .topbar .advance { width: 5rem; height: 5rem; font-size: 1rem; right: 1rem; bottom: 1rem; }
+  .advance-multi { right: 1rem; bottom: 6.7rem; width: 5rem; }
   .window-back { padding: 3.6rem .8rem 6rem; }
   .roster-layout { grid-template-columns: 200px 1fr; }
   .detail { grid-template-columns: 220px 1fr; }
@@ -428,6 +443,8 @@ h3.sec::after { content: ''; flex: 1; height: 1px; background: linear-gradient(9
   .dock .home { margin: 0 0 .2rem; padding: 0 0 .3rem; border-right: none; border-bottom: 1px solid rgba(220,196,139,.3); }
   .dock .badge { right: .2rem; }
   .game .topbar .advance { width: 4.6rem; height: 4.6rem; font-size: .85rem; right: .6rem; bottom: .6rem; outline-offset: 1px; border-width: 2px; }
+  .advance-multi { right: .6rem; bottom: 5.7rem; width: 4.6rem; }
+  .advance-multi > .btn { font-size: .75rem; }
 
   .hud-left, .hud-right { top: 3rem; gap: .4rem; }
   .hud-left { left: 4.6rem; width: 15rem; max-height: calc(100vh - 3.6rem); overflow: auto; scrollbar-width: none; }

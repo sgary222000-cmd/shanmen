@@ -23,6 +23,7 @@ export const balance = {
       artifact: 0,
       beast_egg: 0,
       pill_core: 0,
+      pill_life: 0,
     } satisfies Resources,
     outerCount: 12,
     protagonistAgeMonths: 18 * 12,
@@ -312,6 +313,22 @@ export const balance = {
     /** 電腦宗門出價：靈石的百分比範圍 */
     sectBidPct: [20, 55] as [number, number],
     temperamentPct: { steady: 70, merchant: 120, warlike: 100 },
+  },
+  /** 壽元與繼承（P2 批次 A，暫定）。 */
+  lifespan: {
+    /** 各大境界的壽元上限（歲） */
+    years: { qi: 100, foundation: 200, core: 400 },
+    /** 剩下這些百分比時預警 */
+    warnPct: [20, 10],
+    /** 延壽丹：每顆增加該境界基礎壽元的百分比、一生最多服用幾顆 */
+    pillPct: 15,
+    pillMax: 2,
+    /** 親傳弟子（繼承人）修煉加成（百分比） */
+    heirXpPct: 10,
+    /** 祖師顯靈的冷卻（月） */
+    blessingCooldown: 120,
+    /** 連續推進時，糧食或靈石預估幾個月內用完就停下 */
+    shortageMonths: 2,
   },
   heal: {
     healthPerMonth: 15,

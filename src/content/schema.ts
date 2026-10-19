@@ -21,6 +21,7 @@ export const resourceIds = [
   'artifact',
   'beast_egg',
   'pill_core',
+  'pill_life',
 ] as const;
 
 export const stations = ['alchemy', 'forge', 'talisman'] as const;
@@ -69,6 +70,12 @@ export const buildingLevelSchema = z.object({
     /** 洞府：在此區閉關的修煉加成（百分比）、結丹成功率加成（萬分比） */
     seclusionPct: z.number().int().optional(),
     coreBonusBp: z.number().int().optional(),
+    /** 祖師殿：全宗修煉加成（基礎、每位已故掌門、上限，百分比） */
+    ancestorBasePct: z.number().int().optional(),
+    ancestorPerPct: z.number().int().optional(),
+    ancestorMaxPct: z.number().int().optional(),
+    /** 祖師殿 2 級：祖師顯靈，突破失敗時免除懲罰 */
+    blessing: z.boolean().optional(),
   }),
   summary: z.string(),
 });

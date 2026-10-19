@@ -88,6 +88,7 @@ p { margin: .25rem 0 .75rem; }
 .tag.provisional { color: var(--warning); border-color: var(--warning); background: transparent; }
 .pos { color: var(--ok); }
 .neg { color: var(--danger); }
+.warn { color: var(--warning); }
 
 table { width: 100%; border-collapse: collapse; font-size: .94rem; }
 th, td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid var(--paper-3); vertical-align: top; }

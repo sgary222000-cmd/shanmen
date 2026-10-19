@@ -157,6 +157,7 @@ export function DisciplesPage() {
                   <span>{realmName(d.realm)}</span>
                   <span className="sch">
                     {SCHEDULE_NAMES[d.schedule]}
+                    {game.heirId === d.id && '・親傳弟子'}
                     {positionOf(game, d.id) ? `・${POSITION_NAMES[positionOf(game, d.id) ?? 'mentor']}` : ''}
                   </span>
                 </span>

@@ -3,6 +3,7 @@ import type { GameState } from '../types';
 import { allCharacters, isInjured } from './characters/characters';
 import { monthsUntilEmpty, planMonth } from './economy/flows';
 import { qiEfficiencyPct } from './cultivation/cultivation';
+import { heirOf, remainingLifeMonths, remainingLifePct } from './characters/lifespan';
 
 export interface Alert {
   level: 'danger' | 'warning' | 'info';
@@ -29,6 +30,15 @@ export function computeAlerts(state: GameState, content: ContentPack): Alert[] {
   for (const r of content.regions.values()) {
     const qi = qiEfficiencyPct(state, content, r.id);
     if (qi < 100) alerts.push({ level: 'info', text: `${r.name}靈氣不足，在此修煉效率 ${qi}%` });
+  }
+  for (const c of allCharacters(state)) {
+    const pct = remainingLifePct(c);
+    if (pct > 20) continue;
+    const years = Math.floor(remainingLifeMonths(c) / 12);
+    const who = c.role === 'protagonist' ? `掌門${c.name}` : c.name;
+    if (c.role === 'protagonist' && !heirOf(state))
+      alerts.push({ level: 'danger', text: `${who}壽元只剩約 ${years} 年，尚未指定親傳弟子` });
+    else alerts.push({ level: pct <= 10 ? 'danger' : 'warning', text: `${who}壽元只剩約 ${years} 年` });
   }
   for (const c of allCharacters(state)) if (isInjured(c)) alerts.push({ level: 'info', text: `${c.name}受傷（${c.injuryMonths} 個月）` });
   for (const f of plan.furnaces) if (!f.runs && f.reason) alerts.push({ level: 'warning', text: `丹爐 ${f.index + 1}：${f.reason}` });

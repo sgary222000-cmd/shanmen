@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { advanceBlockers, computeAlerts, formatDate, planMonth, type ResourceId } from '../../engine';
 import { RESOURCE_IDS } from '../../engine/resources';
 import { content, useGame, useUi } from '../store';
@@ -8,6 +8,10 @@ export function TopBar() {
   const game = useGame();
   const advance = useUi((s) => s.advance);
   const busy = useUi((s) => s.busy);
+  const running = useUi((s) => s.running);
+  const advanceMany = useUi((s) => s.advanceMany);
+  const stopRun = useUi((s) => s.stopRun);
+  const [menu, setMenu] = useState(false);
   const setPage = useUi((s) => s.setPage);
   const alerts = useMemo(() => computeAlerts(game, content), [game]);
   const blockers = advanceBlockers(game);
@@ -58,8 +62,45 @@ export function TopBar() {
         title={blockers[0] ?? '結算本月並進入下個月'}
         onClick={() => void advance()}
       >
-        推進一月
+        {running ? `推進中 ${running.done}/${running.total}` : '推進一月'}
       </button>
+      <span className="advance-multi">
+        {running ? (
+          <button className="btn small danger" data-testid="advance-stop" onClick={stopRun}>
+            停止連續推進
+          </button>
+        ) : (
+          <>
+            {menu && (
+              <span className="menu" data-testid="advance-menu">
+                {[3, 6, 12].map((n) => (
+                  <button
+                    key={n}
+                    className="btn small"
+                    data-testid={`advance-${n}`}
+                    onClick={() => {
+                      setMenu(false);
+                      void advanceMany(n);
+                    }}
+                  >
+                    {n === 12 ? '一年' : `${n} 個月`}
+                  </button>
+                ))}
+                <span className="muted small">遇到重要事件會自動停下（可在設定頁調整）</span>
+              </span>
+            )}
+            <button
+              className="btn small secondary"
+              data-testid="advance-many"
+              disabled={busy || blockers.length > 0}
+              title={blockers[0] ?? '一次推進好幾個月'}
+              onClick={() => setMenu(!menu)}
+            >
+              連續推進 {menu ? '▴' : '▾'}
+            </button>
+          </>
+        )}
+      </span>
     </header>
   );
 }
