@@ -24,7 +24,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     hint: '在「主角」頁安排閉關，修煉速度最快。',
     check: (s) => s.protagonist.schedule === 'seclusion',
   },
-  { id: 'month', title: '推進首月', hint: '按右上角「推進一月」。', check: (s) => s.stats.monthsAdvanced >= 1 },
+  { id: 'month', title: '推進首月', hint: '按右下角的「推進一月」。', check: (s) => s.stats.monthsAdvanced >= 1 },
   { id: 'hall', title: '修復宗門大殿', hint: '在「建設」頁修復大殿，開放招生與更多建築。', check: (s) => hallLevel(s) >= 1 },
   {
     id: 'inner',
@@ -33,9 +33,15 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     check: (s) => s.disciples.length >= 1,
   },
   {
+    id: 'commission',
+    title: '接第一件委託',
+    hint: '在「坊市」頁的委託榜接一件勞務委託，派閒置的外門弟子去賺靈石與聲望。',
+    check: (s) => s.reputation > 0,
+  },
+  {
     id: 'explore',
     title: '完成初次探索與戰鬥',
-    hint: '在「探索」頁帶隊進入荒廢洞府。',
+    hint: '主角修到煉氣三層後，在「探索」頁帶一兩名內門弟子進入荒廢洞府。實力不足時出發前會提醒。',
     check: (s) => s.stats.explorations >= 1 && s.battles.length >= 1,
   },
   {

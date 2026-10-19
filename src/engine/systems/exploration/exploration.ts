@@ -7,7 +7,6 @@ import { addInto, canAfford, formatResources, scaleResources, spend } from '../.
 import { rng } from '../../rng';
 import type { BattleRecord, Character, ExplorationRun, GameState, Row } from '../../types';
 import { findCharacter, isInjured } from '../characters/characters';
-import { releaseFurnace } from '../alchemy/alchemy';
 import { ITEM_NAMES } from '../talent/items';
 import { runBattle, unitFromEnemy } from '../combat/combat';
 import { allyUnit, applyFormation, characterMaxHp, companions, healPctFor } from '../combat/party';
@@ -64,7 +63,6 @@ export function startExploration(
   const hp: Record<string, number> = {};
   const fixedRows: Record<string, Row> = {};
   for (const c of members) {
-    releaseFurnace(state, c.id);
     c.schedule = 'explore';
     fixedRows[c.id] = rows[c.id] ?? 'front';
     hp[c.id] = allyUnit(state, content, c, fixedRows[c.id] ?? 'front').hp;
@@ -249,8 +247,11 @@ function finishRun(state: GameState, content: ContentPack, status: 'completed' |
     }
   }
   addInto(state.pendingLoot, kept);
+  // 結束後畫面上的收穫改為實際帶回的物資（含撤退折扣與首次通關獎勵）
+  run.loot = { ...kept };
   const verdict = { completed: '探索完成', retreated: '撤退', defeated: '探索失敗' }[status];
   run.log.push(`${verdict}。帶回物資：${formatResources(kept)}（月底入庫）。`);
+  (state.monthLog ??= []).push(`${realm.name}${verdict}，帶回${formatResources(kept) || '無'}。`);
 
   // 傷勢：倒下者重傷，生命低於一半者輕傷
   for (const id of run.teamIds) {

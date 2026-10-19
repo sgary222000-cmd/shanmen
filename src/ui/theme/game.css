@@ -476,3 +476,20 @@ h3.sec::after { content: ''; flex: 1; height: 1px; background: linear-gradient(9
   .title-menu .btn { padding: .4rem 1rem; font-size: 1rem; }
   .newgame { max-height: none; margin: 0; }
 }
+
+/* 視窗內的引導提示條 */
+.tutorial-strip {
+  display: flex; gap: .8rem; align-items: baseline; flex-wrap: wrap;
+  padding: .35rem 1.4rem; font-size: .85rem; color: var(--ink);
+  background: linear-gradient(90deg, rgba(201,88,63,.14), rgba(201,88,63,.03));
+  border-bottom: 1px solid var(--gold-line);
+}
+.tutorial-strip .k { font-family: var(--font-title); color: var(--cinnabar); letter-spacing: .08em; white-space: nowrap; }
+@media (max-height: 520px) { .tutorial-strip { padding: .2rem .8rem; font-size: .8rem; } }
+
+/* 提示訊息放在頂欄下方置中，不蓋住右下角的「推進一月」與底部功能列 */
+.toasts { top: 4.2rem; bottom: auto; right: auto; left: 50%; transform: translateX(-50%); width: min(460px, calc(100vw - 2rem)); max-width: none; }
+.toast { text-align: center; box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+@media (max-height: 520px) { .toasts { top: 3rem; } }
+/* 可捲動的面板：四角紋飾跟著內容捲動，不會壓在文字上 */
+.newgame { background-attachment: local; }

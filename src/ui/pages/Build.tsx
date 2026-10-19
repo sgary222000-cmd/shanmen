@@ -122,7 +122,9 @@ function RegionView({ regionId }: { regionId: string }) {
   const here = game.buildings.filter((b) => b.region === regionId);
   const options = newBuildOptions(game, content, regionId);
   const allowNames =
-    region.allows === 'any' ? '任何建築' : region.allows.map((id) => content.buildings.get(id)?.name ?? id).join('、') || '下一批開放';
+    region.allows === 'any'
+      ? `限定區域以外的建築（${[...content.buildings.values()].filter((d) => d.onlyRegions && !d.onlyRegions.includes(regionId)).map((d) => d.name).join('、')}要蓋在別區）`
+      : region.allows.map((id) => content.buildings.get(id)?.name ?? id).join('、') || '下一批開放';
   return (
     <div>
       <div className="panel region-panel">

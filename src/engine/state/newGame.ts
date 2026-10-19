@@ -111,12 +111,14 @@ export function newGame(content: ContentPack, opts: NewGameOptions): GameState {
     dispatches: [],
     sects: initialSects(content),
     intel: [],
+    monthLog: [],
     tournament: null,
     auction: null,
     veins: [],
     stats: { commands: 0, monthsAdvanced: 0, explorations: 0 },
   };
   rollMarket(state);
+  state.monthStart = { ...state.resources };
   refreshBoard(state, content);
   return state;
 }

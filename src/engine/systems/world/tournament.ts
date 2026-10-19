@@ -10,10 +10,9 @@ import { findCharacter } from '../characters/characters';
 import { runBattle, unitFromCharacter, type Unit } from '../combat/combat';
 import { allyUnit } from '../combat/party';
 import { canJoinExpedition } from '../exploration/exploration';
-import { releaseFurnace } from '../alchemy/alchemy';
 import { sectPowerCap } from './sects';
 
-// 年度大比（每 3 年 9 月）：各宗派三名弟子一對一切磋，三戰兩勝為勝一場。
+// 三年大比（每 3 年 9 月）：各宗派三名弟子一對一切磋，三戰兩勝為勝一場。
 // 我宗與三個電腦宗門循環對戰，依勝場排名，名次決定聲望與獎品。切磋點到為止，不會受傷。
 
 const T = balance.tournament;
@@ -118,7 +117,6 @@ export function enterTournament(state: GameState, content: ContentPack, teamIds:
   const ours = teamIds.map((id) => {
     const c = findCharacter(state, id);
     ensure(c, '找不到弟子');
-    releaseFurnace(state, c.id);
     c.schedule = 'explore';
     return allyUnit(state, content, c, 'front', 99999);
   });
@@ -170,11 +168,11 @@ export function enterTournament(state: GameState, content: ContentPack, teamIds:
 export function maybeOpenTournament(state: GameState, lines: string[]): void {
   if (!isTournamentMonth(state)) return;
   state.tournament = { year: state.date.year, status: 'open', standings: [], log: [], rank: null };
-  lines.push(`年度大比本月舉行，可在「宗門往來」頁派最多 ${T.teamSize} 名弟子參加（需聲望 ${T.minReputation}）。`);
+  lines.push(`三年大比本月舉行，可在「宗門往來」頁派最多 ${T.teamSize} 名弟子參加（需聲望 ${T.minReputation}）。`);
   state.events.push({
     id: newId(state, 'ev'),
     kind: 'notice',
-    title: '年度大比',
+    title: '三年大比',
     text: `第 ${state.date.year} 年的大比本月舉行。到「宗門往來」頁選最多 ${T.teamSize} 名弟子參加；本月不參加就算棄權。`,
     blocking: false,
   });

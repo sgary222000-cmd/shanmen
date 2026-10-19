@@ -92,7 +92,7 @@ export const balance = {
     innerPerTwo: 1,
   },
   outer: {
-    errandLingshi: 2,
+    errandLingshi: 3,
     hungerSatisfactionLoss: 10,
     leaveThreshold: 20,
     trainingGainPerMonth: 4,
@@ -152,7 +152,9 @@ export const balance = {
     rollMinPct: 80,
     rollMaxPct: 120,
     /** 榜上同時最多幾件護衛委託：否則內門一多，每月可接好幾件高額護衛，委託流靈石失控 */
-    maxEscortOnBoard: 2,
+    maxEscortOnBoard: 1,
+    /** 每月最多接幾件委託（0.4.5）：委託路線第 100 年靈石是其他路線 10 倍以上，先限制件數 */
+    maxPerMonth: 3,
   },
   reputation: {
     /** 每 20 聲望，招生多 1 名外門，最多 +3 */
@@ -286,7 +288,7 @@ export const balance = {
       { favor: 30, pct: 5 },
     ],
   },
-  /** 年度大比：每 3 年 9 月 */
+  /** 三年大比：每 3 年 9 月 */
   tournament: {
     intervalYears: 3,
     month: 9,

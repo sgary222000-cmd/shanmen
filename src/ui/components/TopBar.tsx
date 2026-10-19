@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { advanceBlockers, computeAlerts, formatDate } from '../../engine';
+import { advanceBlockers, computeAlerts, formatDate, planMonth, type ResourceId } from '../../engine';
+import { RESOURCE_IDS } from '../../engine/resources';
 import { content, useGame, useUi } from '../store';
 import { ResIcon } from './Icons';
 
@@ -12,8 +13,13 @@ export function TopBar() {
   const blockers = advanceBlockers(game);
   const r = game.resources;
   const danger = alerts.filter((a) => a.level === 'danger').length;
-  // 上月的資源增減，顯示在數字旁
-  const d = game.reports[0]?.delta ?? {};
+  // 本月預估增減（與產業頁收支表的淨變化相同），顯示在數字旁
+  const d = useMemo(() => {
+    const plan = planMonth(game, content);
+    const out: Partial<Record<ResourceId, number>> = {};
+    for (const id of RESOURCE_IDS) out[id] = (plan.production[id] ?? 0) + (plan.expected[id] ?? 0) - (plan.consumption[id] ?? 0);
+    return out;
+  }, [game]);
   const pillDelta = (d.pill_qi ?? 0) + (d.pill_heal ?? 0) + (d.pill_foundation ?? 0) + (d.pill_peiyuan ?? 0);
   const chips: [string, string, number, number, string | undefined][] = [
     ['lingshi', '靈石', r.lingshi, d.lingshi ?? 0, 'res-lingshi'],
@@ -30,7 +36,7 @@ export function TopBar() {
       <span className="date" data-testid="date">{formatDate(game.date)}</span>
       <span className="res">
         {chips.map(([id, label, value, delta, testId]) => (
-          <span key={id} className="res-chip" title={label}>
+          <span key={id} className="res-chip" title={`${label}（旁邊的數字是本月預估增減）`}>
             <ResIcon id={id} />
             <span className="lbl">{label}</span>
             {/* key 綁數值：數字改變時重新播放閃光 */}

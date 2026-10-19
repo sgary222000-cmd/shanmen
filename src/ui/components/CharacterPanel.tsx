@@ -5,7 +5,7 @@ import { isCraftSchedule } from '../../engine/systems/buildings/buildings';
 import { LOCKED_SCHEDULES, SCHEDULE_NAMES, seatOptions, seclusionInterruptCost, selectableSchedules } from '../../engine/systems/characters/schedule';
 import { breakthroughOdds, monthlyXp } from '../../engine/systems/cultivation/cultivation';
 import { content, useGame, useUi } from '../store';
-import { insightGain, techniqueOf, techniqueTier } from '../../engine/systems/talent/techniques';
+import { insightGain, libraryResearch, techniqueOf, techniqueTier } from '../../engine/systems/talent/techniques';
 import { POSITION_NAMES, positionOf } from '../../engine/systems/talent/positions';
 import { BEAST_TASK_NAMES } from '../../engine/systems/beasts/beasts';
 import { COMMON_EQUIPMENT } from '../../content/equipment';
@@ -102,6 +102,14 @@ export function CharacterPanel({ c }: { c: Character }) {
   );
   const odds = breakthroughOdds(game, content, c);
   const locked = c.schedule === 'explore' || c.schedule === 'dispatch' || isCraftSchedule(c.schedule) || !!seclusion;
+  // 目前不能選的行程與原因（按鈕反灰並顯示原因）
+  const noLibrary = libraryResearch(game, content) === null;
+  const scheduleBlocked = (s: ScheduleKind): string | undefined => {
+    if (s === 'breakthrough') return odds.blocked || undefined;
+    if (s === 'research' && noLibrary) return '需要先蓋好藏經閣才能研究功法';
+    if (s === 'heal' && c.injuryMonths <= 0 && c.health >= 100) return '沒有受傷，不需要療傷';
+    return undefined;
+  };
 
   return (
     <div className="panel" data-testid={`char-${c.id}`}>
@@ -164,7 +172,7 @@ export function CharacterPanel({ c }: { c: Character }) {
             s === 'seclusion' ? (
               <span key={s} className="row">
                 <button
-                  className="btn small"
+                  className={`btn small ${c.schedule === 'seclusion' ? '' : 'secondary'}`}
                   disabled={locked}
                   data-testid={`seclusion-${c.id}`}
                   onClick={() => dispatch({ type: 'setSchedule', characterId: c.id, schedule: 'seclusion', months })}
@@ -177,8 +185,8 @@ export function CharacterPanel({ c }: { c: Character }) {
               <button
                 key={s}
                 className={`btn small ${c.schedule === s ? '' : 'secondary'}`}
-                disabled={locked || (s === 'breakthrough' && !!odds.blocked)}
-                title={s === 'breakthrough' ? odds.blocked : undefined}
+                disabled={locked || !!scheduleBlocked(s)}
+                title={scheduleBlocked(s)}
                 onClick={() => dispatch({ type: 'setSchedule', characterId: c.id, schedule: s })}
               >
                 {SCHEDULE_NAMES[s]}
@@ -193,6 +201,7 @@ export function CharacterPanel({ c }: { c: Character }) {
             ))}
         </div>
       )}
+      {!locked && noLibrary && <p className="muted small">「研究功法」需要先在建設頁蓋好藏經閣。</p>}
       {isPro && !seclusion && (
         <p className="muted small">閉關修煉最快，每連續一個月再 +10%（最多 +30%）；中途中斷會失去累積的加成。</p>
       )}

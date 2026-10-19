@@ -78,6 +78,7 @@ function OuterJobs() {
   const dispatch = useUi((s) => s.dispatch);
   const [jobs, setJobs] = useState<OuterDisciples['jobs']>(game.outer.jobs);
   useEffect(() => setJobs(game.outer.jobs), [game.outer.jobs]);
+  const dirty = (Object.keys({ ...jobs, ...game.outer.jobs }) as (keyof typeof jobs)[]).some((k) => (jobs[k] ?? 0) !== (game.outer.jobs[k] ?? 0));
   const cap = jobCapacity(game, content);
   const total = OUTER_JOBS.reduce((n, k) => n + jobs[k], 0);
   const free = game.outer.count - game.outer.labor;
@@ -105,8 +106,8 @@ function OuterJobs() {
                 {cap[k] === 0
                   ? '需要先建造對應建築'
                   : Number.isFinite(cap[k])
-                    ? `工位 ${cap[k]}`
-                    : `每人每月靈石 ${balance.outer.errandLingshi}`}
+                    ? `工位 ${cap[k]}${k === 'field' ? '（種糧食或藥草，在建設頁的靈田卡片切換）' : ''}`
+                    : `每人每月靈石 ${balance.outer.errandLingshi}；坊市委託榜的勞務委託報酬更高`}
               </td>
             </tr>
           ))}
@@ -118,10 +119,15 @@ function OuterJobs() {
         </tbody>
       </table>
       <div className="row">
-        <button className="btn" data-testid="apply-jobs" disabled={total > free} onClick={() => dispatch({ type: 'setOuterJobs', jobs })}>
+        <button className={`btn ${dirty ? 'gold' : ''}`} data-testid="apply-jobs" disabled={total > free} onClick={() => dispatch({ type: 'setOuterJobs', jobs })}>
           套用分工
         </button>
         {total > free && <span className="neg small">分工人數超過可用外門人數</span>}
+        {total <= free && dirty && (
+          <span className="neg small" data-testid="jobs-dirty">
+            分工已修改但還沒套用，離開這頁前請按「套用分工」。
+          </span>
+        )}
         {game.outer.labor > 0 && <span className="muted small">另有 {game.outer.labor} 人本月外出做勞務委託</span>}
       </div>
     </div>

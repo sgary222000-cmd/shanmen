@@ -18,7 +18,7 @@ import {
   STATIONS,
 } from '../buildings/buildings';
 import { productionBonusPct } from '../regions/regions';
-import { allCharacters } from '../characters/characters';
+import { allCharacters, findCharacter } from '../characters/characters';
 import { craftPositionBp, stewardPct } from '../talent/positions';
 import { beastFood, beastGather, guardianBonus } from '../beasts/beasts';
 import { monthIndex } from '../../date';
@@ -272,7 +272,8 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
       const keep = f.keep ?? 0;
       const belowKeep =
         keep > 0 && RESOURCE_IDS.some((id) => id !== 'lingshi' && (recipe.inputs[id] ?? 0) > 0 && pool[id] - (recipe.inputs[id] ?? 0) < keep);
-      if (index >= slots) plan.reason = roomWorks ? `${info.bench}數量不足` : `${info.room}未運作`;
+      if (findCharacter(state, f.alchemistId)?.schedule !== info.schedule) plan.reason = `${info.worker}本月外出，停工`;
+      else if (index >= slots) plan.reason = roomWorks ? `${info.bench}數量不足` : `${info.room}未運作`;
       else if (belowKeep) plan.reason = `材料會低於保留量 ${keep}，停工`;
       else if (!take(pool, consumption, recipe.inputs)) plan.reason = '材料不足，停工';
       else plan.runs = true;

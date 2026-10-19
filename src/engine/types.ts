@@ -240,7 +240,7 @@ export interface TournamentStanding {
   duelWins: number;
 }
 
-/** 年度大比：每 3 年一次。 */
+/** 三年大比：每 3 年一次。 */
 export interface TournamentState {
   year: number;
   status: 'open' | 'done' | 'skipped';
@@ -473,6 +473,12 @@ export interface GameState {
   sects: SectState[];
   /** 情報紀錄（新的在前） */
   intel: IntelEntry[];
+  /** 本月月中發生的事（接委託、探索結果、坊市買賣），月底寫進月報開頭。0.4.5 新增，舊存檔沒有。 */
+  monthLog?: string[];
+  /** 上次月結時的庫存，用來算月報的整月增減（含月中收支）。0.4.5 新增。 */
+  monthStart?: Resources;
+  /** 本月已接的委託件數，月底歸零。0.4.5 新增。 */
+  commissionsTaken?: number;
   tournament: TournamentState | null;
   auction: AuctionState | null;
   veins: Vein[];

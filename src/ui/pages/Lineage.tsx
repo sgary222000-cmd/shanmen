@@ -121,8 +121,10 @@ export function LineagePage() {
         <p className="small">
           領悟來源：平時修煉每月 +{balance.technique.passive.qi}（築基 +{balance.technique.passive.foundation}、金丹 +
           {balance.technique.passive.core}），閉關再 +{balance.technique.seclusionPassive}；在藏經閣「研究功法」每月 +
-          {balance.technique.researchBase + (lib ?? 0)}
-          {lib === null ? '（目前沒有運作中的藏經閣，不能研究）' : ''}。結丹需要小成。
+          {lib === null
+            ? `${balance.technique.researchBase} 再加藏經閣加成（目前沒有運作中的藏經閣，不能研究）`
+            : `${balance.technique.researchBase + lib}（基礎 ${balance.technique.researchBase} + 藏經閣 ${lib}）`}
+          。結丹需要小成。
         </p>
         <table>
           <thead>

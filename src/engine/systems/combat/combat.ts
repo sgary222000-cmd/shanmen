@@ -248,7 +248,7 @@ export function runBattle(input: BattleInput): BattleOutcome {
       const mitigated = Math.floor((target.def * (100 - pierce)) / 100);
       const dmg = Math.max(1, raw - mitigated);
       target.hp = Math.max(0, target.hp - dmg);
-      log.push(`${actor.name}${skillName ? `施展${skillName}，` : '攻擊'}${target.name}，造成 ${dmg} 傷害。`);
+      log.push(`${actor.name}${skillName ? `施展${skillName}，擊中` : '攻擊'}${target.name}，造成 ${dmg} 傷害。`);
       if (target.hp === 0) {
         const line = `${target.name}倒下。`;
         log.push(line);

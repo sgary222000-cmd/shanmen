@@ -73,6 +73,9 @@ export function NewGamePage() {
               返回
             </button>
           </div>
+          {(!protagonistName.trim() || !sectName.trim()) && (
+            <p className="muted small">請先填寫{!sectName.trim() ? '宗門名稱' : '掌門姓名'}，才能接掌山門。</p>
+          )}
         </div>
       </div>
     </div>

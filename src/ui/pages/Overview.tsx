@@ -15,11 +15,26 @@ const SPOTS: Record<string, [number, number]> = {
   'building.hall': [53, 41],
   'building.dorm': [28, 77],
   'building.field': [80, 88],
-  'building.quarry': [12, 54],
-  'building.lumber': [90, 57],
+  'building.quarry': [12, 70],
+  'building.lumber': [84, 40],
   'building.alchemy': [74, 60],
   'building.array': [33, 47],
 };
+
+/** 視窗裡的引導提示條：在各頁操作時也看得到目前步驟。 */
+export function TutorialStrip() {
+  const game = useGame();
+  const step = currentStep(game);
+  if (!step) return null;
+  return (
+    <div className="tutorial-strip" data-testid="tutorial-strip">
+      <span className="k">
+        引導 {game.tutorial.done.length + 1}/{TUTORIAL_STEPS.length}・{step.title}
+      </span>
+      <span>{step.hint}</span>
+    </div>
+  );
+}
 
 function TutorialCard() {
   const game = useGame();
@@ -128,9 +143,10 @@ export function OverviewPage() {
             .filter((r) => qiCapacity(game, content, r.id) > 0 && regionState(game, r.id).status === 'open')
             .map((r) => (
               <div className="row2" key={r.id}>
-                <span>{r.name}靈氣</span>
+                <span title="修煉的人需要的靈氣／這一區能提供的靈氣；需要超過能提供時，修煉效率下降">{r.name}靈氣（需要／可供）</span>
                 <b className={qiEfficiencyPct(game, content, r.id) < 100 ? 'neg' : ''}>
                   {qiDemandOf(game, r.id)} / {qiCapacity(game, content, r.id)}
+                  {qiEfficiencyPct(game, content, r.id) < 100 && `・效率 ${qiEfficiencyPct(game, content, r.id)}%`}
                 </b>
               </div>
             ))}

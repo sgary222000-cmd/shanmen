@@ -123,6 +123,9 @@ function Board() {
         每月月底更新，榜上至少有一件勞務委託（只要有閒置的外門就能接）。接下即當場結算，報酬立即入庫。
         <span className="tag provisional">數值暫定</span>
       </p>
+      <p className="small" data-testid="commissions-taken">
+        本月已接 <b>{game.commissionsTaken ?? 0}</b> / {balance.commissions.maxPerMonth} 件委託。
+      </p>
       <div className="grid three fill">
         {game.commissions.map((c) => (
           <CommissionCard key={c.id} c={c} />

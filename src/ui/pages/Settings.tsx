@@ -52,7 +52,7 @@ export function SettingsPage() {
         <div className="row">
           {['音量', '加速結算', '連續推進與自動停止條件', '通知', '離線加成'].map((x) => (
             <span key={x} className="tag locked">
-              {x}（P2 起）
+              {x}（之後的版本）
             </span>
           ))}
         </div>
