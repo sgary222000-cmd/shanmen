@@ -402,3 +402,77 @@ h3.sec::after { content: ''; flex: 1; height: 1px; background: linear-gradient(9
   .hud-right .hud-card ul { display: none; }
   .scene .spot .lv { display: none; }
 }
+
+/* ── 手機橫拿（畫面高度很矮）：功能列移到左側直排，視窗佔滿其餘空間 ── */
+@media (max-height: 520px) {
+  html { font-size: 13px; }
+  .game .topbar { padding: .3rem .6rem .7rem; gap: .5rem; }
+  .topbar .sect { font-size: 1rem; padding: .1rem .5rem; }
+  .topbar .date { font-size: .9rem; white-space: nowrap; }
+  .res-chip { padding: .05rem .4rem .05rem .2rem; }
+  .res-chip svg { width: 14px; height: 14px; }
+  .res-chip b { font-size: .9rem; }
+  .res-chip .d { display: none; }
+  .topbar .alerts { padding: .15rem .5rem; font-size: .85rem; }
+
+  .dock {
+    left: 0; top: 2.9rem; bottom: 0; transform: none;
+    flex-direction: column; gap: 0; padding: .2rem .15rem 4rem;
+    width: 4rem; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
+    border-width: 1px 1px 0 0; border-radius: 0 6px 0 0;
+  }
+  .dock::-webkit-scrollbar { display: none; }
+  .dock button { width: 100%; flex: none; font-size: .72rem; padding: .2rem 0; gap: 1px; }
+  .dock button:hover { transform: none; }
+  .dock .seal { width: 2.4rem; height: 2.4rem; font-size: 1.1rem; }
+  .dock .home { margin: 0 0 .2rem; padding: 0 0 .3rem; border-right: none; border-bottom: 1px solid rgba(220,196,139,.3); }
+  .dock .badge { right: .2rem; }
+  .game .topbar .advance { width: 4.6rem; height: 4.6rem; font-size: .85rem; right: .6rem; bottom: .6rem; outline-offset: 1px; border-width: 2px; }
+
+  .hud-left, .hud-right { top: 3rem; gap: .4rem; }
+  .hud-left { left: 4.6rem; width: 15rem; max-height: calc(100vh - 3.6rem); overflow: auto; scrollbar-width: none; }
+  .hud-right { right: .6rem; width: 16rem; max-height: calc(100vh - 9rem); }
+  .hud-card { padding: .45rem .6rem; }
+  .leader { padding: .25rem .6rem .25rem .25rem; }
+  .leader .face { width: 3.4rem; height: 3.4rem; }
+  .leader .nm { font-size: 1.1rem; }
+  .scene .spot { padding: .15rem .5rem; }
+  .scene .spot .nm { font-size: .8rem; }
+
+  .window-back { padding: 3.1rem 5.8rem .9rem 4.9rem; }
+  .window { box-shadow: 0 0 0 3px rgba(17,33,31,.92), 0 0 0 4px rgba(220,196,139,.5), 0 12px 30px rgba(0,0,0,.6); }
+  .window::before, .window::after { height: 8px; left: -10px; right: -10px; }
+  .window::before { top: -7px; }
+  .window::after { bottom: -7px; }
+  .window-head { padding: .3rem .8rem .25rem; }
+  .window-head h2 { font-size: 1.25rem; letter-spacing: .3em; }
+  .window-head h2::before, .window-head h2::after { margin: 0 .4rem; font-size: .7rem; }
+  .window-close { width: 2.2rem; height: 2.2rem; right: .5rem; }
+  .window-body { padding: .6rem .8rem .9rem; }
+  .tabs { margin-bottom: .6rem; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .tabs button { flex: none; padding: .35rem .8rem; }
+  .roster-layout { grid-template-columns: 11rem 1fr; }
+  .detail { grid-template-columns: 9.5rem 1fr; gap: .7rem; }
+  .hero { padding: 4px; }
+  .hero .realm-seal { width: 2.6rem; height: 2.6rem; font-size: .75rem; right: -6px; top: -6px; }
+  .hero-name { padding: 1rem .3rem .4rem; }
+  .hero-name b { font-size: 1.2rem; letter-spacing: .15em; }
+  .sheet .attrs b { font-size: 1.2rem; }
+  .skills { gap: .2rem .8rem; }
+  .window-body .panel { overflow-x: auto; }
+  .window-body table { white-space: nowrap; }
+  .room-head, .region-head { height: 70px; }
+  .room-head h3 { font-size: 1.2rem !important; }
+  .sect-card2 .room-head { height: 80px; }
+  .run-head { height: 80px; }
+  .realm-card { height: 80px; }
+  .bcard > .art { aspect-ratio: 2 / 1; }
+  .realm-info { grid-template-columns: 1fr; }
+  .realm-info > .art { display: none; }
+  .title-screen { justify-content: flex-start; gap: .5rem; padding: .6rem; }
+  .title-logo { padding: .4rem 2rem; }
+  .title-logo h1 { font-size: 2.4rem; }
+  .title-logo p { margin: .2rem 0 0; }
+  .title-menu .btn { padding: .4rem 1rem; font-size: 1rem; }
+  .newgame { max-height: none; margin: 0; }
+}

@@ -246,7 +246,7 @@ function Prepare() {
         ))}
       </div>
       <Dispatches />
-      <div className="grid two">
+      <div className="grid two realm-info">
         <Art path={realm.art} alt={realm.name} />
         <div className="panel">
           <h3>
