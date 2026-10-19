@@ -4,8 +4,8 @@ import { hallLevel, innerLimit, outerCapacity } from '../../engine/systems/build
 import { powerLevel, realmName } from '../../engine/systems/characters/characters';
 import { SCHEDULE_NAMES } from '../../engine/systems/characters/schedule';
 import { disciplePortrait } from '../art';
-import { Art } from '../components/Art';
-import { CharacterPanel } from '../components/CharacterPanel';
+import { CharacterSheet } from '../components/Layout';
+import { artUrl } from '../art';
 import { content, useGame, useUi } from '../store';
 import { POSITION_IDS, POSITION_NAMES, POSITION_TEXT, positionEffectText, positionOf } from '../../engine/systems/talent/positions';
 import { SKILL_NAMES } from '../components/CharacterPanel';
@@ -58,8 +58,10 @@ type SortKey = 'realm' | 'age' | keyof Skills;
 export function DisciplesPage() {
   const game = useGame();
   const dispatch = useUi((s) => s.dispatch);
+  const [tab, setTab] = useState<'inner' | 'outer' | 'positions'>('inner');
   const [sort, setSort] = useState<SortKey>('realm');
   const [filter, setFilter] = useState<'all' | 'idle' | 'injured'>('all');
+  const [picked, setPicked] = useState<string | null>(null);
   const limit = innerLimit(game, content);
   const list = game.disciples
     .filter((d) => (filter === 'idle' ? d.schedule === 'cultivate' : filter === 'injured' ? d.injuryMonths > 0 : true))
@@ -68,70 +70,111 @@ export function DisciplesPage() {
       if (sort === 'age') return a.ageMonths - b.ageMonths;
       return b.skills[sort] - a.skills[sort];
     });
+  const cur = list.find((d) => d.id === picked) ?? list[0];
   return (
-    <div>
-      <h2>弟子</h2>
-      <div className="panel">
-        <h3>外門（群體管理）</h3>
-        <p>
-          人數 {game.outer.count} / {outerCapacity(game, content)}・滿意度 {game.outer.satisfaction}・培養度 {game.outer.training}
-          ・連續缺糧 {game.outer.hungerMonths} 個月
-        </p>
-        <p className="muted small">外門分工在「產業」頁安排；未分工者自動修煉，提高培養度，選拔出的內門資質更好。</p>
-        <div className="row">
-          <button
-            className="btn"
-            data-testid="promote"
-            disabled={hallLevel(game) < 1 || game.disciples.length >= limit || game.outer.count < 1}
-            onClick={() => dispatch({ type: 'promoteOuter' })}
-          >
-            從外門選拔內門（靈石 {balance.recruit.promoteCost}）
-          </button>
-          <span className="muted small">
-            {hallLevel(game) < 1 ? '需要先修復宗門大殿。' : `內門上限 ${limit} 人（大殿等級決定）。`}
-          </span>
-        </div>
-        <p className="muted small">大殿修復後每 {balance.recruit.intervalMonths} 個月舉行一次山門招生。</p>
+    <div className="disciples">
+      <div className="tabs">
+        <button className={tab === 'inner' ? 'on' : ''} onClick={() => setTab('inner')} data-testid="tab-inner">
+          內門名冊 <small>{game.disciples.length} / {limit}</small>
+        </button>
+        <button className={tab === 'outer' ? 'on' : ''} onClick={() => setTab('outer')} data-testid="tab-outer">
+          外門 <small>{game.outer.count} / {outerCapacity(game, content)}</small>
+        </button>
+        <button className={tab === 'positions' ? 'on' : ''} onClick={() => setTab('positions')} data-testid="tab-positions">
+          職位
+        </button>
       </div>
-      <div className="panel">
-        <div className="row" style={{ justifyContent: 'space-between' }}>
-          <h3>
-            內門弟子 {game.disciples.length} / {limit}
-          </h3>
-          <div className="row small">
-            排序：
-            <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
-              <option value="realm">境界</option>
-              {(Object.keys(SKILL_NAMES) as (keyof Skills)[]).map((k) => (
-                <option key={k} value={k}>
-                  {SKILL_NAMES[k]}
-                </option>
-              ))}
-              <option value="age">年齡</option>
-            </select>
-            篩選：
-            <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)}>
-              <option value="all">全部</option>
-              <option value="idle">日常修煉中</option>
-              <option value="injured">受傷</option>
-            </select>
+
+      {tab === 'outer' && (
+        <div className="panel">
+          <h3>外門（群體管理）</h3>
+          <div className="stats">
+            <div className="stat">
+              <div className="k">人數</div>
+              <div className="v">
+                {game.outer.count}
+                <small> / {outerCapacity(game, content)}</small>
+              </div>
+            </div>
+            <div className="stat">
+              <div className="k">滿意度</div>
+              <div className="v">{game.outer.satisfaction}</div>
+            </div>
+            <div className="stat">
+              <div className="k">培養度</div>
+              <div className="v">{game.outer.training}</div>
+            </div>
+            <div className="stat">
+              <div className="k">連續缺糧</div>
+              <div className="v">
+                {game.outer.hungerMonths}
+                <small> 個月</small>
+              </div>
+            </div>
+          </div>
+          <p className="muted small">外門分工在「產業」頁安排；未分工者自動修煉，提高培養度，選拔出的內門資質更好。大殿修復後每 {balance.recruit.intervalMonths} 個月舉行一次山門招生。</p>
+          <div className="row">
+            <button
+              className="btn"
+              data-testid="promote"
+              disabled={hallLevel(game) < 1 || game.disciples.length >= limit || game.outer.count < 1}
+              onClick={() => dispatch({ type: 'promoteOuter' })}
+            >
+              從外門選拔內門（靈石 {balance.recruit.promoteCost}）
+            </button>
+            <span className="muted small">{hallLevel(game) < 1 ? '需要先修復宗門大殿。' : `內門上限 ${limit} 人（大殿等級決定）。`}</span>
           </div>
         </div>
-        {!game.disciples.length && <p className="muted">尚無內門弟子。</p>}
-        <p className="muted small">
-          {game.disciples.map((d) => `${d.name}：${SCHEDULE_NAMES[d.schedule]}`).join('、')}
-        </p>
-      </div>
-      <Positions />
-      <div className="grid two">
-        {list.map((d) => (
-          <div key={d.id} className="disciple-card">
-            <Art path={disciplePortrait(d)} alt={d.name} />
-            <CharacterPanel c={d} />
+      )}
+
+      {tab === 'positions' && <Positions />}
+
+      {tab === 'inner' && (
+        <div className="roster-layout">
+          <div className="roster">
+            <div className="roster-tools">
+              <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} aria-label="排序">
+                <option value="realm">依境界</option>
+                {(Object.keys(SKILL_NAMES) as (keyof Skills)[]).map((k) => (
+                  <option key={k} value={k}>
+                    依{SKILL_NAMES[k]}
+                  </option>
+                ))}
+                <option value="age">依年齡</option>
+              </select>
+              <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} aria-label="篩選">
+                <option value="all">全部</option>
+                <option value="idle">日常修煉中</option>
+                <option value="injured">受傷</option>
+              </select>
+            </div>
+            {!game.disciples.length && <p className="muted">尚無內門弟子。到「外門」分頁選拔。</p>}
+            {list.map((d) => (
+              <button key={d.id} className={`roster-item ${cur?.id === d.id ? 'on' : ''}`} onClick={() => setPicked(d.id)} data-testid={`roster-${d.id}`}>
+                <img src={artUrl(disciplePortrait(d))} alt="" />
+                <span className="t">
+                  <b>{d.name}</b>
+                  <span>{realmName(d.realm)}</span>
+                  <span className="sch">
+                    {SCHEDULE_NAMES[d.schedule]}
+                    {positionOf(game, d.id) ? `・${POSITION_NAMES[positionOf(game, d.id) ?? 'mentor']}` : ''}
+                  </span>
+                </span>
+                {d.injuryMonths > 0 && <span className="hurt">傷</span>}
+              </button>
+            ))}
+            {Array.from({ length: Math.max(0, limit - game.disciples.length) }, (_, i) => (
+              <div key={i} className="roster-item empty">
+                <span className="slot">空</span>
+                <span className="t">
+                  <span>尚可收 1 名內門</span>
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <p className="muted small">親傳弟子與長老會在 P2 開放。</p>
+          {cur && <CharacterSheet c={cur} portrait={disciplePortrait(cur)} />}
+        </div>
+      )}
     </div>
   );
 }

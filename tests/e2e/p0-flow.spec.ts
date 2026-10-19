@@ -23,12 +23,13 @@ async function advance(page: Page, months: number) {
   }
 }
 
-async function nav(page: Page, id: string) {
+async function nav(page: Page, id: string, tab?: string) {
   await page.getByTestId(`nav-${id}`).click();
+  if (tab) await page.getByTestId(`tab-${tab}`).click();
 }
 
 async function setJobs(page: Page, jobs: Record<string, number>) {
-  await nav(page, 'industry');
+  await nav(page, 'industry', 'jobs');
   for (const [k, v] of Object.entries(jobs)) await page.getByTestId(`job-${k}`).fill(String(v));
   await page.getByTestId('apply-jobs').click();
 }
@@ -67,16 +68,17 @@ test('P0 完整流程可玩完並在重新載入後恢復', async ({ page }) => 
   await setJobs(page, { field: 4, quarry: 3, lumber: 3, errand: 2 });
 
   // 5. 培養弟子：從外門選拔內門
-  await nav(page, 'disciples');
+  await nav(page, 'disciples', 'outer');
   await page.getByTestId('promote').click();
+  await page.getByTestId('tab-inner').click();
   await expect(page.locator('[data-testid^="char-c"]')).toHaveCount(1);
   await shot(page, '03-弟子');
 
   // 6. 生產：推進數月，石材與靈木增加
-  await nav(page, 'industry');
+  await nav(page, 'industry', 'ledger');
   const stoneBefore = Number(await page.getByTestId('ledger').locator('tr', { hasText: '石材' }).locator('td').nth(1).textContent());
   await advance(page, 3);
-  await nav(page, 'industry');
+  await nav(page, 'industry', 'ledger');
   const stoneAfter = Number(await page.getByTestId('ledger').locator('tr', { hasText: '石材' }).locator('td').nth(1).textContent());
   expect(stoneAfter).toBeGreaterThan(stoneBefore);
 
@@ -133,7 +135,7 @@ test('P0 完整流程可玩完並在重新載入後恢復', async ({ page }) => 
   await page.getByTestId('continue').click();
   await expect(page.getByTestId('date')).toHaveText(dateBefore ?? '');
   await expect(page.getByTestId('res-lingshi')).toHaveText(lingshiBefore ?? '');
-  await nav(page, 'reports');
+  await nav(page, 'reports', 'battles');
   await expect(page.getByTestId('battle').first()).toBeVisible();
   await shot(page, '08-讀檔後戰報');
 
@@ -183,7 +185,7 @@ test('匯入存檔後煉丹與築基突破可在介面操作', async ({ page }) 
   await expect(page.getByTestId('date')).toHaveText('第 1 年 1 月');
 
   // 煉丹：指派內門弟子掌爐、煉聚氣丹
-  await nav(page, 'industry');
+  await nav(page, 'industry', 'alchemy');
   await page.getByTestId('furnace-0-alchemist').selectOption('c7');
   await page.getByTestId('furnace-0-recipe').selectOption('recipe.qi_pill');
   await expect(page.getByText('成丹率')).toBeVisible();
@@ -203,6 +205,6 @@ test('匯入存檔後煉丹與築基突破可在介面操作', async ({ page }) 
   await expect(page.getByRole('dialog', { name: '月報' }).getByText(/突破成功|突破失敗/)).toBeVisible();
   await shot(page, '12-突破月報');
   await page.getByTestId('report-close').click();
-  await nav(page, 'industry');
+  await nav(page, 'industry', 'ledger');
   await expect(page.getByTestId('ledger').locator('tr', { hasText: '築基丹' }).locator('td').nth(1)).toHaveText('0');
 });

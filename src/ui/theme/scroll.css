@@ -1,0 +1,290 @@
+/* 介面風格「古籍卷軸 × 青綠山水」：宣紙底、裱框、楷書標題、朱印與玉色點綴。
+   疊在 theme.css 之上，只改外觀，不改版面結構與 data-testid。 */
+:root {
+  --ink: #1b3533;
+  --ink-2: #24463f;
+  --ink-deep: #11211f;
+  --paper: #f3ecdb;
+  --paper-2: #e8dec6;
+  --paper-3: #d8caa8;
+  --card: #fbf7ec;
+  --gold: #b08a3e;
+  --gold-soft: #dcc48b;
+  --gold-line: rgba(176, 138, 62, .55);
+  --cinnabar: #a8392b;
+  --cinnabar-soft: #c9583f;
+  --jade: #4f9a83;
+  --jade-soft: #9fcbb7;
+  --line: #cdbb91;
+  --radius: 4px;
+  --font-title: 'LXGW WenKai TC', 'Kaiti TC', 'STKaiti', 'DFKai-SB', 'BiauKai', serif;
+  --font-body: 'Noto Serif TC', 'Songti TC', 'PMingLiU', 'PingFang TC', serif;
+  --shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 6px 18px -10px rgba(40, 30, 10, .45);
+  /* 宣紙纖維：SVG 雜訊，極淡 */
+  --paper-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .22 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* 裱框四角的回紋 */
+  --corner: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='none' stroke='%23b08a3e' stroke-width='1.4'%3E%3Cpath d='M1 21V1h20'/%3E%3Cpath d='M5 21V5h16'/%3E%3Cpath d='M9 13V9h4v4h-2v-2'/%3E%3C/svg%3E");
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--paper);
+  background-image:
+    var(--paper-noise),
+    radial-gradient(ellipse at 20% 0%, rgba(159, 203, 183, .18), transparent 55%),
+    radial-gradient(ellipse at 100% 100%, rgba(176, 138, 62, .12), transparent 50%);
+}
+
+h1, h2, h3 { font-family: var(--font-title); font-weight: 700; letter-spacing: .04em; }
+
+/* ── 頁面標題：楷書 + 金線與中央菱紋 ── */
+.main > div > h2:first-child {
+  font-size: 1.9rem;
+  display: flex; align-items: center; gap: .9rem;
+  margin: .2rem 0 1rem;
+}
+.main > div > h2:first-child::after {
+  content: ''; flex: 1; height: 9px;
+  background:
+    linear-gradient(var(--gold), var(--gold)) left center / 100% 1px no-repeat,
+    linear-gradient(var(--gold-line), var(--gold-line)) left 7px / 60% 1px no-repeat;
+}
+.main { animation: page-in .35s ease-out; }
+@keyframes page-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ── 卡片：裱框、四角回紋 ── */
+.panel {
+  position: relative;
+  border: 1px solid var(--line);
+  outline: 1px solid rgba(255,255,255,.7);
+  outline-offset: -4px;
+  box-shadow: var(--shadow);
+  padding: 1.1rem 1.35rem;
+}
+/* 四角回紋（右上、左下、右下為翻轉版） */
+.panel {
+  background-image:
+    var(--corner), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='none' stroke='%23b08a3e' stroke-width='1.4'%3E%3Cpath d='M21 21V1H1'/%3E%3Cpath d='M17 21V5H1'/%3E%3Cpath d='M13 13V9H9v4h2v-2'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='none' stroke='%23b08a3e' stroke-width='1.4'%3E%3Cpath d='M1 1v20h20'/%3E%3Cpath d='M5 1v16h16'/%3E%3Cpath d='M9 9v4h4V9h-2v2'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='none' stroke='%23b08a3e' stroke-width='1.4'%3E%3Cpath d='M21 1v20H1'/%3E%3Cpath d='M17 1v16H1'/%3E%3Cpath d='M13 9v4H9V9h2v2'/%3E%3C/svg%3E"),
+    var(--paper-noise);
+  background-position: left 5px top 5px, right 5px top 5px, left 5px bottom 5px, right 5px bottom 5px, 0 0;
+  background-size: 22px, 22px, 22px, 22px, auto;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat;
+  background-color: var(--card);
+}
+.panel > h3:first-child, .panel > .row:first-child h3 {
+  display: flex; align-items: center; gap: .5rem;
+  font-size: 1.2rem; color: var(--ink);
+}
+.panel > h3:first-child::before, .panel > .row:first-child h3::before {
+  content: ''; width: 9px; height: 9px; flex: none;
+  background: var(--cinnabar); transform: rotate(45deg);
+  box-shadow: 0 0 0 2px var(--card), 0 0 0 3px var(--cinnabar-soft);
+}
+
+/* ── 按鈕：墨色木牌、金色內框；次要按鈕為紙牌 ── */
+.btn {
+  position: relative;
+  font-family: var(--font-title);
+  letter-spacing: .06em;
+  background: linear-gradient(180deg, #2d5650, var(--ink-2));
+  border: 1px solid var(--ink-deep);
+  box-shadow: inset 0 0 0 1px rgba(220, 196, 139, .45), 0 2px 0 rgba(0,0,0,.18);
+  border-radius: 3px;
+  transition: transform .12s, box-shadow .12s, filter .12s;
+}
+.btn:hover:not(:disabled) { background: linear-gradient(180deg, #336158, var(--ink)); filter: brightness(1.05); transform: translateY(-1px); }
+.btn:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 0 0 1px rgba(220,196,139,.45); }
+.btn.secondary {
+  background: linear-gradient(180deg, #fffaf0, var(--paper-2));
+  color: var(--ink);
+  border-color: var(--line);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.8), 0 1px 0 rgba(0,0,0,.08);
+}
+.btn.secondary:hover:not(:disabled) { background: linear-gradient(180deg, #fff, var(--paper-3)); }
+.btn.gold { background: linear-gradient(180deg, #c9a253, var(--gold)); border-color: #8a6a2c; color: #fffaf0; }
+.btn.danger { background: transparent; box-shadow: none; }
+
+/* ── 表單元件：自訂下拉與勾選 ── */
+select {
+  appearance: none;
+  padding: .3rem 2rem .3rem .65rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23a8392b' stroke-width='1.6'/%3E%3C/svg%3E") right .6rem center / 11px no-repeat,
+    linear-gradient(180deg, #fffdf6, #f3ead6);
+  box-shadow: inset 0 1px 2px rgba(80, 60, 20, .08);
+  cursor: pointer;
+  max-width: 100%;
+}
+select:hover:not(:disabled) { border-color: var(--gold); }
+select:focus { outline: 2px solid var(--gold-soft); outline-offset: 1px; }
+input[type=checkbox] {
+  appearance: none; width: 1.05rem; height: 1.05rem; margin: 0 .35rem 0 0; vertical-align: -3px;
+  border: 1px solid var(--gold); border-radius: 2px; background: #fffdf6; cursor: pointer; position: relative;
+}
+input[type=checkbox]:checked { background: var(--cinnabar); border-color: var(--cinnabar); }
+input[type=checkbox]:checked::after {
+  content: ''; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px;
+  border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg);
+}
+
+.tag { background: rgba(255,255,255,.55); border-color: var(--line); border-radius: 2px; font-family: var(--font-title); }
+.tag.gold { background: linear-gradient(180deg, #ecd9a6, var(--gold-soft)); border-color: var(--gold); color: #4a3510; }
+
+/* ── 進度條：玉色，帶微光 ── */
+.bar { height: 10px; border-radius: 5px; background: rgba(120, 100, 60, .15); box-shadow: inset 0 1px 2px rgba(0,0,0,.15); }
+.bar > div {
+  border-radius: 5px;
+  background: linear-gradient(90deg, #3f8571, var(--jade) 60%, var(--jade-soft));
+  box-shadow: 0 0 6px rgba(79, 154, 131, .55);
+  position: relative; overflow: hidden;
+}
+.bar > div::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%);
+  transform: translateX(-100%); animation: shimmer 3.2s ease-in-out infinite;
+}
+@keyframes shimmer { 60%, 100% { transform: translateX(100%); } }
+
+table th { font-family: var(--font-title); color: var(--ink-soft); }
+th, td { border-bottom: 1px dashed rgba(176, 138, 62, .35); }
+
+/* ── 上方橫列：墨色雲紋、資源圖示 ── */
+.topbar {
+  gap: 1.1rem;
+  padding: .45rem 1.1rem;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='40' fill='none' stroke='%23dcc48b' stroke-opacity='.07' stroke-width='1.2'%3E%3Cpath d='M0 30c10-12 22-12 30 0 8-12 20-12 30 0M60 14c10-12 22-12 30 0 8-12 20-12 30 0'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #23413d, var(--ink-deep));
+  border-bottom: 2px solid var(--gold);
+  box-shadow: 0 3px 12px rgba(0,0,0,.25);
+}
+.topbar .sect {
+  font-family: var(--font-title); font-size: 1.35rem; letter-spacing: .15em;
+  color: #f4e3b5; text-shadow: 0 0 10px rgba(220,196,139,.35);
+  padding: .05rem .7rem; border: 1px solid rgba(220,196,139,.5); border-radius: 2px;
+  box-shadow: inset 0 0 0 3px rgba(17,33,31,1), inset 0 0 0 4px rgba(220,196,139,.35);
+}
+.topbar .date { font-family: var(--font-title); color: var(--paper); letter-spacing: .05em; }
+.topbar .res { gap: .4rem; }
+.res-chip {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .12rem .55rem .12rem .3rem; border-radius: 999px;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(220,196,139,.22);
+  color: rgba(243,236,219,.82); font-size: .82rem; line-height: 1.3;
+}
+.res-chip svg { width: 18px; height: 18px; flex: none; }
+.res-chip b { color: #f4e3b5; font-size: .98rem; font-weight: 600; font-variant-numeric: tabular-nums; margin: 0; }
+.res-chip .d { font-size: .72rem; font-variant-numeric: tabular-nums; }
+.res-chip .d.up { color: #8fd3a8; }
+.res-chip .d.down { color: #f0907b; }
+.res-chip b.f { animation: flash 1.2s ease-out; }
+@keyframes flash { 0% { color: #fff; text-shadow: 0 0 8px #f4e3b5; } 100% { text-shadow: none; } }
+.topbar .alerts { font-family: var(--font-title); border-color: rgba(220,196,139,.5); box-shadow: none; background: transparent; }
+.topbar .advance {
+  font-size: 1.05rem; padding: .4rem 1.2rem; letter-spacing: .2em;
+  background: linear-gradient(180deg, var(--cinnabar-soft), var(--cinnabar));
+  border: 1px solid #6e2117; color: #fff6e6;
+  box-shadow: inset 0 0 0 2px rgba(255, 230, 200, .35), 0 2px 0 #5a1a12;
+}
+.topbar .advance:hover:not(:disabled) { background: linear-gradient(180deg, #d4664c, #b3402f); }
+
+/* ── 左側選單：竹簡底、印章字 ── */
+.body { grid-template-columns: 196px 1fr; }
+.nav {
+  background:
+    repeating-linear-gradient(90deg, transparent 0 31px, rgba(120, 95, 45, .07) 31px 32px),
+    linear-gradient(180deg, #e9dcbc, #e2d2ad);
+  border-right: 1px solid var(--gold-line);
+  box-shadow: inset -6px 0 12px -8px rgba(60, 40, 10, .35);
+  padding: .9rem .55rem;
+}
+.nav button {
+  display: flex; align-items: center; gap: .6rem;
+  font-family: var(--font-title); font-size: 1.02rem; letter-spacing: .05em;
+  padding: .38rem .6rem; margin-bottom: 2px; border-radius: 3px; border-left: 3px solid transparent;
+  transition: background .15s, border-color .15s;
+}
+.nav .seal {
+  width: 1.65rem; height: 1.65rem; flex: none; display: grid; place-items: center;
+  border: 1.5px solid var(--cinnabar); border-radius: 3px; color: var(--cinnabar);
+  font-size: .95rem; line-height: 1; background: rgba(255,250,240,.6);
+}
+.nav button:hover:not(.active) { background: rgba(255, 250, 238, .55); }
+.nav button.active {
+  background: linear-gradient(90deg, var(--ink-2), #2f5a52);
+  color: #f4e3b5; border-left-color: var(--gold);
+  box-shadow: 0 2px 6px -2px rgba(0,0,0,.35);
+}
+.nav button.active .seal { background: var(--cinnabar); color: #fff4e0; border-color: #f4e3b5; }
+.nav .badge { margin-left: auto; float: none; }
+
+/* ── 頁首橫幅 ── */
+.banner {
+  position: relative; height: 150px; margin: 0 0 1.1rem; overflow: hidden;
+  border: 1px solid var(--gold-line); box-shadow: var(--shadow);
+}
+.banner img { width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block; }
+.banner::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(17,33,31,.82) 0%, rgba(17,33,31,.45) 38%, transparent 70%);
+}
+.banner .t { position: absolute; left: 1.4rem; top: 50%; transform: translateY(-50%); z-index: 1; color: #f7ecd0; }
+.banner .t h2 { color: #f7ecd0; font-size: 2.1rem; margin: 0; text-shadow: 0 2px 8px rgba(0,0,0,.5); letter-spacing: .25em; }
+.banner .t p { margin: .2rem 0 0; color: rgba(247,236,208,.85); font-size: .95rem; }
+
+/* ── 全景：卷軸裝裱 ── */
+.panorama.panel { padding: .7rem; background: linear-gradient(180deg, #3a5c55, #22403b); border-color: #142a27; outline-color: rgba(220,196,139,.45); }
+.panorama .art { border: 2px solid var(--gold-soft); border-radius: 2px; }
+.panorama .spot {
+  font-family: var(--font-title); letter-spacing: .05em;
+  background: rgba(17,33,31,.86); border-color: var(--gold-soft); border-radius: 2px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35); transition: transform .15s;
+}
+.panorama .spot:hover { transform: translate(-50%, -55%); background: var(--cinnabar); }
+.panorama .spot.empty { background: rgba(251,247,236,.92); border-color: var(--gold); }
+
+/* ── 數值牌 ── */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .7rem; margin-bottom: 1rem; }
+.stat {
+  position: relative; padding: .7rem .9rem .65rem; border: 1px solid var(--line);
+  background: linear-gradient(180deg, #fffcf3, #f4ead3); box-shadow: var(--shadow);
+}
+.stat::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--gold); }
+.stat .k { font-family: var(--font-title); color: var(--ink-soft); font-size: .9rem; letter-spacing: .1em; }
+.stat .v { font-family: var(--font-title); font-size: 1.55rem; color: var(--ink); line-height: 1.25; }
+.stat .v small { font-size: .95rem; color: var(--muted); }
+.stat .s { font-size: .78rem; color: var(--muted); }
+.stat.hl::before { background: var(--cinnabar); }
+.stat .meter { height: 4px; margin-top: .35rem; background: rgba(120,100,60,.15); border-radius: 2px; overflow: hidden; }
+.stat .meter > i { display: block; height: 100%; background: var(--jade); }
+
+/* ── 弟子卡：裱框立繪＋境界朱印 ── */
+.disciple-grid { grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); }
+.disciple-card { grid-template-columns: 150px 1fr; gap: 1rem; }
+.portrait {
+  position: relative; padding: 5px; background: linear-gradient(180deg, #c9a253, #8a6a2c);
+  box-shadow: 0 6px 14px -6px rgba(40,30,10,.6);
+}
+.portrait .art { border: 1px solid #f4e3b5; border-radius: 0; }
+.portrait .name {
+  position: absolute; left: 5px; right: 5px; bottom: 5px; padding: .15rem 0; text-align: center;
+  font-family: var(--font-title); color: #f7ecd0; letter-spacing: .2em;
+  background: linear-gradient(0deg, rgba(17,33,31,.92), rgba(17,33,31,.55));
+}
+.realm-seal {
+  position: absolute; right: -8px; top: -8px; z-index: 1;
+  width: 2.6rem; height: 2.6rem; display: grid; place-items: center; text-align: center;
+  font-family: var(--font-title); font-size: .78rem; line-height: 1.05; color: #fff1e0;
+  background: var(--cinnabar); border: 2px solid #fff1e0; outline: 1px solid var(--cinnabar);
+  transform: rotate(-8deg); box-shadow: 0 2px 6px rgba(0,0,0,.35);
+}
+.disciple-card .panel h3 { font-size: 1.3rem; }
+
+/* ── 小提示與彈窗 ── */
+.toast { font-family: var(--font-title); border-left: 4px solid var(--gold); background: var(--ink-deep); }
+.modal { background: var(--paper-noise), var(--card); border: 2px solid var(--gold); box-shadow: 0 0 0 6px rgba(17,33,31,.85), 0 20px 50px rgba(0,0,0,.5); }

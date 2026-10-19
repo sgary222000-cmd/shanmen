@@ -9,6 +9,7 @@ import { envoyGiftPct } from '../../engine/systems/talent/positions';
 import { favorName, giftFavor, GOAL_NAMES, sectTradeBlocked, sectTradePrice, TEMPERAMENT_NAMES } from '../../engine/systems/world/sects';
 import { nextTournamentYear, tournamentBlocked } from '../../engine/systems/world/tournament';
 import { Art } from '../components/Art';
+import { useTabs } from '../components/Layout';
 import { content, useGame, useUi } from '../store';
 
 // 宗門往來（P1 批次 E）：鄰近三宗、送禮與交易、情報、年度大比、靈脈競標。P1 沒有宣戰（前期保護中）。
@@ -24,8 +25,13 @@ function Sects() {
         const lot = goodDef(s.wants).lot;
         const tradeBlocked = sectTradeBlocked(game, s, 1);
         return (
-          <div key={s.id} className="panel" data-testid={`sect-${s.id}`}>
-            {def?.art && <Art path={def.art} alt={def.name} />}
+          <div key={s.id} className="panel sect-card2" data-testid={`sect-${s.id}`}>
+            {def?.art && (
+              <div className="room-head">
+                <Art path={def.art} alt={def.name} />
+                <span className="favor">好感 {s.favor}・{favorName(s.favor)}</span>
+              </div>
+            )}
             <h3>
               {def?.name} <span className="tag">{content.lineages.get(def?.lineage ?? '')?.name}</span>{' '}
               <span className="tag">{TEMPERAMENT_NAMES[def?.temperament ?? 'steady']}</span>
@@ -183,15 +189,21 @@ function Auction() {
 
 export function WorldPage() {
   const game = useGame();
+  const { tab, bar } = useTabs([
+    { id: 'sects', label: '鄰近宗門' },
+    { id: 'tournament', label: '年度大比' },
+    { id: 'auction', label: '靈脈競標' },
+    { id: 'intel', label: <>情報 <small>{game.intel.length}</small></> },
+  ]);
   return (
     <div>
-      <h2>
-        宗門往來 <span className="tag gold">前期保護中</span>
-      </h2>
-      <p className="muted small">P1 期間各宗不會宣戰或攻打山門；往來只有送禮、交易、大比與競標。</p>
-      <Sects />
-      <Tournament />
-      <Auction />
+      <p className="muted small">
+        <span className="tag gold">前期保護中</span> P1 期間各宗不會宣戰或攻打山門；往來只有送禮、交易、大比與競標。</p>
+      {bar}
+      {tab === 'sects' && <Sects />}
+      {tab === 'tournament' && <Tournament />}
+      {tab === 'auction' && <Auction />}
+      {tab === 'intel' && (
       <div className="panel" data-testid="intel">
         <h3>情報紀錄</h3>
         {!game.intel.length && <p className="muted small">尚無消息。</p>}
@@ -201,6 +213,7 @@ export function WorldPage() {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

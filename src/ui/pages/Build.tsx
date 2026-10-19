@@ -25,9 +25,9 @@ function BuildingCard({ b }: { b: Building }) {
   const action = b.level === 0 ? (def.id === 'building.hall' ? '修復' : '建造') : '升級';
   const noDemolish = demolishBlocked(b);
   return (
-    <div className="panel" data-testid={`bld-${b.id}`}>
+    <div className="panel bcard" data-testid={`bld-${b.id}`}>
       <Art path={b.level === 0 && def.artRuined ? def.artRuined : def.art} alt={def.name} />
-      <h3 style={{ marginTop: '.5rem' }}>
+      <h3>
         {def.name} <span className="tag">{b.level ? `${b.level} 級` : b.construction ? '施工中' : '殘破'}</span>
         {b.status === 'disabled' && <span className="tag neg">停用：{b.disabledReason}</span>}
       </h3>
@@ -125,9 +125,12 @@ function RegionView({ regionId }: { regionId: string }) {
     region.allows === 'any' ? '任何建築' : region.allows.map((id) => content.buildings.get(id)?.name ?? id).join('、') || '下一批開放';
   return (
     <div>
-      <div className="panel">
-        <Art path={region.art} alt={region.name} />
-        <h3 style={{ marginTop: '.5rem' }}>
+      <div className="panel region-panel">
+        <div className="room-head region-head">
+          <Art path={region.art} alt={region.name} />
+          <h3>{region.name}</h3>
+        </div>
+        <h3 className="region-meta">
           {region.name}{' '}
           {rs.status === 'open' ? (
             <span className="tag">
@@ -172,7 +175,7 @@ function RegionView({ regionId }: { regionId: string }) {
       </div>
       {here.length > 0 && (
         <>
-          <h3>已有建築</h3>
+          <h3 className="sec">已有建築</h3>
           <div className="grid three fill">
             {here.map((b) => (
               <BuildingCard key={b.id} b={b} />
@@ -182,12 +185,12 @@ function RegionView({ regionId }: { regionId: string }) {
       )}
       {rs.status === 'open' && options.length > 0 && (
         <>
-          <h3>新建</h3>
+          <h3 className="sec">新建</h3>
           <div className="grid three fill">
             {options.map(({ def, next, cost, blocked }) => (
-              <div key={def.id} className={`panel${blocked ? ' locked' : ''}`} data-testid={`new-${def.id}`}>
+              <div key={def.id} className={`panel bcard${blocked ? ' locked' : ''}`} data-testid={`new-${def.id}`}>
                 <Art path={def.art} alt={def.name} />
-                <h3 style={{ marginTop: '.5rem' }}>
+                <h3>
                   {def.name} <span className="tag locked">未建</span>
                 </h3>
                 <p className="small">{def.description}</p>
@@ -225,17 +228,12 @@ export function BuildPage() {
         材料於開工時付清；完工後下個月才開始運作；取消施工退還 {CANCEL_REFUND_PCT}% 材料；拆除退還 {DEMOLISH_REFUND_PCT}% 已投入的基本造價。
         <span className="tag provisional">數值暫定</span>
       </p>
-      <div className="row" style={{ flexWrap: 'wrap', marginBottom: '.6rem' }}>
+      <div className="tabs">
         {[...content.regions.values()].map((r) => {
           const rs = regionState(game, r.id);
           const label = rs.status === 'open' ? `${usedSlots(game, r.id)}/${r.slots}` : rs.status === 'opening' ? '施工中' : '未開放';
           return (
-            <button
-              key={r.id}
-              className={`btn small ${regionId === r.id ? '' : 'secondary'}`}
-              data-testid={`region-tab-${r.id}`}
-              onClick={() => setRegion(r.id)}
-            >
+            <button key={r.id} className={regionId === r.id ? 'on' : ''} data-testid={`region-tab-${r.id}`} onClick={() => setRegion(r.id)}>
               {r.name}（{label}）
             </button>
           );

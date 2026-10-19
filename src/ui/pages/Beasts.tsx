@@ -103,10 +103,24 @@ export function BeastsPage() {
   return (
     <div>
       <h2>靈獸苑</h2>
+      <div className="stats">
+        <div className="stat hl">
+          <div className="k">靈獸</div>
+          <div className="v">
+            {keptBeasts(game)}
+            <small> / {beastCapacity(game, content)}</small>
+          </div>
+        </div>
+        <div className="stat">
+          <div className="k">靈獸蛋</div>
+          <div className="v">{game.resources.beast_egg}</div>
+        </div>
+        <div className="stat">
+          <div className="k">護宗神獸</div>
+          <div className="v">{guardianBeast(game)?.name ?? '尚無'}</div>
+        </div>
+      </div>
       <div className="panel">
-        <p className="small">
-          靈獸 {keptBeasts(game)} / {beastCapacity(game, content)} 隻・靈獸蛋 {game.resources.beast_egg} 顆
-        </p>
         <p className="muted small">
           靈獸苑孵化靈獸蛋，隨機得到 {content.beasts.size} 種靈獸之一（越稀有越難孵到）。幼年每月吃飽成長 {balance.beasts.growthPerMonth} 點，滿 {balance.beasts.adultGrowth}{' '}
           長為成年（靈獸苑 2 級更快）。靈獸可以隨主人出戰（不佔隊伍名額，每人最多一隻）、外出採集或休養；人先吃糧，剩下的才餵靈獸，沒吃飽的不成長也不採集。
@@ -118,19 +132,19 @@ export function BeastsPage() {
       </div>
       <GuardianPanel />
       {!keptBeasts(game) && <p className="muted">還沒有靈獸。</p>}
-      <div className="grid two">
+      <div className="grid beast-grid">
         {game.beasts.filter((b) => !b.guardian).map((b) => {
           const species = content.beasts.get(b.speciesId);
           const art = b.stage === 'adult' ? species?.artAdult ?? species?.art : species?.art;
           const fed = plan.fedBeasts.includes(b.id);
           const per = species ? guardianBonusAt(species, 1) : undefined;
           return (
-            <div key={b.id} className="panel" data-testid={`beast-${b.id}`}>
-              {art && (
-                <div style={{ maxWidth: 280 }}>
-                  <Art path={art} alt={b.name} />
-                </div>
-              )}
+            <div key={b.id} className="panel beast-card" data-testid={`beast-${b.id}`}>
+              <div className="portrait beast-art">
+                {art && <Art path={art} alt={b.name} />}
+                <span className="name">{b.stage === 'adult' ? '成年' : `幼年・${b.growth}/${balance.beasts.adultGrowth}`}</span>
+              </div>
+              <div className="beast-info">
               <h3>
                 {b.name} <span className="tag">{b.stage === 'adult' ? '成年' : '幼年'}</span>
               </h3>
@@ -204,6 +218,7 @@ export function BeastsPage() {
                   <span className="muted">{ascendBlocked(game, content, b.id)}</span>
                 </p>
               )}
+              </div>
             </div>
           );
         })}
