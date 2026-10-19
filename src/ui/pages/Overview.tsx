@@ -74,7 +74,7 @@ export function SceneBackdrop() {
           const all = game.buildings.filter((x) => x.defId === def.id);
           const b = all.find((x) => x.region === 'region.main') ?? all[0];
           const level = b ? (all.length > 1 ? `×${all.length}` : b.level ? `${b.level} 級` : b.construction ? '' : '殘破') : '未建';
-          const state = b?.construction ? '施工中' : b?.status === 'disabled' ? '停用' : '';
+          const state = b?.construction ? '施工中' : b?.damaged ? '損毀' : b?.status === 'disabled' ? '停用' : '';
           return (
             <button
               key={def.id}

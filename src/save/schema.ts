@@ -154,6 +154,8 @@ export const worldSchema = z
     tournament: z.object({ year: int, status: z.enum(['open', 'done', 'skipped']) }).passthrough().nullable(),
     auction: z.object({ id: z.string(), playerBid: nonneg, deadline: int }).passthrough().nullable(),
     veins: z.array(z.object({ name: z.string(), orePerMonth: nonneg, until: int })),
+    wars: z.array(z.object({ id: z.string(), sectId: z.string(), side: z.enum(['attack', 'defend']), resolveAt: int, hidden: nonneg }).passthrough()),
+    integrations: z.array(z.object({ sectId: z.string(), lingshi: nonneg, until: int })),
   })
   .passthrough();
 

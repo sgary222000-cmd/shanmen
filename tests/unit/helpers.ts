@@ -24,7 +24,7 @@ export function advance(state: GameState, months = 1): GameState {
   for (let i = 0; i < months; i++) {
     // 自動略過招生事件，方便測試
     for (const ev of s.events) {
-      if (ev.kind === 'aid') continue; // 盟友求援留給測試自己處理
+      if (ev.kind === 'aid' || ev.kind === 'victory') continue; // 盟友求援、戰後處置留給測試自己處理
       s = run(s, ev.kind === 'recruitment' ? { type: 'resolveRecruitment', eventId: ev.id, candidateId: null } : { type: 'dismissEvent', eventId: ev.id });
     }
     s = run(s, { type: 'advanceMonth', expectMonth: monthIndex(s.date) });

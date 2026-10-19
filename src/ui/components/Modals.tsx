@@ -2,6 +2,8 @@ import { formatAge, formatDate } from '../../engine';
 import { realmName, rootName } from '../../engine/systems/characters/characters';
 import { innerLimit } from '../../engine/systems/buildings/buildings';
 import { lifespanText } from '../../engine/systems/characters/lifespan';
+import { annexBlocked, vassalTribute } from '../../engine/systems/world/war';
+import { balance } from '../../content/balance';
 import { content, useGame, useUi } from '../store';
 import { ResList } from './Res';
 
@@ -97,7 +99,10 @@ export function EventModal() {
             <p className="muted small">內門弟子每兩人每月消耗糧食 1，並佔用靈氣 2。目前靈石 {game.resources.lingshi}。</p>
           </>
         )}
-        {ev.kind !== 'succession' && (
+        {ev.kind === 'victory' && ev.victory && (
+          <VictoryChoices eventId={ev.id} sectId={ev.victory.sectId} />
+        )}
+        {ev.kind !== 'succession' && ev.kind !== 'victory' && (
           <div className="row" style={{ marginTop: '.75rem' }}>
             <button
               className="btn secondary"
@@ -115,6 +120,52 @@ export function EventModal() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/** 攻打得勝後的處置：割地賠款、收為附屬、吞併。 */
+function VictoryChoices({ eventId, sectId }: { eventId: string; sectId: string }) {
+  const game = useGame();
+  const dispatch = useUi((s) => s.dispatch);
+  const sect = game.sects.find((s) => s.id === sectId);
+  if (!sect) return null;
+  const W = balance.war;
+  const annex = annexBlocked(game, content, sectId);
+  const options = [
+    {
+      choice: 'tribute' as const,
+      label: '割地賠款',
+      text: `取得對方最多 ${W.cedeSites} 處據點，賠償約 ${Math.min(sect.resources.lingshi, W.indemnityBase + sect.power * W.indemnityPerPower)} 靈石。`,
+      blocked: undefined,
+    },
+    { choice: 'vassal' as const, label: '收為附屬', text: `對方每月進貢約 ${vassalTribute(sect)} 靈石，不再與我宗為敵。`, blocked: undefined },
+    {
+      choice: 'annex' as const,
+      label: '吞併',
+      text: `得到對方部分弟子、一半靈石與全部據點；之後 ${W.integrationYears} 年每月整合費 ${W.integrationLingshi} 靈石，新附弟子忠誠 ${W.annexLoyalty}，其他宗門好感 −${W.annexFear}。`,
+      blocked: annex,
+    },
+  ];
+  return (
+    <div data-testid="victory">
+      {options.map((o) => (
+        <div key={o.choice} className="row small" style={{ marginBottom: '.4rem' }}>
+          <button
+            className="btn small"
+            data-testid={`victory-${o.choice}`}
+            disabled={!!o.blocked}
+            title={o.blocked}
+            onClick={() => dispatch({ type: 'resolveVictory', eventId, choice: o.choice })}
+          >
+            {o.label}
+          </button>
+          <span>
+            {o.text}
+            {o.blocked && <span className="neg">（{o.blocked}）</span>}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }

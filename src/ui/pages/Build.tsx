@@ -15,6 +15,7 @@ import { openRegionBlocked, productionBonusPct, regionState } from '../../engine
 import { Art } from '../components/Art';
 import { ResList } from '../components/Res';
 import { content, useGame, useUi } from '../store';
+import { repairBlocked, repairCost } from '../../engine/systems/world/war';
 
 function BuildingCard({ b }: { b: Building }) {
   const game = useGame();
@@ -30,7 +31,22 @@ function BuildingCard({ b }: { b: Building }) {
       <h3>
         {def.name} <span className="tag">{b.level ? `${b.level} 級` : b.construction ? '施工中' : '殘破'}</span>
         {b.status === 'disabled' && <span className="tag neg">停用：{b.disabledReason}</span>}
+        {b.damaged && <span className="tag neg">損毀</span>}
       </h3>
+      {b.damaged && (
+        <p className="small">
+          山門戰中損毀，修好前停用。
+          <button
+            className="btn small"
+            data-testid={`repair-${b.id}`}
+            disabled={!!repairBlocked(game, content, b.id)}
+            title={repairBlocked(game, content, b.id)}
+            onClick={() => dispatch({ type: 'repairBuilding', buildingId: b.id })}
+          >
+            修復（<ResList value={repairCost(content, b)} />）
+          </button>
+        </p>
+      )}
       <p className="small">{def.description}</p>
       {current && (
         <p className="small">

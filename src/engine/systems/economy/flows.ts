@@ -164,7 +164,7 @@ export function fillOrder(
   state: GameState,
   content: ContentPack,
   defId: string,
-  operating: (b: Building) => boolean = (b) => b.level >= 1 && b.status !== 'ruined',
+  operating: (b: Building) => boolean = (b) => b.level >= 1 && b.status !== 'ruined' && !b.damaged,
 ): { b: Building; pct: number }[] {
   return state.buildings
     .map((b, order) => ({ b, order, pct: 100 + productionBonusPct(state, content, b.region, defId) }))
@@ -217,7 +217,7 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
   // 2. 建築維護（依建築順序）
   const unpaidBuildings: string[] = [];
   for (const b of state.buildings) {
-    if (b.level < 1) continue;
+    if (b.level < 1 || b.damaged) continue;
     const def = content.buildings.get(b.defId);
     const lv = def ? levelDef(def, b.level) : undefined;
     if (!lv) continue;
@@ -227,7 +227,7 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
     }
   }
   const operating = (b: Building | undefined) =>
-    !!b && b.level >= 1 && b.status !== 'ruined' && !unpaidBuildings.includes(b.id);
+    !!b && b.level >= 1 && b.status !== 'ruined' && !b.damaged && !unpaidBuildings.includes(b.id);
 
   // 3. 突破用築基丹
   const breakthroughReady: string[] = [];
@@ -319,6 +319,11 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
   const now = monthIndex(state.date);
   const veinOre = state.veins.filter((v) => v.until >= now).reduce((n, v) => n + v.orePerMonth, 0);
   if (veinOre) production.ore = (production.ore ?? 0) + veinOre;
+  // 我宗佔有的資源據點（P2 批次 D）
+  for (const site of state.sites ?? []) {
+    if (site.owner !== 'player') continue;
+    addInto(production, balance.sites.income[site.kind] as Partial<Resources>);
+  }
   for (const id of RESOURCE_IDS) if (production[id] === 0) delete production[id];
 
   return {

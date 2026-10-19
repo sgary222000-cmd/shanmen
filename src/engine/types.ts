@@ -166,6 +166,8 @@ export interface Building {
   crop?: 'food' | 'herb';
   /** 本月因維護不足停用 */
   disabledReason?: string;
+  /** 山門戰敗時損毀，修好前停用（P2 批次 D） */
+  damaged?: boolean;
 }
 
 export type RegionStatus = 'locked' | 'opening' | 'open';
@@ -233,8 +235,10 @@ export interface ResourceSite {
   id: string;
   name: string;
   kind: 'ore' | 'herb' | 'lingshi' | 'wood';
-  /** 佔有的宗門 ID；null 為無主 */
+  /** 佔有的宗門 ID；null 為無主，'player' 為我宗（P2 批次 D） */
   owner: string | null;
+  /** 我宗上次出兵爭奪這處據點的月份（每年最多一次） */
+  contestedAt?: number;
 }
 
 /** 電腦宗門（P1 批次 E）。只做合法行動：缺料就不能建設。 */
@@ -258,6 +262,37 @@ export interface SectState {
   /** 對我宗的信任 0–100：只能靠履行約定累積，禮物買不到（P2 批次 C，舊存檔遷移時補上） */
   trust?: number;
   treaty?: Treaty | null;
+  /** 停戰到哪個月（monthIndex），之前雙方不再宣戰（P2 批次 D） */
+  truceUntil?: number;
+  /** 戰敗後成為我宗附屬：每月進貢、不再與我宗為敵 */
+  vassal?: boolean;
+  /** 已被我宗吞併：不再出現在世界上 */
+  annexed?: boolean;
+}
+
+/** 宣戰後的戰事（P2 批次 D）：準備期結束時打山門戰。 */
+export interface War {
+  id: string;
+  sectId: string;
+  /** 我宗是攻方或守方 */
+  side: 'attack' | 'defend';
+  reason: string;
+  declared: number;
+  /** 開戰的月份（monthIndex） */
+  resolveAt: number;
+  /** 指定出戰的人；空的表示開戰時自動挑最強的三人 */
+  teamIds: string[];
+  /** 撤離到後山密庫的靈石，戰後取回 */
+  hidden: number;
+  /** 答應出兵相助的盟友 */
+  allies: string[];
+}
+
+/** 吞併後的整合費用（每月靈石，到期為止）。 */
+export interface Integration {
+  sectId: string;
+  lingshi: number;
+  until: number;
 }
 
 export interface IntelEntry {
@@ -425,7 +460,7 @@ export interface Candidate {
 
 export interface PendingEvent {
   id: string;
-  kind: 'recruitment' | 'notice' | 'succession' | 'aid';
+  kind: 'recruitment' | 'notice' | 'succession' | 'aid' | 'victory';
   title: string;
   text: string;
   /** 阻擋推進月份，直到處理 */
@@ -436,10 +471,12 @@ export interface PendingEvent {
   successors?: string[];
   /** 盟友求援（P2 批次 C）：哪一宗、出資金額、回覆期限（monthIndex） */
   aid?: { sectId: string; lingshi: number; deadline: number };
+  /** 攻打得勝（P2 批次 D）：戰敗的宗門，選割地賠款、收為附屬或吞併 */
+  victory?: { sectId: string };
 }
 
 /** 連續推進的停止原因。 */
-export type StopKind = 'event' | 'lifespan' | 'death' | 'breakthrough' | 'tournament' | 'auction' | 'shortage' | 'diplomacy';
+export type StopKind = 'event' | 'lifespan' | 'death' | 'breakthrough' | 'tournament' | 'auction' | 'shortage' | 'diplomacy' | 'war';
 
 export interface StopReason {
   kind: StopKind;
@@ -455,7 +492,7 @@ export interface Ancestor {
   /** 坐化的年月 */
   date: GameDate;
   /** 死因：壽終坐化或突破隕落（0.7.0 新增，舊資料視為坐化） */
-  cause?: 'age' | 'breakthrough';
+  cause?: 'age' | 'breakthrough' | 'war';
 }
 
 export interface MonthReport {
@@ -536,6 +573,10 @@ export interface GameState {
   shortageLevel?: number;
   /** 資源據點（P2 批次 C） */
   sites: ResourceSite[];
+  /** 進行中的戰事（P2 批次 D） */
+  wars: War[];
+  /** 吞併後的整合費用（P2 批次 D） */
+  integrations: Integration[];
   /** 本月月中發生的事（接委託、探索結果、坊市買賣），月底寫進月報開頭。0.4.5 新增，舊存檔沒有。 */
   monthLog?: string[];
   /** 暫代掌門升任前的忠誠，改立時恢復（0.6.0 新增） */

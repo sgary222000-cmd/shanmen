@@ -8,6 +8,7 @@ import type { GameState, ResourceId, SectGoal, SectState, SectTemperament, StopR
 import { contactBlocked, councilEnvoyPct, isDistant, requestAid, SITE_KIND_NAMES, siteIncome } from './diplomacy';
 import { goodDef, MARKET_GOODS, sellPrice } from '../economy/market';
 import { envoyGiftPct } from '../talent/positions';
+import { defendSite, graceOver, PLAYER, playerPower } from './war';
 
 // 電腦宗門（企畫書 §13，P1 為初步互動）：各有資源帳本、人口、實力、性格與目前目標，
 // 每月只做 1–2 件合法行動（缺料就不能建設），行動會影響坊市行情並寫入情報紀錄。
@@ -105,12 +106,20 @@ function expand(state: GameState, content: ContentPack, def: SectDef, sect: Sect
     intel(state, sect.id, `${def.name}派人佔下無主的${site.name}（${SITE_KIND_NAMES[site.kind]}）。`);
     return true;
   }
+  // 前期保護結束後，好戰而冷淡、沒有條約的宗門也會來搶我宗的據點
+  const hitPlayer =
+    graceOver(state) && !sect.treaty && !sect.vassal && def.temperament === 'warlike' && sect.favor < balance.war.declareFavor && sect.power > playerPower(state, content);
   const targets = sites.filter((x) => {
+    if (x.owner === PLAYER) return hitPlayer;
     const owner = state.sects.find((s) => s.id === x.owner);
-    return owner && owner.id !== sect.id && owner.power < sect.power;
+    return owner && owner.id !== sect.id && !owner.annexed && owner.power < sect.power;
   });
   if (!targets.length) return false;
   const site = r.pick(targets);
+  if (site.owner === PLAYER) {
+    defendSite(state, content, sect, site, lines, stops);
+    return true;
+  }
   const defender = state.sects.find((s) => s.id === site.owner);
   if (!defender) return false;
   const dname = content.sects.get(defender.id)?.name ?? '';
@@ -217,7 +226,7 @@ export function tickSects(state: GameState, content: ContentPack, lines: string[
   siteIncome(state);
   for (const sect of state.sects) {
     const def = content.sects.get(sect.id);
-    if (!def) continue;
+    if (!def || sect.annexed) continue;
     if (def.scope === 'distant') {
       tickDistant(state, content, sect);
       if (state.date.month % 3 === 0) {
@@ -305,6 +314,7 @@ export function sectTradePrice(state: GameState, sect: SectState): number {
 
 export function sectTradeBlocked(state: GameState, content: ContentPack, sect: SectState, lots: number): string | undefined {
   const lot = goodDef(sect.wants).lot;
+  if (sect.annexed) return '已併入我宗';
   if (isDistant(content, sect.id)) return '路途遙遠，無法直接買賣';
   if (!Number.isInteger(lots) || lots < 1) return '批數需為正整數';
   if (sect.tradedThisMonth + lots > sectTradeLots(sect)) return `本月最多再賣 ${sectTradeLots(sect) - sect.tradedThisMonth} 批`;

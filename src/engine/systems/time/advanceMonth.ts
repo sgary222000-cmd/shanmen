@@ -21,6 +21,7 @@ import { tickBeasts } from '../beasts/beasts';
 import { resolveDispatches } from '../exploration/dispatch';
 import { tickSects } from '../world/sects';
 import { tickDiplomacy } from '../world/diplomacy';
+import { tickWar } from '../world/war';
 import { maybeStartAuction, resolveAuction } from '../world/auction';
 import { closeTournament, maybeOpenTournament } from '../world/tournament';
 
@@ -133,6 +134,7 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
   // 6. 電腦宗門行動（影響下個月的坊市行情）、靈脈開標、大比截止
   tickSects(state, content, lines, stops);
   tickDiplomacy(state, content, lines, stops);
+  tickWar(state, content, lines, stops);
   resolveAuction(state, content, lines);
   closeTournament(state, lines);
 

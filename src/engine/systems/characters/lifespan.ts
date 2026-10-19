@@ -254,10 +254,11 @@ export function tickLifespan(state: GameState, lines: string[], stops: StopReaso
   );
 }
 
-export type DeathCause = 'age' | 'breakthrough';
+export type DeathCause = 'age' | 'breakthrough' | 'war';
 
 function deathText(c: Character, cause: DeathCause): string {
   const age = Math.floor(c.ageMonths / 12);
+  if (cause === 'war') return `在山門戰中戰死，以${realmName(c.realm)}之身殞命，享年 ${age} 歲。`;
   return cause === 'age'
     ? `壽元已盡，以${realmName(c.realm)}之身坐化，享壽 ${age} 歲。`
     : `衝擊化神失敗，以${realmName(c.realm)}之身隕落，享年 ${age} 歲。`;
@@ -272,7 +273,7 @@ export function passAway(state: GameState, ids: string[], cause: DeathCause, lin
     returnEquipment(state, c);
     state.disciples = state.disciples.filter((d) => d.id !== c.id);
     lines.push(`✝ ${c.name}${deathText(c, cause)}職位與工作已空出。`);
-    stops.push({ kind: 'death', text: `${c.name}${cause === 'age' ? '坐化' : '隕落'}` });
+    stops.push({ kind: 'death', text: `${c.name}${cause === 'age' ? '坐化' : cause === 'war' ? '戰死' : '隕落'}` });
   }
   if (ids.includes(state.protagonist.id)) succeed(state, cause, lines, stops);
 }
