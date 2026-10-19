@@ -2,7 +2,7 @@ import type { ContentPack } from '../../../content/registry';
 import type { BuildingDef, BuildingLevelDef } from '../../../content/schema';
 import { ensure } from '../../errors';
 import { newId } from '../../ids';
-import { addInto, canAfford, formatResources, gain, RESOURCE_IDS, scaleResources, spend } from '../../resources';
+import { addInto, canAfford, formatResources, gain, shortfallText, RESOURCE_IDS, scaleResources, spend } from '../../resources';
 import type { Building, Furnace, GameState, Resources, ScheduleKind, Skills, Station } from '../../types';
 import { isRegionOpen, lineageDef, MAIN_REGION, regionDef } from '../regions/regions';
 
@@ -223,7 +223,7 @@ export function newBuildOptions(state: GameState, content: ContentPack, regionId
       else if (def.unlockHall > hall) blocked = `需要大殿 ${def.unlockHall} 級才開放`;
       else if (next.requiresHall > hall) blocked = `需要大殿 ${next.requiresHall} 級`;
       else if (usedSlots(state, regionId) >= region.slots) blocked = `${region.name}建築槽位已滿`;
-      else if (!canAfford(state.resources, cost)) blocked = `材料不足（需要 ${formatResources(cost)}）`;
+      else if (!canAfford(state.resources, cost)) blocked = shortfallText(state.resources, cost);
     }
     out.push({ def, regionId, next, cost, blocked });
   }
@@ -249,7 +249,7 @@ export function upgradeOption(state: GameState, content: ContentPack, building: 
   if (building.construction) blocked = '施工中';
   else if (!next) blocked = '已達本階段最高等級';
   else if (next.requiresHall > hall) blocked = `需要大殿 ${next.requiresHall} 級`;
-  else if (!canAfford(state.resources, cost)) blocked = `材料不足（需要 ${formatResources(cost)}）`;
+  else if (!canAfford(state.resources, cost)) blocked = shortfallText(state.resources, cost);
   return { def, building, next, cost, blocked };
 }
 

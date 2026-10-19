@@ -1,7 +1,7 @@
 import { isCraftSchedule } from '../../engine/systems/buildings/buildings';
 import { useState } from 'react';
-import type { BattleRecord, Row } from '../../engine';
-import { allCharacters, realmName } from '../../engine/systems/characters/characters';
+import { formatDate, type BattleRecord, type Row } from '../../engine';
+import { allCharacters, findCharacter, powerLevel, realmName } from '../../engine/systems/characters/characters';
 import { canJoinExpedition, retreatPct } from '../../engine/systems/exploration/exploration';
 import { dispatchBlocked, dispatchOdds, realmNodeLoot } from '../../engine/systems/exploration/dispatch';
 import { scaleResources } from '../../engine/resources';
@@ -30,7 +30,7 @@ export function BattleView({ b, open }: { b: BattleRecord; open?: boolean }) {
     <div className="panel" data-testid="battle">
       <h3>
         {b.title}：<span className={b.result === 'win' ? 'pos' : 'neg'}>{label}</span>
-        <span className="muted small">（{b.rounds} 回合）</span>
+        <span className="muted small">（{formatDate(b.date)}・{b.rounds} 回合）</span>
       </h3>
       <div className="grid two">
         {[
@@ -115,7 +115,15 @@ function ActiveRun() {
           ・回春丹 {game.resources.pill_heal}
         </div>
         <p className="small">
-          目前收穫：<ResList value={run.loot} />（撤退保留 {retreatPct(game, content, realm)}%，戰敗全部失去）
+          {finished ? (
+            <>
+              帶回物資：<ResList value={run.loot} />（月底入庫）
+            </>
+          ) : (
+            <>
+              目前收穫：<ResList value={run.loot} />（撤退保留 {retreatPct(game, content, realm)}%，戰敗全部失去）
+            </>
+          )}
         </p>
         {!finished && (
           <div className="row">
@@ -233,6 +241,12 @@ function Prepare() {
   const people = allCharacters(game);
   const clears = game.realmClears[realm.id] ?? 0;
   const toggle = (id: string) => setTeam(team.includes(id) ? team.filter((x) => x !== id) : [...team, id].slice(0, realm.maxTeam));
+  const strongest = team
+    .map((id) => findCharacter(game, id))
+    .filter((c) => !!c)
+    .sort((a, b) => powerLevel(b.realm) - powerLevel(a.realm))[0];
+  const underpowered =
+    strongest && realm.recommendLevel && powerLevel(strongest.realm) < realm.recommendLevel ? `${strongest.name}（${realmName(strongest.realm)}）` : '';
   return (
     <div>
       <div className="realm-strip">
@@ -297,7 +311,7 @@ function Prepare() {
                   <option value="front">前排</option>
                   <option value="back">後排</option>
                 </select>
-                <span className="muted small why">{reason ?? (isCraftSchedule(c.schedule) ? '出發後會離開工坊' : '')}</span>
+                <span className="muted small why">{reason ?? (isCraftSchedule(c.schedule) ? '本月工坊停工，下月回到工坊' : '')}</span>
               </div>
             );
           })}
@@ -341,6 +355,11 @@ function Prepare() {
         >
           出發探索
         </button>
+        {underpowered && (
+          <p className="neg small" data-testid="underpowered">
+            隊伍中最強的是{underpowered}，低於建議實力「{realm.recommend}」，很可能全滅並受重傷。
+          </p>
+        )}
       </div>
       <DispatchPanel realmId={realm.id} team={team} />
     </div>

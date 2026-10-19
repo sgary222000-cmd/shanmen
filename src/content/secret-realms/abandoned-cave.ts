@@ -12,6 +12,7 @@ export const abandonedCave: SecretRealmDef = {
   retreatLootPct: 50,
   art: 'final/cave.webp',
   recommend: '煉氣三層以上',
+  recommendLevel: 3,
   dispatch: { months: 1, power: 150, lootPct: [30, 50] },
   firstClear: {
     rewardId: 'reward.abandoned_cave.first_clear',

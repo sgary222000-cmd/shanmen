@@ -3,7 +3,7 @@ import { monthIndex, nextMonth } from '../../date';
 import { ensure } from '../../errors';
 import { addInto, gain, RESOURCE_IDS } from '../../resources';
 import type { GameState, MonthReport, Resources } from '../../types';
-import { resolveFurnaces, tidyBenches } from '../alchemy/alchemy';
+import { benchOf, resolveFurnaces, tidyBenches } from '../alchemy/alchemy';
 import { progressConstruction } from '../buildings/buildings';
 import { allCharacters } from '../characters/characters';
 import { refreshBoard } from '../commissions/commissions';
@@ -40,8 +40,10 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
   const blockers = advanceBlockers(state);
   ensure(blockers.length === 0, blockers[0] ?? '');
 
-  const lines: string[] = [];
-  const before: Resources = { ...state.resources };
+  // 月中已發生的事放在月報最前面；增減從上次月結算起，包含月中的委託、買賣與補給
+  const lines: string[] = (state.monthLog ?? []).map((l) => `本月事務：${l}`);
+  state.monthLog = [];
+  const before: Resources = { ...(state.monthStart ?? state.resources) };
 
   // 1. 檢查行程合法性：條件不足的突破改為日常修煉
   const odds = new Map<string, ReturnType<typeof breakthroughOdds>>();
@@ -104,12 +106,13 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
   resolveDispatches(state, content, produced, lines);
   state.exploration = null;
   state.exploredThisMonth = false;
-  for (const c of allCharacters(state)) if (c.schedule === 'explore') c.schedule = c.injuryMonths > 0 ? 'heal' : 'cultivate';
-  // 工作者若已不在工坊行程，從爐位移除
-  tidyBenches(state);
+  for (const c of allCharacters(state)) if (c.schedule === 'explore') c.schedule = c.injuryMonths > 0 ? 'heal' : (benchOf(state, c.id) ?? 'cultivate');
+  // 工作者若已不在工坊行程（例如外出受傷），從爐位移除
+  tidyBenches(state, lines);
 
   state.trade = { soldLingshi: 0, boughtFood: 0 };
   state.outer.labor = 0;
+  state.commissionsTaken = 0;
   rollMarket(state);
 
   // 6. 電腦宗門行動（影響下個月的坊市行情）、靈脈開標、大比截止
@@ -135,6 +138,7 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
     if (d) delta[id] = d;
   }
   const report: MonthReport = { date: settled, lines, delta };
+  state.monthStart = { ...state.resources };
   state.reports.unshift(report);
   state.reports = state.reports.slice(0, REPORT_KEEP);
   state.stats.monthsAdvanced += 1;

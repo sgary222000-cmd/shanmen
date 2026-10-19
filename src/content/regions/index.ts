@@ -6,12 +6,12 @@ export const regions: RegionDef[] = [
   {
     id: 'region.main',
     name: '主峰',
-    description: '宗門根本所在，靈氣穩定，槽位珍貴。任何建築都能蓋在這裡，但沒有額外加成。',
+    description: '宗門根本所在，靈氣穩定，槽位珍貴。大多數建築都能蓋在這裡，但沒有額外加成。',
     slots: 8,
     baseQi: 10,
     allows: 'any',
     bonus: { buildCostPct: 0, productionPct: {}, alchemyBonusBp: 0, forgeBonusBp: 0, cultivationPct: 0, tradeCapPct: 0 },
-    bonusText: '基礎靈氣 10；可建造任何建築',
+    bonusText: '基礎靈氣 10',
     art: 'final/panorama.webp',
   },
   {

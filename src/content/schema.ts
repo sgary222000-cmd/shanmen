@@ -174,6 +174,8 @@ export const secretRealmSchema = z.object({
   }),
   /** 建議實力說明，例如「煉氣後期」 */
   recommend: z.string(),
+  /** 建議實力換算的境界等級（同 powerLevel：煉氣 n 層 = n、築基初期 = 12），隊伍最強者低於此值時出發前警告 */
+  recommendLevel: z.number().int().positive().optional(),
   /** 已通關後再入，節點物資的百分比 */
   repeatLootPct: z.number().int().min(0).max(100),
   /** 撤退時保留物資的百分比 */

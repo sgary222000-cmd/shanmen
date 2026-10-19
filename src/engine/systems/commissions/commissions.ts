@@ -7,7 +7,6 @@ import { newId } from '../../ids';
 import { canAfford, formatResources, gain, RESOURCE_IDS, spend } from '../../resources';
 import { rng } from '../../rng';
 import type { Commission, GameState, Resources, Row } from '../../types';
-import { releaseFurnace } from '../alchemy/alchemy';
 import { hallLevel } from '../buildings/buildings';
 import { findCharacter, outerCultivating } from '../characters/characters';
 import { runBattle, unitFromEnemy } from '../combat/combat';
@@ -43,6 +42,7 @@ export function idleOuter(state: GameState): number {
 
 /** 接下委託前的檢查；undefined 表示可以接（護衛另需選隊員）。 */
 export function commissionBlocked(state: GameState, c: Commission): string | undefined {
+  if ((state.commissionsTaken ?? 0) >= balance.commissions.maxPerMonth) return `本月已接 ${balance.commissions.maxPerMonth} 件委託，下個月再來`;
   if (c.kind === 'labor' && idleOuter(state) < 1) return '沒有閒置的外門弟子（未分工、正在修煉的人才能外出幫工）';
   if (c.kind === 'deliver' && c.deliver && !canAfford(state.resources, c.deliver)) return `物資不足（需要 ${formatResources(c.deliver)}）`;
   return undefined;
@@ -131,6 +131,7 @@ export function acceptCommission(state: GameState, content: ContentPack, id: str
   const done = (text: string, reward: Partial<Resources>) => {
     gain(state.resources, reward);
     state.reputation += c.reputation;
+    state.commissionsTaken = (state.commissionsTaken ?? 0) + 1;
     state.commissions = state.commissions.filter((x) => x.id !== id);
     return `${text}得到 ${formatResources(reward)}，聲望 +${c.reputation}。`;
   };
@@ -199,7 +200,7 @@ export function acceptCommission(state: GameState, content: ContentPack, id: str
   // 隊員本月外出；傷勢與探索相同：倒下者重傷，生命低於一半者輕傷
   const notes: string[] = [];
   for (const m of members) {
-    releaseFurnace(state, m.id);
+    // 掌爐者外出一個月：爐位保留，本月停工，月底回到工坊
     m.schedule = 'explore';
     const u = outcome.allies.find((x) => x.key === m.id);
     if (!u) continue;

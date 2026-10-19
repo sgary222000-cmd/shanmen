@@ -77,6 +77,16 @@ export function scaleResources(amount: Partial<Resources>, pct: number): Partial
   return out;
 }
 
+/** 費用不足時的說明：只列出還缺的資源與數量。 */
+export function shortfallText(have: Resources, cost: Partial<Resources>): string {
+  const lack: Partial<Resources> = {};
+  for (const id of RESOURCE_IDS) {
+    const need = (cost[id] ?? 0) - have[id];
+    if (need > 0) lack[id] = need;
+  }
+  return `材料不足（還缺 ${formatResources(lack)}）`;
+}
+
 export function formatResources(amount: Partial<Resources>): string {
   const parts = RESOURCE_IDS.filter((id) => amount[id]).map((id) => `${RESOURCE_NAMES[id]} ${amount[id]}`);
   return parts.length ? parts.join('、') : '無';

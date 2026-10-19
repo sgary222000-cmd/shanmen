@@ -30,9 +30,11 @@ export function maybeRecruitment(state: GameState, content: ContentPack, lines: 
     kind: 'recruitment',
     title: '山門招生',
     text:
-      `本次招生有 ${joined} 人加入外門` +
-      (repBonus ? `（宗門聲望多吸引了 ${repBonus} 人）` : '') +
-      (room < balance.recruit.outerMin ? '（弟子居所將滿）' : '') +
+      (joined === 0
+        ? '弟子居所已滿，這次沒有新人加入外門（擴建弟子居所可以再收人）'
+        : `本次招生有 ${joined} 人加入外門` +
+          (repBonus && joined > repBonus ? `（宗門聲望多吸引了 ${repBonus} 人）` : '') +
+          (room <= joined ? '（弟子居所已滿）' : '')) +
       `。另有 ${candidates.length} 名資質較佳的少年求入內門，最多收一人，需支付安置靈石。`,
     blocking: true,
     candidates,

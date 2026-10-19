@@ -12,7 +12,7 @@ import { Art } from '../components/Art';
 import { useTabs } from '../components/Layout';
 import { content, useGame, useUi } from '../store';
 
-// 宗門往來（P1 批次 E）：鄰近三宗、送禮與交易、情報、年度大比、靈脈競標。P1 沒有宣戰（前期保護中）。
+// 宗門往來（P1 批次 E）：鄰近三宗、送禮與交易、情報、三年大比、靈脈競標。P1 沒有宣戰（前期保護中）。
 
 function Sects() {
   const game = useGame();
@@ -84,7 +84,7 @@ function Tournament() {
   const blocked = tournamentBlocked(game, team);
   return (
     <div className="panel" data-testid="tournament">
-      <h3>年度大比</h3>
+      <h3>三年大比</h3>
       <p className="small">
         每 {T.intervalYears} 年 {T.month} 月舉行，下一屆：第 {nextTournamentYear(game)} 年。需聲望 {T.minReputation}（目前 {game.reputation}）。派最多{' '}
         {T.teamSize} 人與三宗一對一切磋（三戰兩勝），點到為止不會受傷。名次獎勵：第 1 名聲望 +30、靈石 200、築基丹 1；第 2 名聲望 +15、靈石 100；第
@@ -191,14 +191,14 @@ export function WorldPage() {
   const game = useGame();
   const { tab, bar } = useTabs([
     { id: 'sects', label: '鄰近宗門' },
-    { id: 'tournament', label: '年度大比' },
+    { id: 'tournament', label: '三年大比' },
     { id: 'auction', label: '靈脈競標' },
     { id: 'intel', label: <>情報 <small>{game.intel.length}</small></> },
   ]);
   return (
     <div>
       <p className="muted small">
-        <span className="tag gold">前期保護中</span> P1 期間各宗不會宣戰或攻打山門；往來只有送禮、交易、大比與競標。</p>
+        <span className="tag gold">前期保護中</span> 目前各宗不會宣戰或攻打山門；往來只有送禮、交易、大比與競標。</p>
       {bar}
       {tab === 'sects' && <Sects />}
       {tab === 'tournament' && <Tournament />}

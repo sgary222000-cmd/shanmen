@@ -85,6 +85,21 @@ export type CommandResult =
   | { ok: false; error: string };
 
 /** 執行指令。永遠不修改傳入的 state；失敗時回傳錯誤訊息。 */
+const LOGGED_COMMANDS = new Set<Command['type']>([
+  'sell',
+  'buyFood',
+  'marketBuy',
+  'marketSell',
+  'buyRecipe',
+  'acceptCommission',
+  'buyScripture',
+  'dispatch',
+  'giftSect',
+  'sectTrade',
+  'enterTournament',
+  'promoteOuter',
+]);
+
 export function applyCommand(state: GameState, content: ContentPack, cmd: Command): CommandResult {
   const next = structuredClone(state);
   try {
@@ -241,6 +256,8 @@ export function applyCommand(state: GameState, content: ContentPack, cmd: Comman
         throw new RuleError(`未知的指令：${JSON.stringify(never)}`);
       }
     }
+    // 月中有收支或結果的指令，記進本月事務，月底寫進月報
+    if (message && LOGGED_COMMANDS.has(cmd.type)) (next.monthLog ??= []).push(message);
     next.stats.commands += 1;
     updateTutorial(next);
     return { ok: true, state: next, ...(message ? { message } : {}), ...(report ? { report } : {}) };

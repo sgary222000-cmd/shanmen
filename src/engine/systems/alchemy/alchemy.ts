@@ -70,12 +70,22 @@ export function releaseFurnace(state: GameState, characterId: string): void {
   for (const st of STATIONS) for (const f of benchList(state, st)) if (f.alchemistId === characterId) f.alchemistId = null;
 }
 
-/** 月底：工作者若已不在對應行程，從爐位移除。 */
-export function tidyBenches(state: GameState): void {
+/** 人物負責的工坊行程（掌爐或執筆），沒有則為 null。 */
+export function benchOf(state: GameState, characterId: string): (typeof STATION_INFO)[Station]['schedule'] | null {
+  for (const st of STATIONS) if (benchList(state, st).some((f) => f.alchemistId === characterId)) return STATION_INFO[st].schedule;
+  return null;
+}
+
+/** 月底：工作者若已不在對應行程，從爐位移除，並寫進月報。 */
+export function tidyBenches(state: GameState, lines?: string[]): void {
   for (const st of STATIONS) {
-    for (const f of benchList(state, st)) {
-      if (f.alchemistId && findCharacter(state, f.alchemistId)?.schedule !== STATION_INFO[st].schedule) f.alchemistId = null;
-    }
+    benchList(state, st).forEach((f, i) => {
+      if (!f.alchemistId) return;
+      const c = findCharacter(state, f.alchemistId);
+      if (c?.schedule === STATION_INFO[st].schedule) return;
+      if (c && lines) lines.push(`${c.name}${c.schedule === 'heal' ? '受傷療養' : '另有安排'}，離開${STATION_INFO[st].room}${STATION_INFO[st].bench} ${i + 1}，需要重新指派。`);
+      f.alchemistId = null;
+    });
   }
 }
 

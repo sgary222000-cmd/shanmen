@@ -13,7 +13,7 @@ import { ExplorePage } from './pages/Explore';
 import { IndustryPage } from './pages/Industry';
 import { MarketPage } from './pages/Market';
 import { NewGamePage } from './pages/NewGame';
-import { OverviewPage } from './pages/Overview';
+import { OverviewPage, TutorialStrip } from './pages/Overview';
 import { ProtagonistPage } from './pages/Protagonist';
 import { ReportsPage } from './pages/Reports';
 import { SavesPage } from './pages/Saves';
@@ -44,6 +44,7 @@ function GameScreen() {
                 ✕
               </button>
             </header>
+            <TutorialStrip />
             <div className="window-body main" key={page}>
               {page === 'build' && <BuildPage />}
               {page === 'protagonist' && <ProtagonistPage />}

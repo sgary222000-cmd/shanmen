@@ -2,7 +2,7 @@ import type { ContentPack } from '../../../content/registry';
 import { MAIN_REGION } from '../../../content/registry';
 import type { LineageDef, RegionDef } from '../../../content/schema';
 import { ensure } from '../../errors';
-import { canAfford, formatResources, spend } from '../../resources';
+import { canAfford, formatResources, shortfallText, spend } from '../../resources';
 import type { GameState, RegionState } from '../../types';
 
 // 區域（企畫書 §7）：各區有槽位、環境加成與開放條件。開路費用開工時付清，完工下月可建造。
@@ -43,7 +43,7 @@ export function openRegionBlocked(state: GameState, content: ContentPack, id: st
   if (rs.status === 'opening') return '施工中';
   if (!def.unlock) return undefined;
   if (def.unlock.requiresHall > hall) return `需要大殿 ${def.unlock.requiresHall} 級`;
-  if (!canAfford(state.resources, def.unlock.cost)) return `材料不足（需要 ${formatResources(def.unlock.cost)}）`;
+  if (!canAfford(state.resources, def.unlock.cost)) return shortfallText(state.resources, def.unlock.cost);
   return undefined;
 }
 

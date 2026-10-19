@@ -149,4 +149,9 @@ export function rollMarket(state: GameState): void {
     }
   }
   state.market = { goods, rumor };
+  // 坊市傳聞也記進情報，和月報一致（舊存檔升級途中還沒有情報欄位時略過）
+  if (rumor && Array.isArray(state.intel)) {
+    state.intel.unshift({ date: { ...state.date }, sectId: '', text: rumor });
+    state.intel = state.intel.slice(0, balance.sects.intelKeep);
+  }
 }
