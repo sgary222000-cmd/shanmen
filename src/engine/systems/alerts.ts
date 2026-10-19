@@ -1,4 +1,5 @@
 import type { ContentPack } from '../../content/registry';
+import { monthIndex } from '../date';
 import type { GameState } from '../types';
 import { allCharacters, isInjured } from './characters/characters';
 import { monthsUntilEmpty, planMonth } from './economy/flows';
@@ -15,6 +16,11 @@ export function computeAlerts(state: GameState, content: ContentPack): Alert[] {
   const alerts: Alert[] = [];
   const plan = planMonth(state, content);
   for (const ev of state.events) if (ev.blocking) alerts.push({ level: 'danger', text: `待處理：${ev.title}` });
+  for (const ev of state.events)
+    if (ev.kind === 'aid' && ev.aid) {
+      const left = ev.aid.deadline - monthIndex(state.date);
+      alerts.push({ level: 'danger', text: `${ev.title}，${left > 0 ? `${left} 個月內` : '本月'}要在「往來」頁回覆` });
+    }
   if (plan.foodShortfall > 0) alerts.push({ level: 'danger', text: `本月糧食不足 ${plan.foodShortfall} 份` });
   else {
     const m = monthsUntilEmpty(state, plan, 'food');
@@ -37,7 +43,7 @@ export function computeAlerts(state: GameState, content: ContentPack): Alert[] {
     const pct = remainingLifePct(c);
     if (pct > 20) continue;
     const left = remainingLifeMonths(c);
-    const rest = left >= 12 ? `約 ${Math.floor(left / 12)} 年` : `${left} 個月`;
+    const rest = left >= 12 ? ` 約 ${Math.floor(left / 12)} 年` : ` ${left} 個月`;
     const who = c.role === 'protagonist' ? `掌門${c.name}` : c.name;
     if (c.role === 'protagonist' && !heirOf(state))
       alerts.push({ level: 'danger', text: `${who}壽元只剩${rest}，尚未指定親傳弟子` });

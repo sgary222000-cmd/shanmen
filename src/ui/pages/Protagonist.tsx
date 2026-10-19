@@ -30,7 +30,7 @@ export function ProtagonistPage() {
             <ul className="small">
               {ancestors.map((a, i) => (
                 <li key={i}>
-                  第 {i + 1} 代 {a.name}：{realmName(a.realm)}，享壽 {Math.floor(a.ageMonths / 12)} 歲，{formatDate(a.date)}坐化
+                  第 {i + 1} 代 {a.name}：{realmName(a.realm)}，享壽 {Math.floor(a.ageMonths / 12)} 歲，{formatDate(a.date)}{a.cause === 'breakthrough' ? '衝擊化神隕落' : '坐化'}
                 </li>
               ))}
             </ul>

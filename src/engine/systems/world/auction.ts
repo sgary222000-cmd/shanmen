@@ -1,3 +1,4 @@
+import { neighborSects } from './diplomacy';
 import { balance } from '../../../content/balance';
 import type { ContentPack } from '../../../content/registry';
 import { monthIndex } from '../../date';
@@ -46,7 +47,7 @@ export function resolveAuction(state: GameState, content: ContentPack, lines: st
   if (!a || monthIndex(state.date) < a.deadline) return;
   const r = rng(state, 'sects');
   let best: { sectId: string; bid: number } | null = null;
-  for (const s of state.sects) {
+  for (const s of neighborSects(state, content)) {
     const def = content.sects.get(s.id);
     const temper = def ? A.temperamentPct[def.temperament] : 100;
     const bid = Math.floor((s.resources.lingshi * r.range(A.sectBidPct[0], A.sectBidPct[1]) * temper) / 10000);

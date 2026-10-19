@@ -1,6 +1,7 @@
 import type { ContentPack } from '../src/content/registry';
 import { applyCommand, type Command, type GameState } from '../src/engine';
 import { monthIndex } from '../src/engine/date';
+import { aidTroops, contactBlocked, treatyBlocked, treatyCapacity, treatyCount } from '../src/engine/systems/world/diplomacy';
 import { allByDef, benchCount, benchList, hallLevel, isCraftSchedule, qiCapacity, innerLimit, newBuildOptions, upgradeOption } from '../src/engine/systems/buildings/buildings';
 import { commissionBlocked, idleOuter } from '../src/engine/systems/commissions/commissions';
 import { buyPrice, demandLeft, marketOpen, recipesForSale, stockLeft } from '../src/engine/systems/economy/market';
@@ -97,10 +98,36 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
       const pick = s.disciples.length < innerLimit(s, content) ? affordable?.id ?? null : null;
       s = tryCmd(s, content, { type: 'resolveRecruitment', eventId: ev.id, candidateId: pick });
       if (pick) note(`招收內門弟子`);
+    } else if (ev.kind === 'aid' && ev.aid) {
+      // 盟友求援：靈石夠就出資，不然出兵，都不行才婉拒
+      const choice = s.resources.lingshi >= ev.aid.lingshi + 200 ? 'money' : aidTroops(s).length ? 'troops' : 'refuse';
+      s = tryCmd(s, content, { type: 'resolveAid', eventId: ev.id, choice });
+      note(`回覆求援：${choice}`);
     } else if (ev.kind === 'succession') {
       s = tryCmd(s, content, { type: 'resolveSuccession', eventId: ev.id, characterId: ev.successors?.[0] ?? s.protagonist.id });
       note(`確認新掌門 ${s.protagonist.name}`);
     } else s = tryCmd(s, content, { type: 'dismissEvent', eventId: ev.id });
+  }
+
+  // 外交：有議事堂後，條件夠就締約（先互不侵犯，信任夠了改結盟）；好戰宗門好感太低時送點禮
+  if (treatyCapacity(s, content)) {
+    for (const sect of s.sects) {
+      for (const kind of ['alliance', 'peace'] as const) {
+        if (!treatyBlocked(s, content, sect.id, kind) && s.resources.lingshi >= balance.diplomacy.treaties[kind].lingshi + 300) {
+          const before = s;
+          s = tryCmd(s, content, { type: 'signTreaty', sectId: sect.id, kind });
+          if (s !== before) note(`締約：${sect.id} ${kind}`);
+          break;
+        }
+      }
+    }
+  }
+  // 送禮只在有議事堂、還能再締約、手頭寬裕時才送，一年最多送一家，免得把存款送光
+  if (treatyCapacity(s, content) > treatyCount(s) && s.resources.lingshi >= 1500) {
+    const target = s.sects.find(
+      (sect) => !sect.treaty && sect.giftsThisYear === 0 && !contactBlocked(s, content, sect.id) && sect.favor < balance.diplomacy.treaties.peace.favor,
+    );
+    if (target && !s.sects.some((x) => x.giftsThisYear > 0)) s = tryCmd(s, content, { type: 'giftSect', sectId: target.id, lingshi: 100 });
   }
 
   // 傳承：指定境界最高的內門為親傳弟子；壽元剩兩成時服延壽丹
@@ -235,6 +262,7 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     ['building.cave_abode', ['region.back'], 1],
     ['building.training', ['region.outer', 'region.main'], 1],
     ['building.ancestral', ['region.main'], 1],
+    ['building.council', ['region.gate', 'region.main'], 1],
     ['building.beast_garden', ['region.valley', 'region.back'], 1],
     ['building.talisman', ['region.back', 'region.main'], route === 'craft' ? 2 : 1],
     ['building.mine', ['region.fire', 'region.outer'], route === 'craft' ? 2 : 1],

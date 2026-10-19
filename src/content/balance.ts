@@ -47,14 +47,14 @@ export const balance = {
   /** 煉氣各層升到下一層所需修為：stage × 60；築基各期 1500 */
   qiXpPerStage: 60,
   foundationXpPerStage: 1500,
-  /** 金丹各期 4000（P1 批次 D）；元嬰各期 50000、化神各期 100000（P2 批次 B） */
+  /** 金丹各期 4000（P1 批次 D）；元嬰各期 40000、化神各期 80000（P2 批次 B，0.7.0 調整） */
   coreXpPerStage: 4000,
-  nascentXpPerStage: 50000,
-  deityXpPerStage: 100000,
+  nascentXpPerStage: 40000,
+  deityXpPerStage: 80000,
   /** 煉氣的每月基礎修為；築基、金丹見 baseXpByMajor */
   baseXpPerMonth: 10,
   /** 每月基礎修為依大境界提高，否則築基四期要上百年（docs/P1規劃.md §3.7） */
-  baseXpByMajor: { qi: 10, foundation: 20, core: 40, nascent: 70, deity: 120 },
+  baseXpByMajor: { qi: 10, foundation: 20, core: 40, nascent: 100, deity: 160 },
   rootMultiplierPct: { low: 80, mid: 100, high: 130, heaven: 160 } satisfies Record<RootGrade, number>,
   /** 行程對修煉的倍率（百分比） */
   scheduleXpPct: {
@@ -210,7 +210,7 @@ export const balance = {
     failDeathBp: 0,
   },
   deityBreakthrough: {
-    baseBp: 2500,
+    baseBp: 3500,
     maxBp: 7500,
     arrayLv3Bp: 1000,
     rootBp: { low: -1000, mid: 0, high: 500, heaven: 1000 } satisfies Record<RootGrade, number>,
@@ -222,7 +222,7 @@ export const balance = {
     requiredInsight: 400,
     failInjuryMonths: 12,
     failHealth: 20,
-    failXpLossPct: 40,
+    failXpLossPct: 25,
     /** 失敗時身死道消的機率（萬分比，佔失敗的比例） */
     failDeathBp: 2500,
   },
@@ -313,6 +313,8 @@ export const balance = {
     maxPower: 210,
     powerPerYear: 2,
     maxPopulation: 80,
+    /** 遠方勢力實力上限（簡化結算，每年 +1–3） */
+    distantMaxPower: 260,
     /** 建築總級數上限與資源存量上限，避免百年後帳本無限膨脹 */
     maxBuildings: 30,
     resourceCap: { lingshi: 3000, food: 1500, stone: 1000, wood: 1000 },
@@ -330,6 +332,52 @@ export const balance = {
       { favor: 60, pct: 10 },
       { favor: 30, pct: 5 },
     ],
+    /** 條約（P2 批次 C，暫定）：締約條件、儀式費用、期限（年）、提前解約的代價 */
+    treaties: {
+      peace: { favor: 40, trust: 20, lingshi: 200, years: 10, breakTrust: 30, breakFavor: 20, breakReputation: 10 },
+      alliance: { favor: 60, trust: 50, lingshi: 600, years: 10, breakTrust: 40, breakFavor: 30, breakReputation: 20 },
+    },
+    /** 遠方勢力要大殿幾級才建立往來 */
+    distantHall: 4,
+    /** 信任：守約每滿一年 +2、條約期滿 +5、履行援助 +10、拒絕援助 −15（重承諾的宗門加減都 ×1.5） */
+    trustPerYear: 2,
+    trustOnExpiry: 5,
+    trustOnAid: 10,
+    trustOnRefuse: 15,
+    favorOnAid: 5,
+    favorOnRefuse: 10,
+    honorablePct: 150,
+    /** 聯盟：交易加價 +5%、每月可多賣 2 批；連續拒絕援助 2 次，盟友會解除聯盟 */
+    allianceTradePct: 5,
+    allianceTradeLots: 2,
+    maxRefusals: 2,
+    /** 援助：出資 = 120 + 盟友實力 × 2 靈石；出兵 = 派最多 2 名內門 3 個月，每人 20% 機率輕傷 1 個月；回覆期限 2 個月 */
+    aidBaseLingshi: 120,
+    aidPerPower: 2,
+    aidTroops: 2,
+    aidMonths: 3,
+    aidInjuryBp: 2000,
+    aidDeadline: 2,
+    /** 遠方盟友每月遭妖獸潮等禍事、向盟友求援的機率（萬分比） */
+    distantTroubleBp: 80,
+    /** 好戰而冷淡（好感 < 20）、沒有互不侵犯的宗門，每月騷擾我宗商隊的機率與損失（靈石 5%，最多 100） */
+    harassBp: 400,
+    harassFavor: 20,
+    harassPct: 5,
+    harassMax: 100,
+  },
+  /** 資源據點（P2 批次 C）：佔有的宗門每月收入；搶奪無主據點的費用、攻打他宗據點的勝率 */
+  sites: {
+    income: { ore: { lingshi: 15 }, herb: { lingshi: 12 }, lingshi: { lingshi: 25 }, wood: { wood: 8, lingshi: 5 } },
+    claimLingshi: 100,
+    /** 每宗最多佔幾處（避免一宗獨佔） */
+    maxPerSect: 3,
+    /** 攻方勝率 = 50% + (攻方實力 − 守方實力) × 0.5%，夾在 20%–80%；聯盟盟友可能求援 */
+    attackBaseBp: 5000,
+    attackPerPowerBp: 50,
+    attackMinBp: 2000,
+    attackMaxBp: 8000,
+    lossPower: 3,
   },
   /** 三年大比：每 3 年 9 月 */
   tournament: {
@@ -354,7 +402,7 @@ export const balance = {
     minBid: 50,
     /** 電腦宗門出價：靈石的百分比範圍 */
     sectBidPct: [20, 55] as [number, number],
-    temperamentPct: { steady: 70, merchant: 120, warlike: 100 },
+    temperamentPct: { steady: 70, merchant: 120, warlike: 100, scholarly: 60, honorable: 80 },
   },
   /** 壽元與繼承（P2 批次 A，暫定）。 */
   lifespan: {

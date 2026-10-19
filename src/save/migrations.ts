@@ -9,6 +9,7 @@ import { RESOURCE_IDS } from '../engine/resources';
 import { seedState } from '../engine/rng';
 import { emptyPositions } from '../engine/systems/talent/positions';
 import { initialSects } from '../engine/systems/world/sects';
+import { initialSites } from '../engine/systems/world/diplomacy';
 
 type World = Record<string, unknown>;
 
@@ -121,6 +122,17 @@ export const migrations: Record<number, (w: World) => World> = {
   6: (w) => {
     const resources = Object.fromEntries(RESOURCE_IDS.map((id) => [id, (w.resources as Record<string, number>)[id] ?? 0]));
     return { ...w, version: 7, resources };
+  },
+  // v7 → v8（P2 批次 C）：各宗補上信任與條約欄位、加入三個遠方勢力、資源據點。
+  7: (w) => {
+    const fresh = initialSects(content);
+    const old = (w.sects as Record<string, unknown>[]).map((s) => ({
+      trust: fresh.find((f) => f.id === s.id)?.trust ?? 20,
+      treaty: null,
+      ...s,
+    }));
+    const added = fresh.filter((f) => !old.some((s) => (s as { id?: string }).id === f.id));
+    return { ...w, version: 8, sects: [...old, ...added], sites: initialSites() };
   },
 };
 

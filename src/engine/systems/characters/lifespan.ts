@@ -146,6 +146,7 @@ function succeed(state: GameState, cause: DeathCause, lines: string[], stops: St
     realm: { ...old.realm },
     ageMonths: old.ageMonths,
     date: { ...state.date },
+    cause,
   });
   releaseEverything(state, old.id);
   returnEquipment(state, old);

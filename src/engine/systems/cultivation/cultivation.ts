@@ -215,8 +215,9 @@ export function breakthroughOdds(state: GameState, content: ContentPack, c: Char
   const top = topStage(c.realm.major);
   let blocked: string | undefined;
   if (atRealmCap(c) || (c.realm.major === 'deity' && c.realm.stage === top)) blocked = '化神圓滿已是人界頂點，煉虛以上之後的版本開放';
-  else if (c.realm.stage < top || c.xp < xpToNext(c.realm))
+  else if (c.realm.stage < top)
     blocked = `需要${MAJOR_NAMES[c.realm.major]}${c.realm.major === 'qi' ? '九層' : '圓滿'}且修為圓滿（目前 ${realmName(c.realm)}）`;
+  else if (c.xp < xpToNext(c.realm)) blocked = `修為還沒圓滿（${c.xp} / ${xpToNext(c.realm)}）`;
   else if (isInjured(c)) blocked = '受傷中不能突破';
   else if (c.insight < b.requiredInsight) {
     const tier = balance.technique.tiers.find((t) => t.insight === b.requiredInsight)?.name ?? '';
@@ -235,7 +236,7 @@ export function breakthroughOdds(state: GameState, content: ContentPack, c: Char
     bp,
     factors,
     failure: `消耗${pillName}；受傷 ${b.failInjuryMonths} 個月、健康降至 ${b.failHealth}、損失 ${b.failXpLossPct}% 修為。${deathText}${
-      blessingReady(state, content) ? '祖師殿可以免除這次失敗的受傷與修為損失。' : ''
+      blessingReady(state, content) ? `祖師殿可以免除這次失敗的受傷、修為損失${deathBp ? '與死亡' : ''}。` : ''
     }`,
     blocked,
     pill,

@@ -1,6 +1,6 @@
 import type { BuildingDef } from '../schema';
 
-// 建築：十七種（P2 批次 A 加入祖師殿；批次 B 加入大殿 4–5 級，聚靈陣、洞府、藏經閣 3 級），依大殿等級逐步開放。P1 起靈田、採石場、靈木場可蓋多座（受區域槽位限制），煉丹房最多兩座，聚靈陣每區一座。
+// 建築：十八種（P2 批次 A 加入祖師殿、批次 C 加入議事堂；批次 B 加入大殿 4–5 級，聚靈陣、洞府、藏經閣 3 級），依大殿等級逐步開放。P1 起靈田、採石場、靈木場可蓋多座（受區域槽位限制），煉丹房最多兩座，聚靈陣每區一座。
 // 批次 B 加入藥園、靈礦場、煉器坊、符陣閣、坊市；批次 C 加入藏經閣、演武場、洞府、靈獸苑。所有數值為暫定值（見 docs/暫定數值與決策.md）。
 
 export const buildings: BuildingDef[] = [
@@ -44,7 +44,7 @@ export const buildings: BuildingDef[] = [
         level: 4,
         cost: { stone: 300, wood: 240, lingshi: 800 },
         months: 6,
-        maintenance: { lingshi: 8 },
+        maintenance: { lingshi: 13 },
         requiresHall: 3,
         effects: { innerLimit: 14, recruitOuterBonus: 6 },
         summary: '宗門晉階：聚靈陣、洞府、藏經閣可升到 3 級（凝嬰所需）。內門上限 14 人。',
@@ -245,7 +245,7 @@ export const buildings: BuildingDef[] = [
         level: 3,
         cost: { stone: 150, lingshi: 700 },
         months: 4,
-        maintenance: { lingshi: 8 },
+        maintenance: { lingshi: 16 },
         requiresHall: 4,
         effects: { qiCapacity: 40 },
         summary: '所在區域靈氣容量 +40；在此區凝嬰、化神成功率 +10%。',
@@ -423,7 +423,7 @@ export const buildings: BuildingDef[] = [
         level: 3,
         cost: { stone: 120, wood: 160, lingshi: 500 },
         months: 4,
-        maintenance: { lingshi: 4 },
+        maintenance: { lingshi: 6 },
         requiresHall: 4,
         effects: { researchPerMonth: 22, allowBranches: true },
         summary: '研究每月領悟 +30，修到功法圓滿更快。',
@@ -490,10 +490,10 @@ export const buildings: BuildingDef[] = [
         level: 3,
         cost: { stone: 240, wood: 160, lingshi: 800 },
         months: 6,
-        maintenance: { lingshi: 6 },
+        maintenance: { lingshi: 11 },
         requiresHall: 4,
         effects: { qiCapacity: 20, seclusionPct: 40, coreBonusBp: 1500, nascentBonusBp: 1000 },
-        summary: '後山靈氣容量 +20；閉關修煉 +40%；凝嬰成功率 +10%。',
+        summary: '後山靈氣容量 +20；閉關修煉 +40%；結丹成功率 +15%；凝嬰、化神成功率 +10%。',
       },
     ],
   },
@@ -552,6 +552,35 @@ export const buildings: BuildingDef[] = [
         requiresHall: 3,
         effects: { ancestorBasePct: 3, ancestorPerPct: 3, ancestorMaxPct: 15, blessing: true },
         summary: '同上；並可「祖師顯靈」：突破失敗時免除受傷與修為損失（每 10 年一次）。',
+      },
+    ],
+  },
+  {
+    id: 'building.council',
+    name: '議事堂',
+    description: '宗門與外派往來、締結盟約的地方，外事執事在此辦公。可以締結互不侵犯與聯盟條約，等級越高能同時維持的條約越多。可蓋在主峰或山門。',
+    unlockHall: 3,
+    maxTotal: 1,
+    onlyRegions: ['region.main', 'region.gate'],
+    art: 'placeholder/council.svg',
+    levels: [
+      {
+        level: 1,
+        cost: { stone: 120, wood: 120, lingshi: 400 },
+        months: 4,
+        maintenance: { lingshi: 5 },
+        requiresHall: 3,
+        effects: { maxTreaties: 2, envoyBonusPct: 50 },
+        summary: '可以締結互不侵犯、聯盟條約，最多同時 2 份；外事執事的送禮效果再 +50%。',
+      },
+      {
+        level: 2,
+        cost: { stone: 200, wood: 200, lingshi: 1200 },
+        months: 6,
+        maintenance: { lingshi: 10 },
+        requiresHall: 4,
+        effects: { maxTreaties: 4, envoyBonusPct: 100 },
+        summary: '最多同時 4 份條約；外事執事的送禮效果再 +100%。',
       },
     ],
   },

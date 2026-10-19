@@ -61,6 +61,9 @@ for (let i = 0; i < years * 12; i++) {
   if (hallLevel(state) >= 4) mark('大殿 4 級');
   if (hallLevel(state) >= 5) mark('大殿 5 級');
   if (qiCapacity(state, content, 'region.back') >= 70) mark('後山靈氣 70');
+  if (state.buildings.some((b) => b.defId === 'building.council' && b.level >= 1)) mark('議事堂完工');
+  if (state.sects.some((x) => x.treaty?.kind === 'peace')) mark('首份互不侵犯');
+  if (state.sects.some((x) => x.treaty?.kind === 'alliance')) mark('首份聯盟');
   if (state.outer.count >= 40) mark('外門 40 人');
   if (state.outer.count >= 60) mark('外門 60 人');
   if (i % 120 === 119) console.log(`第 ${(i + 1) / 12} 年：靈石 ${state.resources.lingshi}、外門 ${state.outer.count}、內門 ${state.disciples.length}、打零工 ${state.outer.jobs.errand}`);
@@ -114,6 +117,7 @@ console.log(
 );
 console.log(`戰鬥 ${state.battles.length} 場（保留最近 30 場）：${state.battles.slice(0, 5).map((b) => `${b.title} ${b.result}`).join('；')}`);
 console.log(`弟子坐化 ${deaths} 人；歷代掌門：${(state.ancestors ?? []).map((a) => `${a.name}（${realmName(a.realm)}、${Math.floor(a.ageMonths / 12)} 歲）`).join('、') || '無'}；現任掌門 ${state.protagonist.name}（${Math.floor(state.protagonist.ageMonths / 12)} 歲）`);
+console.log(`外交：${state.sects.map((x) => `${content.sects.get(x.id)?.name} 好感 ${x.favor} 信任 ${x.trust ?? 0}${x.treaty ? `（${x.treaty.kind}）` : ''}`).join('、')}；據點：${state.sites.map((x) => `${x.name}→${x.owner ? content.sects.get(x.owner)?.name : '無主'}`).join('、')}`);
 console.log(`不變條件違反次數（資源為負或非整數）：${violations}`);
 console.log(`指令數：${state.stats.commands}；推進月數：${state.stats.monthsAdvanced}`);
 if (process.argv.includes('--log')) for (const l of log) console.log(`  [${l.month}] ${l.text}`);

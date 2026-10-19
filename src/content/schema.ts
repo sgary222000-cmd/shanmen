@@ -74,6 +74,9 @@ export const buildingLevelSchema = z.object({
     coreBonusBp: z.number().int().optional(),
     /** 洞府 3 級：凝嬰成功率加成（萬分比） */
     nascentBonusBp: z.number().int().optional(),
+    /** 議事堂：可同時維持的條約數、外事執事送禮效果加成（P2 批次 C） */
+    maxTreaties: z.number().int().optional(),
+    envoyBonusPct: z.number().int().optional(),
     /** 祖師殿：全宗修煉加成（基礎、每位已故掌門、上限，百分比） */
     ancestorBasePct: z.number().int().optional(),
     ancestorPerPct: z.number().int().optional(),
@@ -331,7 +334,9 @@ export const sectSchema = z.object({
   id: z.string().regex(/^sect\.[a-z_]+$/),
   name: z.string(),
   lineage: z.string(),
-  temperament: z.enum(['steady', 'merchant', 'warlike']),
+  temperament: z.enum(['steady', 'merchant', 'warlike', 'scholarly', 'honorable']),
+  /** neighbor：鄰近宗門，完整模擬（坊市、大比、競標）；distant：遠方勢力，簡化結算、大殿 4 級後才有往來（P2 批次 C） */
+  scope: z.enum(['neighbor', 'distant']).optional(),
   description: z.string(),
   start: z.object({
     lingshi: z.number().int().nonnegative(),
@@ -342,6 +347,7 @@ export const sectSchema = z.object({
     buildings: z.number().int().nonnegative(),
     power: z.number().int().positive(),
     favor: z.number().int().min(0).max(100),
+    trust: z.number().int().min(0).max(100).optional(),
   }),
   art: z.string().optional(),
 });

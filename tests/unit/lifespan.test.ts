@@ -178,20 +178,23 @@ describe('祖師殿', () => {
 });
 
 describe('連續推進的停止條件', () => {
-  it('糧食快用完時要求停下，同一次短缺只停一次', () => {
+  it('糧食快用完時要求停下，之後只在惡化時再停', () => {
     let s = edit(developed(), (x) => {
       x.resources.food = foodNeed(x) * 4;
       x.nextRecruitMonth = 999;
       x.buildings = x.buildings.filter((b) => b.defId !== 'building.field');
     });
-    const kinds: boolean[] = [];
-    for (let i = 0; i < 4; i++) {
+    const texts: string[] = [];
+    for (let i = 0; i < 6; i++) {
       const r = tryRun(s, { type: 'advanceMonth', expectMonth: monthIndex(s.date) });
       if (!r.ok) throw new Error(r.error);
-      kinds.push(!!r.report?.stops?.some((x) => x.kind === 'shortage' && x.text.includes('糧食')));
+      texts.push(...(r.report?.stops ?? []).filter((x) => x.kind === 'shortage').map((x) => x.text));
       s = r.state;
     }
-    expect(kinds.filter(Boolean)).toHaveLength(1);
+    // 快用完、不夠吃各停一次，不會每個月都停
+    expect(texts.length).toBeGreaterThanOrEqual(1);
+    expect(texts.length).toBeLessThanOrEqual(3);
+    expect(new Set(texts.map((t) => t.replace(/\d+/g, ''))).size).toBe(texts.length);
   });
 
   it('修為圓滿、可以突破時要求停下（只在剛達成的那個月）', () => {
