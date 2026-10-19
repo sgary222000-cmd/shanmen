@@ -54,8 +54,8 @@ export const enemies: EnemyDef[] = [
     skill: { name: '裂石重擊', multiplierPct: 170, cooldown: 3 },
   },
   // 批次 D：地下靈礦
-  { id: 'enemy.mine_rat', name: '礦坑鼠妖', hp: 60, atk: 20, def: 4, spd: 14, hit: 11, res: 5, row: 'front' },
-  { id: 'enemy.rock_lizard', name: '岩甲蜥', hp: 110, atk: 22, def: 10, spd: 8, hit: 9, res: 6, row: 'front' },
+  { id: 'enemy.mine_rat', name: '礦坑鼠妖', hp: 60, atk: 20, def: 4, spd: 14, hit: 11, res: 5, row: 'front', art: 'final/enemy-mine-rat.webp' },
+  { id: 'enemy.rock_lizard', name: '岩甲蜥', hp: 110, atk: 22, def: 10, spd: 8, hit: 9, res: 6, row: 'front', art: 'final/enemy-rock-lizard.webp' },
   {
     id: 'enemy.vein_spirit',
     name: '礦脈守靈',
@@ -66,10 +66,11 @@ export const enemies: EnemyDef[] = [
     hit: 11,
     res: 8,
     row: 'front',
+    art: 'final/enemy-vein-spirit.webp',
     skill: { name: '礦爆', multiplierPct: 170, cooldown: 3 },
   },
   // 批次 D：靈獸山谷
-  { id: 'enemy.vine_snake', name: '毒藤蛇', hp: 120, atk: 31, def: 8, spd: 15, hit: 13, res: 8, row: 'front' },
+  { id: 'enemy.vine_snake', name: '毒藤蛇', hp: 120, atk: 31, def: 8, spd: 15, hit: 13, res: 8, row: 'front', art: 'final/enemy-vine-snake.webp' },
   {
     id: 'enemy.thunder_deer',
     name: '雷角鹿',
@@ -80,6 +81,7 @@ export const enemies: EnemyDef[] = [
     hit: 13,
     res: 9,
     row: 'back',
+    art: 'final/enemy-thunder-deer.webp',
     skill: { name: '雷擊', multiplierPct: 150, cooldown: 3 },
   },
   {
@@ -92,11 +94,12 @@ export const enemies: EnemyDef[] = [
     hit: 13,
     res: 10,
     row: 'front',
+    art: 'final/enemy-red-python.webp',
     skill: { name: '絞殺', multiplierPct: 180, cooldown: 3 },
   },
   // 批次 D：古修遺跡
-  { id: 'enemy.sword_puppet', name: '遺跡劍傀', hp: 220, atk: 50, def: 18, spd: 14, hit: 15, res: 10, row: 'front' },
-  { id: 'enemy.talisman_wisp', name: '符靈', hp: 140, atk: 54, def: 8, spd: 18, hit: 17, res: 12, row: 'back' },
+  { id: 'enemy.sword_puppet', name: '遺跡劍傀', hp: 220, atk: 50, def: 18, spd: 14, hit: 15, res: 10, row: 'front', art: 'final/enemy-sword-puppet.webp' },
+  { id: 'enemy.talisman_wisp', name: '符靈', hp: 140, atk: 54, def: 8, spd: 18, hit: 17, res: 12, row: 'back', art: 'final/enemy-talisman-wisp.webp' },
   {
     id: 'enemy.remnant_soul',
     name: '殘魂修士',
@@ -107,6 +110,7 @@ export const enemies: EnemyDef[] = [
     hit: 17,
     res: 14,
     row: 'front',
+    art: 'final/enemy-remnant-soul.webp',
     skill: { name: '殘魂劍訣', multiplierPct: 180, cooldown: 3 },
   },
 ];
