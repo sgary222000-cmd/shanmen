@@ -2,6 +2,7 @@ import type { ContentPack } from '../src/content/registry';
 import { applyCommand, type Command, type GameState } from '../src/engine';
 import { monthIndex } from '../src/engine/date';
 import { aidTroops, contactBlocked, treatyBlocked, treatyCapacity, treatyCount } from '../src/engine/systems/world/diplomacy';
+import { annexBlocked, casusBelli, contestBlocked, contestOdds, declareBlocked, peaceCost, playerPower, warOdds } from '../src/engine/systems/world/war';
 import { allByDef, benchCount, benchList, hallLevel, isCraftSchedule, qiCapacity, innerLimit, newBuildOptions, upgradeOption } from '../src/engine/systems/buildings/buildings';
 import { commissionBlocked, idleOuter } from '../src/engine/systems/commissions/commissions';
 import { buyPrice, demandLeft, marketOpen, recipesForSale, stockLeft } from '../src/engine/systems/economy/market';
@@ -103,10 +104,47 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
       const choice = s.resources.lingshi >= ev.aid.lingshi + 200 ? 'money' : aidTroops(s).length ? 'troops' : 'refuse';
       s = tryCmd(s, content, { type: 'resolveAid', eventId: ev.id, choice });
       note(`回覆求援：${choice}`);
+    } else if (ev.kind === 'victory' && ev.victory) {
+      // 攻打得勝：能吞併就吞併，不然收為附屬
+      const choice = annexBlocked(s, content, ev.victory.sectId) ? 'vassal' : 'annex';
+      s = tryCmd(s, content, { type: 'resolveVictory', eventId: ev.id, choice });
+      note(`戰後處置：${choice}`);
     } else if (ev.kind === 'succession') {
       s = tryCmd(s, content, { type: 'resolveSuccession', eventId: ev.id, characterId: ev.successors?.[0] ?? s.protagonist.id });
       note(`確認新掌門 ${s.protagonist.name}`);
     } else s = tryCmd(s, content, { type: 'dismissEvent', eventId: ev.id });
+  }
+
+  // 戰事：守山門勝算不到一半時，付得起就求和，不然撤離資產
+  for (const war of s.wars) {
+    if (war.side !== 'defend' || war.hidden) continue;
+    const odds = warOdds(s, content, war);
+    if (odds.winPct >= 50) continue;
+    const before = s;
+    if (s.resources.lingshi >= peaceCost(s, war) + 200) s = tryCmd(s, content, { type: 'makePeace', warId: war.id });
+    else s = tryCmd(s, content, { type: 'evacuate', warId: war.id });
+    if (s !== before) note(`戰事應對（勝算 ${odds.winPct}%）`);
+  }
+  for (const b of s.buildings) if (b.damaged) s = tryCmd(s, content, { type: 'repairBuilding', buildingId: b.id });
+  // 據點：無主的就佔；鄰宗的勝算七成以上才搶；實力遠勝又有理由時宣戰
+  if (s.resources.lingshi >= 800) {
+    for (const site of s.sites) {
+      if (contestBlocked(s, content, site.id)) continue;
+      if (site.owner && contestOdds(s, content, site.id) < 70) continue;
+      const before = s;
+      s = tryCmd(s, content, { type: 'contestSite', siteId: site.id });
+      if (s !== before) note(`爭奪據點 ${site.name}`);
+      break;
+    }
+  }
+  if (hallLevel(s) >= 4 && s.resources.lingshi >= 2000 && !s.wars.length) {
+    const target = s.sects.find(
+      (x) => !declareBlocked(s, content, x.id) && (casusBelli(s, content, x) || route === 'commission') && playerPower(s, content) * 2 >= x.power * 3,
+    );
+    if (target) {
+      s = tryCmd(s, content, { type: 'declareWar', sectId: target.id });
+      note(`宣戰：${target.id}`);
+    }
   }
 
   // 外交：有議事堂後，條件夠就締約（先互不侵犯，信任夠了改結盟）；好戰宗門好感太低時送點禮
@@ -263,6 +301,7 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     ['building.training', ['region.outer', 'region.main'], 1],
     ['building.ancestral', ['region.main'], 1],
     ['building.council', ['region.gate', 'region.main'], 1],
+    ['building.grand_array', ['region.gate', 'region.main'], 1],
     ['building.beast_garden', ['region.valley', 'region.back'], 1],
     ['building.talisman', ['region.back', 'region.main'], route === 'craft' ? 2 : 1],
     ['building.mine', ['region.fire', 'region.outer'], route === 'craft' ? 2 : 1],

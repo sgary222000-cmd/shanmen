@@ -64,7 +64,7 @@ export function levelDef(def: BuildingDef, level: number): BuildingLevelDef | un
 
 /** 建築目前是否能發揮效果（已完成且本月未因維護停用）。升級中的建築以目前等級運作。 */
 export function isOperating(b: Building): boolean {
-  return b.level >= 1 && b.status !== 'disabled' && b.status !== 'ruined';
+  return b.level >= 1 && b.status !== 'disabled' && b.status !== 'ruined' && !b.damaged;
 }
 
 export function effectsOf(content: ContentPack, b: Building) {

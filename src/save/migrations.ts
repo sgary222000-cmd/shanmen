@@ -134,6 +134,8 @@ export const migrations: Record<number, (w: World) => World> = {
     const added = fresh.filter((f) => !old.some((s) => (s as { id?: string }).id === f.id));
     return { ...w, version: 8, sects: [...old, ...added], sites: initialSites() };
   },
+  // 0.7.x → 0.8.0（P2 批次 D）：戰事、吞併整合費
+  8: (w) => ({ ...w, version: 9, wars: [], integrations: [] }),
 };
 
 export function migrate(world: World, from: number, to: number): World {

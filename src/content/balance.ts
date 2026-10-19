@@ -379,6 +379,79 @@ export const balance = {
     attackMaxBp: 8000,
     lossPower: 3,
   },
+  /** 衝突與戰爭（P2 批次 D，暫定）。 */
+  war: {
+    /** 前期保護：第幾年之前各宗不會宣戰、我宗也不能宣戰 */
+    graceYears: 30,
+    /** 宣戰的準備期（月）：對方宣戰 3–6 個月，我宗宣戰 3 個月 */
+    prepMin: 3,
+    prepMax: 6,
+    playerPrep: 3,
+    /** 我宗宣戰的軍費；沒有正當理由（對方好感 30 以上、也不是在擴張）時聲望 −20 */
+    declareLingshi: 300,
+    causeFavor: 30,
+    unjustReputation: 20,
+    /** 電腦宗門對我宗宣戰：好感低於 20、沒有條約與停戰、好戰或正在擴張、實力不輸我宗的八成；每月機率（萬分比） */
+    declareFavor: 20,
+    declarePowerPct: 80,
+    declareBp: 150,
+    /** 好戰又在擴張、實力達我宗 120% 的宗門，好感 40 以下也可能宣戰（每月萬分比） */
+    bullyPowerPct: 120,
+    bullyBp: 60,
+    /** 山門戰：三場兩勝；每場倒下的內門弟子有 15% 戰死（主角不會死，只受傷） */
+    rounds: 3,
+    deathBp: 1500,
+    koInjuryMonths: 3,
+    protagonistInjuryMonths: 6,
+    /** 開戰前預估勝率用的模擬次數 */
+    previewRuns: 30,
+    /** 盟友信任 50 以上才會出兵相助，每位盟友派一名高手 */
+    allyTrust: 50,
+    /** 談和：守方付 200 + 對方實力 × 3 靈石；攻方撤兵聲望 −10。之後停戰 5 年 */
+    tributeBase: 200,
+    tributePerPower: 3,
+    withdrawReputation: 10,
+    peaceTruceYears: 5,
+    /** 撤離資產：最多把一半靈石藏進後山密庫 */
+    evacuatePct: 50,
+    /** 戰後停戰 10 年 */
+    truceYears: 10,
+    /** 守住山門：對方實力 −15%、賠償 100 + 實力 × 2 靈石、聲望 +20 */
+    defendWinPowerPct: 15,
+    reparationBase: 100,
+    reparationPerPower: 2,
+    defendWinReputation: 20,
+    /** 山門失守：靈石被搶 30%（不含撤離的）、糧食 20%、損毀 2 座建築、割讓 1 處據點、聲望 −10 */
+    lootLingshiPct: 30,
+    lootFoodPct: 20,
+    damagedBuildings: 2,
+    defendLoseReputation: 10,
+    /** 修復損毀建築：該等級建造費的 30% */
+    repairPct: 30,
+    /** 攻打得勝：對方實力 −20%；割地賠款最多 2 處據點與 200 + 實力 × 3 靈石 */
+    attackWinPowerPct: 20,
+    cedeSites: 2,
+    indemnityBase: 200,
+    indemnityPerPower: 3,
+    attackLoseReputation: 15,
+    attackWinReputation: 15,
+    /** 附屬：每月進貢 5 + 實力 ÷ 10 靈石 */
+    vassalBase: 5,
+    vassalPerPower: 10,
+    /** 吞併：大殿 5 級、對方實力不到我宗的 50% 才能吞併；得到三分之一的弟子當外門、2 名內門（忠誠 50）、一半靈石與全部據點；
+     *  每月整合費 30 靈石、10 年；外門滿意度 −15；其他宗門好感 −10 */
+    annexPowerPct: 50,
+    annexHall: 5,
+    /** 攻打對方山門或據點時，對方守山陣法讓守方生命、防禦 +25% */
+    homeDefensePct: 25,
+    annexInner: 2,
+    annexLoyalty: 50,
+    integrationLingshi: 30,
+    integrationYears: 10,
+    annexSatisfaction: 15,
+    annexFear: 10,
+    annexReputation: 30,
+  },
   /** 三年大比：每 3 年 9 月 */
   tournament: {
     intervalYears: 3,

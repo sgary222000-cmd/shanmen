@@ -77,6 +77,8 @@ export const buildingLevelSchema = z.object({
     /** 議事堂：可同時維持的條約數、外事執事送禮效果加成（P2 批次 C） */
     maxTreaties: z.number().int().optional(),
     envoyBonusPct: z.number().int().optional(),
+    defensePct: z.number().int().optional(),
+    warDeathReducePct: z.number().int().optional(),
     /** 祖師殿：全宗修煉加成（基礎、每位已故掌門、上限，百分比） */
     ancestorBasePct: z.number().int().optional(),
     ancestorPerPct: z.number().int().optional(),

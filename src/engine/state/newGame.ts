@@ -12,7 +12,7 @@ import { emptyPositions } from '../systems/talent/positions';
 import { initialSites } from '../systems/world/diplomacy';
 import { initialSects } from '../systems/world/sects';
 
-export const STATE_VERSION = 8;
+export const STATE_VERSION = 9;
 
 export interface NewGameOptions {
   sectName: string;
@@ -113,6 +113,8 @@ export function newGame(content: ContentPack, opts: NewGameOptions): GameState {
     sects: initialSects(content),
     intel: [],
     sites: initialSites(),
+    wars: [],
+    integrations: [],
     monthLog: [],
     heirId: null,
     ancestors: [],

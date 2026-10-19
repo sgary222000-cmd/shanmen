@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="300" viewBox="0 0 480 300">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dfe8ee"/><stop offset="1" stop-color="#a9bfc9"/></linearGradient></defs>
+<rect width="480" height="300" fill="url(#g)"/>
+<path d="M60 230 Q240 20 420 230" fill="none" stroke="#3d7c8c" stroke-width="6" opacity=".7"/>
+<path d="M90 230 Q240 60 390 230" fill="none" stroke="#5aa3b3" stroke-width="3" opacity=".6"/>
+<path d="M170 230 L240 150 L310 230Z" fill="#2e4a5a"/>
+<rect x="8" y="8" width="150" height="28" rx="4" fill="#8b1e1e" opacity=".85"/>
+<text x="16" y="28" font-size="15" fill="#fff" font-family="sans-serif">臨時素材</text>
+<text x="240" y="286" font-size="26" fill="#1f2e2b" text-anchor="middle" font-family="serif">護山大陣</text>
+</svg>

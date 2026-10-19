@@ -24,6 +24,11 @@ export function maybeRecruitment(state: GameState, content: ContentPack, lines: 
   const joined = Math.min(room, r.range(balance.recruit.outerMin, balance.recruit.outerMax) + bonus + repBonus);
   state.outer.count += joined;
 
+  // 內門已滿時不跳出招生視窗（無人可收），只寫進月報
+  if (state.disciples.length >= innerLimit(state, content)) {
+    lines.push(`山門招生：外門 +${joined} 人${joined === 0 ? '（弟子居所已滿）' : ''}；內門已達大殿上限，這次不收內門。`);
+    return;
+  }
   const candidates = Array.from({ length: balance.recruit.candidates }, () => rollCandidate(state, 0));
   state.events.push({
     id: newId(state, 'ev'),

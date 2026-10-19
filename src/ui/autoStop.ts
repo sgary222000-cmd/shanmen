@@ -13,6 +13,7 @@ export const STOP_OPTIONS: { kind: StopKind; label: string }[] = [
   { kind: 'tournament', label: '三年大比開始報名' },
   { kind: 'auction', label: '靈脈競標開始' },
   { kind: 'diplomacy', label: '盟友求援、條約期滿、商隊被騷擾' },
+  { kind: 'war', label: '被宣戰、山門戰結果、據點被攻打' },
 ];
 
 export function readDisabledStops(): StopKind[] {

@@ -21,6 +21,16 @@ export function computeAlerts(state: GameState, content: ContentPack): Alert[] {
       const left = ev.aid.deadline - monthIndex(state.date);
       alerts.push({ level: 'danger', text: `${ev.title}，${left > 0 ? `${left} 個月內` : '本月'}要在「往來」頁回覆` });
     }
+  for (const w of state.wars ?? []) {
+    const left = w.resolveAt - monthIndex(state.date);
+    const name = content.sects.get(w.sectId)?.name ?? '';
+    alerts.push({
+      level: 'danger',
+      text: `${w.side === 'defend' ? `${name}來犯` : `攻打${name}`}，${left > 1 ? `${left} 個月後` : '本月底'}開戰（「往來 → 戰事」可以求和、撤離或指定出戰）`,
+    });
+  }
+  for (const b of state.buildings)
+    if (b.damaged) alerts.push({ level: 'warning', text: `${content.buildings.get(b.defId)?.name ?? b.defId}損毀停用，在建設頁修復` });
   if (plan.foodShortfall > 0) alerts.push({ level: 'danger', text: `本月糧食不足 ${plan.foodShortfall} 份` });
   else {
     const m = monthsUntilEmpty(state, plan, 'food');

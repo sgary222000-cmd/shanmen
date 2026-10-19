@@ -2,6 +2,7 @@ import type { ContentPack } from '../../content/registry';
 import { RuleError } from '../errors';
 import type { BeastTask, GameState, MonthReport, OuterDisciples, PositionId, ResourceId, Row, ScheduleKind, Station, TreatyKind } from '../types';
 import { breakTreaty, resolveAid, signTreaty, type AidChoice } from '../systems/world/diplomacy';
+import { contestSite, declareWar, evacuate, makePeace, repairBuilding, resolveVictory, setWarTeam, type VictoryChoice } from '../systems/world/war';
 import { setPosition } from '../systems/talent/positions';
 import { equipItem } from '../systems/talent/equipment';
 import { buyScripture, openBranch } from '../systems/talent/branches';
@@ -56,6 +57,13 @@ export type Command =
   | { type: 'signTreaty'; sectId: string; kind: TreatyKind }
   | { type: 'breakTreaty'; sectId: string }
   | { type: 'resolveAid'; eventId: string; choice: AidChoice }
+  | { type: 'contestSite'; siteId: string }
+  | { type: 'declareWar'; sectId: string }
+  | { type: 'makePeace'; warId: string }
+  | { type: 'evacuate'; warId: string }
+  | { type: 'setWarTeam'; warId: string; teamIds: string[] }
+  | { type: 'resolveVictory'; eventId: string; choice: VictoryChoice }
+  | { type: 'repairBuilding'; buildingId: string }
   | { type: 'startExploration'; realmId: string; teamIds: string[]; rows: Record<string, Row> }
   | { type: 'exploreMove'; nodeId: string }
   | { type: 'exploreChoice'; choiceId: string }
@@ -110,6 +118,12 @@ const LOGGED_COMMANDS = new Set<Command['type']>([
   'signTreaty',
   'breakTreaty',
   'resolveAid',
+  'contestSite',
+  'declareWar',
+  'makePeace',
+  'evacuate',
+  'resolveVictory',
+  'repairBuilding',
 ]);
 
 export function applyCommand(state: GameState, content: ContentPack, cmd: Command): CommandResult {
@@ -178,6 +192,27 @@ export function applyCommand(state: GameState, content: ContentPack, cmd: Comman
         break;
       case 'resolveAid':
         message = resolveAid(next, content, cmd.eventId, cmd.choice);
+        break;
+      case 'contestSite':
+        message = contestSite(next, content, cmd.siteId);
+        break;
+      case 'declareWar':
+        message = declareWar(next, content, cmd.sectId);
+        break;
+      case 'makePeace':
+        message = makePeace(next, content, cmd.warId);
+        break;
+      case 'evacuate':
+        message = evacuate(next, cmd.warId);
+        break;
+      case 'setWarTeam':
+        message = setWarTeam(next, cmd.warId, cmd.teamIds);
+        break;
+      case 'resolveVictory':
+        message = resolveVictory(next, content, cmd.eventId, cmd.choice);
+        break;
+      case 'repairBuilding':
+        message = repairBuilding(next, content, cmd.buildingId);
         break;
       case 'startExploration':
         startExploration(next, content, cmd.realmId, cmd.teamIds, cmd.rows);

@@ -40,7 +40,7 @@ export function isDistant(content: ContentPack, sectId: string): boolean {
 
 /** 鄰近宗門（坊市、大比、競標、據點都只有鄰近宗門參與）。 */
 export function neighborSects(state: GameState, content: ContentPack): SectState[] {
-  return state.sects.filter((s) => !isDistant(content, s.id));
+  return state.sects.filter((s) => !isDistant(content, s.id) && !s.annexed);
 }
 
 export function trustOf(sect: SectState): number {
@@ -56,6 +56,7 @@ export function trustName(trust: number): string {
 
 /** 與這個勢力是否已有往來；沒有時回傳原因。 */
 export function contactBlocked(state: GameState, content: ContentPack, sectId: string): string | undefined {
+  if (state.sects.find((s) => s.id === sectId)?.annexed) return '已併入我宗';
   if (!isDistant(content, sectId)) return undefined;
   if (hallLevel(state) < D.distantHall) return `遠方勢力要等宗門大殿 ${D.distantHall} 級、聲名遠播後才會往來`;
   return undefined;
@@ -105,7 +106,9 @@ export function treatyBlocked(state: GameState, content: ContentPack, sectId: st
   const contact = contactBlocked(state, content, sectId);
   if (contact) return contact;
   const T = D.treaties[kind];
-  if (!treatyCapacity(state, content)) return '需要先在主峰蓋議事堂';
+  if (!treatyCapacity(state, content)) return '需要先蓋議事堂（主峰或山門）';
+  if (sect.vassal) return '已是我宗附屬，不必締約';
+  if (state.wars?.some((w) => w.sectId === sectId)) return '正在交戰';
   if (sect.treaty?.kind === kind) return `已經締結${TREATY_NAMES[kind]}`;
   if (sect.treaty?.kind === 'alliance' && kind === 'peace') return '已經是盟友';
   if (!sect.treaty && treatyCount(state) >= treatyCapacity(state, content))
@@ -303,7 +306,14 @@ export function tickDiplomacy(state: GameState, content: ContentPack, lines: str
       }
       if (t.kind === 'alliance' && def.scope === 'distant' && r.chance(D.distantTroubleBp))
         requestAid(state, content, sect, `${def.name}遭妖獸潮侵擾，`, lines, stops);
-    } else if (def.temperament === 'warlike' && def.scope !== 'distant' && sect.favor < D.harassFavor && r.chance(D.harassBp)) {
+    } else if (
+      def.temperament === 'warlike' &&
+      def.scope !== 'distant' &&
+      !sect.annexed &&
+      !sect.vassal &&
+      sect.favor < D.harassFavor &&
+      r.chance(D.harassBp)
+    ) {
       const lost = Math.min(D.harassMax, Math.floor((state.resources.lingshi * D.harassPct) / 100));
       if (lost > 0) {
         state.resources.lingshi -= lost;
