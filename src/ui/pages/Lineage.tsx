@@ -39,7 +39,7 @@ function Branches() {
                 </td>
                 {opened ? (
                   <td colSpan={2} className="pos small">
-                    已開設，主持人：{allCharacters(game).find((c) => c.id === opened.hostId)?.name}
+                    已開設，主持人：{allCharacters(game).find((c) => c.id === opened.hostId)?.name ?? '已故前輩'}
                   </td>
                 ) : (
                   <>

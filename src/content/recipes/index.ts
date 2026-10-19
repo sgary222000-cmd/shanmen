@@ -104,4 +104,15 @@ export const recipes: RecipeDef[] = [
     knownAtStart: false,
     station: 'alchemy',
   },
+  {
+    id: 'recipe.life_pill',
+    name: '延壽丹',
+    description: '服用後增加壽元（該境界基礎壽元的 15%），一生最多服用兩顆。材料昂貴，丹方可在坊市購買。',
+    inputs: { spirit_herb: 12, beast_mat: 4, herb: 10, lingshi: 60 },
+    outputs: { pill_life: 1 },
+    baseSuccessBp: 4000,
+    knownAtStart: false,
+    station: 'alchemy',
+    marketPrice: 400,
+  },
 ];

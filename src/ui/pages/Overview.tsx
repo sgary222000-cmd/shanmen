@@ -6,7 +6,7 @@ import { qiEfficiencyPct } from '../../engine/systems/cultivation/cultivation';
 import { currentStep, TUTORIAL_STEPS } from '../../engine/systems/tutorial';
 import { regionState } from '../../engine/systems/regions/regions';
 import { AlertList } from '../components/Alerts';
-import { artUrl } from '../art';
+import { artUrl, portraitOf } from '../art';
 import { ResList } from '../components/Res';
 import { content, useGame, useUi } from '../store';
 
@@ -105,7 +105,7 @@ export function OverviewPage() {
       <aside className="hud-left">
         <button className="leader" onClick={() => setPage('protagonist')}>
           <span className="face">
-            <img src={artUrl(p.gender === 'female' ? 'final/portrait-female.webp' : 'final/portrait-male.webp')} alt="" />
+            <img src={artUrl(portraitOf(p))} alt="" />
           </span>
           <span className="info">
             <span className="nm">{p.name}</span>

@@ -9,6 +9,42 @@ import { insightGain, libraryResearch, techniqueOf, techniqueTier } from '../../
 import { POSITION_NAMES, positionOf } from '../../engine/systems/talent/positions';
 import { BEAST_TASK_NAMES } from '../../engine/systems/beasts/beasts';
 import { COMMON_EQUIPMENT } from '../../content/equipment';
+import { lifespanText, longevityBlocked, longevityGain, remainingLifePct } from '../../engine/systems/characters/lifespan';
+
+function LifeLine({ c }: { c: Character }) {
+  const game = useGame();
+  const dispatch = useUi((s) => s.dispatch);
+  const pct = remainingLifePct(c);
+  const isHeir = game.heirId === c.id;
+  const blocked = longevityBlocked(game, c);
+  const knowsPill = game.recipes.includes('recipe.life_pill') || game.resources.pill_life > 0;
+  return (
+    <div className="small row" data-testid={`life-${c.id}`}>
+      <span className={pct <= 10 ? 'neg' : pct <= 20 ? 'warn' : ''}>{lifespanText(c)}</span>
+      {(c.longevityPills ?? 0) > 0 && <span className="muted">（已服延壽丹 {c.longevityPills} 顆）</span>}
+      {knowsPill && (
+        <button
+          className="btn small secondary"
+          disabled={!!blocked}
+          title={blocked ?? `壽元 +${Math.floor(longevityGain(c) / 12)} 年`}
+          onClick={() => dispatch({ type: 'takeLongevityPill', characterId: c.id })}
+        >
+          服延壽丹（+{Math.floor(longevityGain(c) / 12)} 年，庫存 {game.resources.pill_life}）
+        </button>
+      )}
+      {c.role === 'inner' &&
+        (isHeir ? (
+          <button className="btn small secondary" data-testid={`heir-${c.id}`} onClick={() => dispatch({ type: 'setHeir', characterId: null })}>
+            取消親傳弟子
+          </button>
+        ) : (
+          <button className="btn small secondary" data-testid={`heir-${c.id}`} onClick={() => dispatch({ type: 'setHeir', characterId: c.id })}>
+            立為親傳弟子（繼承人）
+          </button>
+        ))}
+    </div>
+  );
+}
 
 export const SKILL_NAMES = {
   alchemy: '煉丹',
@@ -117,6 +153,7 @@ export function CharacterPanel({ c }: { c: Character }) {
         {c.name} <span className="tag">{isPro ? '掌門' : '內門'}</span>{' '}
         {positionOf(game, c.id) && <span className="tag gold">{POSITION_NAMES[positionOf(game, c.id) ?? 'mentor']}</span>}{' '}
         {c.specialty && <span className="tag">專長：{SKILL_NAMES[c.specialty]}</span>}{' '}
+        {game.heirId === c.id && <span className="tag gold">親傳弟子</span>}{' '}
         {c.injuryMonths > 0 && <span className="tag neg">受傷 {c.injuryMonths} 個月</span>}
       </h3>
       <p className="small muted">
@@ -129,6 +166,7 @@ export function CharacterPanel({ c }: { c: Character }) {
             靈獸：<b>{b.name}</b>（{b.stage === 'adult' ? '成年' : '幼年'}，{BEAST_TASK_NAMES[b.task]}；在「靈獸苑」頁調整）
           </p>
         ))}
+      <LifeLine c={c} />
       <TechniqueLine c={c} />
       <EquipLine c={c} />
       {seatOptions(game, content).length > 1 && (

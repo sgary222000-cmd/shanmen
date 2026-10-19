@@ -17,6 +17,7 @@ import { ascendBlocked, guardianBeast, guardianNextCost, hatchBlocked, raiseBloc
 import { libraryResearch } from '../src/engine/systems/talent/techniques';
 import { tournamentBlocked } from '../src/engine/systems/world/tournament';
 import { COMMON_EQUIPMENT } from '../src/content/equipment';
+import { remainingLifePct } from '../src/engine/systems/characters/lifespan';
 
 /** 自動玩家探索秘境的順序與主角最低綜合等級（煉氣 n 層 = n；築基前期 12、後期 18）。 */
 const REALM_PLAN: [string, number][] = [
@@ -60,7 +61,20 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
       const pick = s.disciples.length < innerLimit(s, content) ? affordable?.id ?? null : null;
       s = tryCmd(s, content, { type: 'resolveRecruitment', eventId: ev.id, candidateId: pick });
       if (pick) note(`招收內門弟子`);
+    } else if (ev.kind === 'succession') {
+      s = tryCmd(s, content, { type: 'resolveSuccession', eventId: ev.id, characterId: ev.successors?.[0] ?? s.protagonist.id });
+      note(`確認新掌門 ${s.protagonist.name}`);
     } else s = tryCmd(s, content, { type: 'dismissEvent', eventId: ev.id });
+  }
+
+  // 傳承：指定境界最高的內門為親傳弟子；壽元剩兩成時服延壽丹
+  const strongest = [...s.disciples].sort((a, b) => powerLevel(b.realm) - powerLevel(a.realm) || b.xp - a.xp)[0];
+  if (strongest && !s.disciples.some((d) => d.id === s.heirId)) {
+    s = tryCmd(s, content, { type: 'setHeir', characterId: strongest.id });
+    note(`立 ${strongest.name} 為親傳弟子`);
+  }
+  for (const c of [s.protagonist, ...s.disciples]) {
+    if (s.resources.pill_life > 0 && remainingLifePct(c) < 20) s = tryCmd(s, content, { type: 'takeLongevityPill', characterId: c.id });
   }
 
   // 交易：坊市開了就照行情賣多餘物資（價格較好），沒有坊市時賣給山下商隊
@@ -161,6 +175,7 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     ['building.library', ['region.main', 'region.gate', 'region.back'], 1],
     ['building.cave_abode', ['region.back'], 1],
     ['building.training', ['region.outer', 'region.main'], 1],
+    ['building.ancestral', ['region.main'], 1],
     ['building.beast_garden', ['region.valley', 'region.back'], 1],
     ['building.talisman', ['region.back', 'region.main'], route === 'craft' ? 2 : 1],
     ['building.mine', ['region.fire', 'region.outer'], route === 'craft' ? 2 : 1],

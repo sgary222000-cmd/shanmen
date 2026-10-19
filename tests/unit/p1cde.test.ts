@@ -123,7 +123,7 @@ describe('結丹', () => {
       const t = edit(s, (x) => {
         x.rng.cultivation = seedState(1000 + i);
       });
-      resolveBreakthrough(t, t.protagonist, odds, []);
+      resolveBreakthrough(t, content, t.protagonist, odds, []);
       if (t.protagonist.realm.major === 'core') wins++;
     }
     expect(Math.abs((wins / N) * 10000 - odds.bp)).toBeLessThan(400);

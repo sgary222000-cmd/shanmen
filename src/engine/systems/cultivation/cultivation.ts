@@ -17,6 +17,8 @@ import {
 import { techniqueOf, techniqueTier } from '../talent/techniques';
 import { mentorPct, positionOf, POSITION_NAMES } from '../talent/positions';
 import { guardianBonus } from '../beasts/beasts';
+import { ancestorPct, blessingReady } from '../characters/lifespan';
+import { monthIndex } from '../../date';
 
 /** 某區域的靈氣效率（百分比）：容量不足時在此修煉的人按比例降低。 */
 export function qiEfficiencyPct(state: GameState, content: ContentPack, regionId: string = MAIN_REGION): number {
@@ -63,6 +65,15 @@ export function monthlyXp(state: GameState, content: ContentPack, c: Character, 
   if (guard.xpPct && pct > 0) {
     pct += guard.xpPct;
     parts.push(`${guard.title} +${guard.xpPct}%`);
+  }
+  const anc = ancestorPct(state, content);
+  if (anc && pct > 0) {
+    pct += anc;
+    parts.push(`祖師殿 +${anc}%`);
+  }
+  if (state.heirId === c.id && (c.schedule === 'cultivate' || c.schedule === 'seclusion')) {
+    pct += balance.lifespan.heirXpPct;
+    parts.push(`親傳弟子 +${balance.lifespan.heirXpPct}%`);
   }
   const tier = techniqueTier(c);
   if (tier.pct) {
@@ -193,7 +204,9 @@ export function breakthroughOdds(state: GameState, content: ContentPack, c: Char
     target: toCore ? 'core' : 'foundation',
     bp,
     factors,
-    failure: `消耗${pillName}；受傷 ${b.failInjuryMonths} 個月、健康降至 ${b.failHealth}、損失 ${b.failXpLossPct}% 修為。不會死亡。`,
+    failure: `消耗${pillName}；受傷 ${b.failInjuryMonths} 個月、健康降至 ${b.failHealth}、損失 ${b.failXpLossPct}% 修為。不會死亡。${
+      blessingReady(state, content) ? '祖師殿可以免除這次失敗的受傷與修為損失。' : ''
+    }`,
     blocked,
     pill: toCore ? 'pill_core' : 'pill_foundation',
   };
@@ -202,6 +215,7 @@ export function breakthroughOdds(state: GameState, content: ContentPack, c: Char
 /** 月結算第 4 步：突破判定。odds 在扣除丹藥之前計算。 */
 export function resolveBreakthrough(
   state: GameState,
+  content: ContentPack,
   c: Character,
   odds: BreakthroughOdds,
   lines: string[],
@@ -212,6 +226,10 @@ export function resolveBreakthrough(
     c.realm = { major: odds.target, stage: 1 };
     c.xp = 0;
     lines.push(odds.target === 'core' ? `★ ${c.name}結丹成功，凝成金丹！` : `★ ${c.name}突破成功，踏入築基前期！`);
+  } else if (blessingReady(state, content)) {
+    // 祖師殿 2 級：祖師顯靈，免除失敗懲罰（丹藥仍然耗掉）
+    state.blessingReadyAt = monthIndex(state.date) + balance.lifespan.blessingCooldown;
+    lines.push(`✗ ${c.name}${odds.target === 'core' ? '結丹' : '突破'}失敗，但祖師顯靈護住心脈，沒有受傷，修為也未受損。`);
   } else {
     c.injuryMonths = Math.max(c.injuryMonths, b.failInjuryMonths);
     c.health = Math.min(c.health, b.failHealth);

@@ -20,6 +20,7 @@ import { buyFood, sell, type Sellable } from '../systems/economy/trade';
 import { buyRecipe, marketBuy, marketSell } from '../systems/economy/market';
 import { acceptCommission } from '../systems/commissions/commissions';
 import { advanceMonth } from '../systems/time/advanceMonth';
+import { resolveSuccession, setHeir, takeLongevityPill } from '../systems/characters/lifespan';
 import { updateTutorial } from '../systems/tutorial';
 import { ensure } from '../errors';
 
@@ -76,6 +77,9 @@ export type Command =
   | { type: 'sectTrade'; sectId: string; lots: number }
   | { type: 'enterTournament'; teamIds: string[] }
   | { type: 'bidAuction'; amount: number }
+  | { type: 'setHeir'; characterId: string | null }
+  | { type: 'takeLongevityPill'; characterId: string }
+  | { type: 'resolveSuccession'; eventId: string; characterId: string }
   | { type: 'markLedgerViewed' }
   | { type: 'skipTutorial' }
   | { type: 'advanceMonth'; expectMonth: number };
@@ -98,6 +102,8 @@ const LOGGED_COMMANDS = new Set<Command['type']>([
   'sectTrade',
   'enterTournament',
   'promoteOuter',
+  'takeLongevityPill',
+  'resolveSuccession',
 ]);
 
 export function applyCommand(state: GameState, content: ContentPack, cmd: Command): CommandResult {
@@ -241,6 +247,15 @@ export function applyCommand(state: GameState, content: ContentPack, cmd: Comman
         break;
       case 'bidAuction':
         message = bidAuction(next, cmd.amount);
+        break;
+      case 'setHeir':
+        message = setHeir(next, cmd.characterId);
+        break;
+      case 'takeLongevityPill':
+        message = takeLongevityPill(next, cmd.characterId);
+        break;
+      case 'resolveSuccession':
+        message = resolveSuccession(next, cmd.eventId, cmd.characterId);
         break;
       case 'markLedgerViewed':
         next.tutorial.viewedLedger = true;

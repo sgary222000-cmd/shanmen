@@ -11,7 +11,7 @@ import type { Beast, GameState, Skills } from '../types';
 import { emptyPositions } from '../systems/talent/positions';
 import { initialSects } from '../systems/world/sects';
 
-export const STATE_VERSION = 5;
+export const STATE_VERSION = 6;
 
 export interface NewGameOptions {
   sectName: string;
@@ -112,6 +112,8 @@ export function newGame(content: ContentPack, opts: NewGameOptions): GameState {
     sects: initialSects(content),
     intel: [],
     monthLog: [],
+    heirId: null,
+    ancestors: [],
     tournament: null,
     auction: null,
     veins: [],

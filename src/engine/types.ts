@@ -19,7 +19,8 @@ export type ResourceId =
   | 'talisman_guard' // 護身符（P1）
   | 'artifact' // 法器（P1；可裝備，見 equipment）
   | 'beast_egg' // 靈獸蛋（P1 批次 C）
-  | 'pill_core'; // 結丹靈液（P1 批次 D）
+  | 'pill_core' // 結丹靈液（P1 批次 D）
+  | 'pill_life'; // 延壽丹（P2 批次 A）
 
 export type Resources = Record<ResourceId, number>;
 
@@ -120,6 +121,10 @@ export interface Character {
   insight: number;
   /** 裝備的法器 ID（content.equipment）；null 表示沒有 */
   equipment: string | null;
+  /** 延壽丹等額外增加的壽元（月）。0.5.0 新增，舊存檔沒有。 */
+  lifeBonusMonths?: number;
+  /** 已服用的延壽丹數（一生有上限） */
+  longevityPills?: number;
 }
 
 export interface Protagonist extends Character {
@@ -392,19 +397,41 @@ export interface Candidate {
 
 export interface PendingEvent {
   id: string;
-  kind: 'recruitment' | 'notice';
+  kind: 'recruitment' | 'notice' | 'succession';
   title: string;
   text: string;
   /** 阻擋推進月份，直到處理 */
   blocking: boolean;
   candidates?: Candidate[];
   outerJoined?: number;
+  /** 繼承事件：可以接任掌門的人物 ID（第一位是暫代的新掌門） */
+  successors?: string[];
+}
+
+/** 連續推進的停止原因。 */
+export type StopKind = 'event' | 'lifespan' | 'death' | 'breakthrough' | 'tournament' | 'auction' | 'shortage';
+
+export interface StopReason {
+  kind: StopKind;
+  text: string;
+}
+
+/** 已故掌門，供奉在祖師殿。 */
+export interface Ancestor {
+  name: string;
+  gender: 'male' | 'female';
+  realm: Realm;
+  ageMonths: number;
+  /** 坐化的年月 */
+  date: GameDate;
 }
 
 export interface MonthReport {
   date: GameDate;
   lines: string[];
   delta: Partial<Resources>;
+  /** 連續推進應該停下來的原因（0.5.0 新增） */
+  stops?: StopReason[];
 }
 
 export interface TutorialState {
@@ -479,6 +506,12 @@ export interface GameState {
   monthStart?: Resources;
   /** 本月已接的委託件數，月底歸零。0.4.5 新增。 */
   commissionsTaken?: number;
+  /** 親傳弟子（指定的掌門繼承人）。0.5.0 新增。 */
+  heirId?: string | null;
+  /** 歷代已故掌門（新的在後）。0.5.0 新增。 */
+  ancestors?: Ancestor[];
+  /** 祖師殿「祖師顯靈」下次可用的月份（monthIndex）；未設表示可用。 */
+  blessingReadyAt?: number;
   tournament: TournamentState | null;
   auction: AuctionState | null;
   veins: Vein[];

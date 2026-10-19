@@ -1,6 +1,6 @@
 import type { BuildingDef } from '../schema';
 
-// 建築：十六種，依大殿等級逐步開放。P1 起靈田、採石場、靈木場可蓋多座（受區域槽位限制），煉丹房最多兩座，聚靈陣每區一座。
+// 建築：十七種（P2 批次 A 加入祖師殿），依大殿等級逐步開放。P1 起靈田、採石場、靈木場可蓋多座（受區域槽位限制），煉丹房最多兩座，聚靈陣每區一座。
 // 批次 B 加入藥園、靈礦場、煉器坊、符陣閣、坊市；批次 C 加入藏經閣、演武場、洞府、靈獸苑。所有數值為暫定值（見 docs/暫定數值與決策.md）。
 
 export const buildings: BuildingDef[] = [
@@ -478,6 +478,35 @@ export const buildings: BuildingDef[] = [
         requiresHall: 2,
         effects: { beastCapacity: 5, beastGrowthPct: 50 },
         summary: '可養 5 隻；幼獸成長速度 +50%。',
+      },
+    ],
+  },
+  {
+    id: 'building.ancestral',
+    name: '祖師殿',
+    description: '供奉開派祖師與歷代掌門的殿堂。祖師庇佑全宗修煉；掌門坐化後牌位入殿，供奉越多加成越高。只能蓋在主峰。',
+    unlockHall: 2,
+    maxTotal: 1,
+    onlyRegions: ['region.main'],
+    art: 'placeholder/ancestral.svg',
+    levels: [
+      {
+        level: 1,
+        cost: { stone: 60, wood: 60, lingshi: 120 },
+        months: 3,
+        maintenance: { lingshi: 3 },
+        requiresHall: 2,
+        effects: { ancestorBasePct: 3, ancestorPerPct: 3, ancestorMaxPct: 15 },
+        summary: '全宗修煉 +3%；每供奉一位已故掌門再 +3%（最多 +15%）。',
+      },
+      {
+        level: 2,
+        cost: { stone: 120, wood: 100, lingshi: 300 },
+        months: 4,
+        maintenance: { lingshi: 5 },
+        requiresHall: 3,
+        effects: { ancestorBasePct: 3, ancestorPerPct: 3, ancestorMaxPct: 15, blessing: true },
+        summary: '同上；並可「祖師顯靈」：突破失敗時免除受傷與修為損失（每 10 年一次）。',
       },
     ],
   },
