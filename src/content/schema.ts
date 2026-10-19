@@ -22,6 +22,8 @@ export const resourceIds = [
   'beast_egg',
   'pill_core',
   'pill_life',
+  'pill_nascent',
+  'pill_deity',
 ] as const;
 
 export const stations = ['alchemy', 'forge', 'talisman'] as const;
@@ -70,6 +72,8 @@ export const buildingLevelSchema = z.object({
     /** 洞府：在此區閉關的修煉加成（百分比）、結丹成功率加成（萬分比） */
     seclusionPct: z.number().int().optional(),
     coreBonusBp: z.number().int().optional(),
+    /** 洞府 3 級：凝嬰成功率加成（萬分比） */
+    nascentBonusBp: z.number().int().optional(),
     /** 祖師殿：全宗修煉加成（基礎、每位已故掌門、上限，百分比） */
     ancestorBasePct: z.number().int().optional(),
     ancestorPerPct: z.number().int().optional(),

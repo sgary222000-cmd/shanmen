@@ -1,3 +1,4 @@
+import { balance } from '../../content/balance';
 import { CharacterSheet } from '../components/Layout';
 import { portraitOf } from '../art';
 import { realmName } from '../../engine/systems/characters/characters';
@@ -19,7 +20,7 @@ export function ProtagonistPage() {
         <h3>傳承與繼任</h3>
         <p className="small">
           親傳弟子：{heir ? <b>{heir.name}</b> : <span className="neg">尚未指定</span>}
-          <span className="muted">（在「弟子」頁指定。親傳弟子修煉 +10%，掌門坐化時直接接任；沒有指定時會跳出繼承選擇。）</span>
+          <span className="muted">（在「弟子」頁指定。親傳弟子在日常修煉或閉關時修煉 +{balance.lifespan.heirXpPct}%，掌門坐化時直接接任；沒有指定時會跳出繼承選擇。）</span>
         </p>
         {ancestors.length > 0 ? (
           <>
@@ -39,7 +40,7 @@ export function ProtagonistPage() {
         )}
       </div>
       <p className="muted small" style={{ marginTop: '.8rem' }}>
-        主角每月只有一項主要行程。查看與下達宗門命令不佔行程；探索、煉丹、授課等親自參與的事才佔用。目前境界開放到金丹；結丹需要功法小成、結丹靈液與足夠靈氣。元嬰在下一個版本開放。
+        主角每月只有一項主要行程。查看與下達宗門命令不佔行程；探索、煉丹、授課等親自參與的事才佔用。境界開放到化神（人界頂點）。結丹需要功法小成、結丹靈液；凝嬰需要功法大成、凝嬰丹、聚靈陣與洞府 3 級；化神需要功法圓滿、化神丹，失敗有機率身死道消（突破前會顯示）。
       </p>
     </div>
   );

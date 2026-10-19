@@ -117,6 +117,11 @@ export const migrations: Record<number, (w: World) => World> = {
     const resources = Object.fromEntries(RESOURCE_IDS.map((id) => [id, (w.resources as Record<string, number>)[id] ?? 0]));
     return { ...w, version: 6, resources, heirId: null, ancestors: [] };
   },
+  // v6 → v7（P2 批次 B）：新資源凝嬰丹、化神丹；境界多了元嬰、化神，舊資料不需要改。
+  6: (w) => {
+    const resources = Object.fromEntries(RESOURCE_IDS.map((id) => [id, (w.resources as Record<string, number>)[id] ?? 0]));
+    return { ...w, version: 7, resources };
+  },
 };
 
 export function migrate(world: World, from: number, to: number): World {

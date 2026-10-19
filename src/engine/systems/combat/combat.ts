@@ -57,7 +57,7 @@ export interface UnitMods {
   guardianHpPct?: number;
 }
 
-/** 金丹修士的傳承招式威力提高 */
+/** 金丹以上修士的傳承招式威力提高 */
 const CORE_SKILL_BONUS_PCT = 30;
 
 export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, hp?: number, mods: UnitMods = {}): Unit {
@@ -84,7 +84,7 @@ export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, h
     mp: 20 + 2 * L,
     skill: {
       name: lineage.skill.name,
-      multiplierPct: lineage.skill.multiplierPct + (c.realm.major === 'core' ? CORE_SKILL_BONUS_PCT : 0),
+      multiplierPct: lineage.skill.multiplierPct + (powerLevel(c.realm) > 21 ? CORE_SKILL_BONUS_PCT : 0),
       mpCost: lineage.skill.mpCost,
       piercePct: lineage.skill.piercePct,
     },

@@ -18,7 +18,8 @@ import {
   STATIONS,
 } from '../buildings/buildings';
 import { productionBonusPct } from '../regions/regions';
-import { allCharacters, findCharacter } from '../characters/characters';
+import { allCharacters, BREAKTHROUGH_PILL, findCharacter, nextMajor } from '../characters/characters';
+import { RESOURCE_NAMES } from '../../resources';
 import { craftPositionBp, stewardPct } from '../talent/positions';
 import { beastFood, beastGather, guardianBonus } from '../beasts/beasts';
 import { monthIndex } from '../../date';
@@ -232,9 +233,10 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
   const breakthroughReady: string[] = [];
   for (const c of allCharacters(state)) {
     if (c.schedule !== 'breakthrough') continue;
-    const pill = c.realm.major === 'qi' ? 'pill_foundation' : 'pill_core';
-    if (take(pool, consumption, { [pill]: 1 })) breakthroughReady.push(c.id);
-    else notes.push(`${c.name}缺少${pill === 'pill_core' ? '結丹靈液' : '築基丹'}，本月無法突破。`);
+    const target = nextMajor(c.realm.major);
+    const pill = target && target !== 'qi' ? BREAKTHROUGH_PILL[target] : undefined;
+    if (pill && take(pool, consumption, { [pill]: 1 })) breakthroughReady.push(c.id);
+    else notes.push(`${c.name}缺少${pill ? RESOURCE_NAMES[pill] : '突破丹藥'}，本月無法突破。`);
   }
 
   // 4. 修煉用丹藥：煉氣服聚氣丹；築基優先服培元丹，沒有時改服聚氣丹

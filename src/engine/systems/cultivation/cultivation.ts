@@ -1,19 +1,24 @@
 import { balance } from '../../../content/balance';
 import type { ContentPack } from '../../../content/registry';
 import { rng } from '../../rng';
-import type { Character, GameState } from '../../types';
+import type { Character, GameState, ResourceId } from '../../types';
+export { BREAKTHROUGH_PILL, type BreakthroughTarget } from '../characters/characters';
 import { MAIN_REGION } from '../../../content/registry';
 import { ARRAY, CAVE_ABODE, effectsOf, isOperating, qiCapacity, TRAINING } from '../buildings/buildings';
 import {
   allCharacters,
-  atP1Cap,
+  atRealmCap,
   isInjured,
+  BREAKTHROUGH_PILL,
+  type BreakthroughTarget,
+  MAJOR_NAMES,
+  nextMajor,
   qiDemandOf,
-  readyForCore,
-  readyForFoundation,
   realmName,
+  topStage,
   xpToNext,
 } from '../characters/characters';
+import { RESOURCE_NAMES } from '../../resources';
 import { techniqueOf, techniqueTier } from '../talent/techniques';
 import { mentorPct, positionOf, POSITION_NAMES } from '../talent/positions';
 import { guardianBonus } from '../beasts/beasts';
@@ -97,6 +102,8 @@ export function monthlyXp(state: GameState, content: ContentPack, c: Character, 
   const base = balance.baseXpByMajor[c.realm.major];
   if (base !== balance.baseXpPerMonth) parts.unshift(`基礎 ${base}`);
   let total = Math.floor((base * Math.max(0, pct) * rootPct * qiPct) / 1_000_000);
+  // 祖師殿加成小，取整後可能完全沒效果：至少保證 +1
+  if (anc && pct > 0 && total > 0 && total === Math.floor((base * Math.max(0, pct - anc) * rootPct * qiPct) / 1_000_000)) total += 1;
   if (isInjured(c)) {
     total = Math.floor((total * balance.injuredXpPct) / 100);
     parts.push(`受傷 ${balance.injuredXpPct}%`);
@@ -123,33 +130,44 @@ export function addXp(c: Character, amount: number, lines: string[]): void {
   for (;;) {
     const need = xpToNext(c.realm);
     if (c.xp < need) return;
-    const top = c.realm.major === 'qi' ? 9 : 4;
+    const top = topStage(c.realm.major);
     if (c.realm.stage < top) {
       c.xp -= need;
       c.realm = { major: c.realm.major, stage: c.realm.stage + 1 };
       lines.push(`${c.name}晉升${realmName(c.realm)}。`);
     } else {
-      c.xp = need; // 停在門檻，等待大突破（金丹圓滿之後於 P2 開放）
+      c.xp = need; // 停在門檻，等待大突破（化神圓滿是人界頂點）
       return;
     }
   }
 }
 
+
 export interface BreakthroughOdds {
-  /** 突破的目標：築基或結丹 */
-  target: 'foundation' | 'core';
+  /** 突破的目標大境界 */
+  target: BreakthroughTarget;
   bp: number;
   factors: string[];
   failure: string;
   blocked: string | undefined;
   /** 本次突破消耗的丹藥 */
-  pill: 'pill_foundation' | 'pill_core';
+  pill: ResourceId;
+  /** 失敗時身死道消的機率（萬分比，佔失敗的比例）；0 表示不會死 */
+  deathBp: number;
 }
 
-/** 突破成功率與條件（築基：煉氣九層圓滿；結丹：築基圓滿）。事前全部列出給玩家看。 */
+export const BREAKTHROUGH_NAMES: Record<BreakthroughTarget, string> = { foundation: '突破', core: '結丹', nascent: '凝嬰', deity: '化神' };
+
+function rulesOf(target: BreakthroughTarget) {
+  if (target === 'foundation') return { ...balance.breakthrough, requiredInsight: 0, masteryBp: 0, failDeathBp: 0 };
+  if (target === 'core') return { ...balance.coreBreakthrough, failDeathBp: 0 };
+  return target === 'nascent' ? balance.nascentBreakthrough : balance.deityBreakthrough;
+}
+
+/** 大突破成功率與條件（築基、結丹、凝嬰、化神）。事前全部列出給玩家看。 */
 export function breakthroughOdds(state: GameState, content: ContentPack, c: Character): BreakthroughOdds {
-  const toCore = c.realm.major !== 'qi';
-  const b = toCore ? balance.coreBreakthrough : balance.breakthrough;
+  const target = (nextMajor(c.realm.major) ?? 'deity') as BreakthroughTarget;
+  const b = rulesOf(target);
   const factors: string[] = [`基礎 ${b.baseBp / 100}%`];
   let bp = b.baseBp;
   const rootBp = b.rootBp[c.root.grade];
@@ -158,19 +176,31 @@ export function breakthroughOdds(state: GameState, content: ContentPack, c: Char
     factors.push(`靈根 ${rootBp > 0 ? '+' : ''}${rootBp / 100}%`);
   }
   const array = state.buildings.find((x) => x.defId === ARRAY && x.region === c.seat && isOperating(x));
-  if (array && array.level >= 2) {
-    bp += b.arrayLv2Bp;
-    factors.push(`聚靈陣 2 級 +${b.arrayLv2Bp / 100}%`);
-  }
-  if (toCore) {
-    const cave = caveAbodeAt(state, content, c.seat);
-    if (cave?.coreBonusBp) {
-      bp += cave.coreBonusBp;
-      factors.push(`洞府 +${cave.coreBonusBp / 100}%`);
+  if (target === 'foundation' || target === 'core') {
+    const lv2 = target === 'core' ? balance.coreBreakthrough.arrayLv2Bp : balance.breakthrough.arrayLv2Bp;
+    if (array && array.level >= 2) {
+      bp += lv2;
+      factors.push(`聚靈陣 2 級 +${lv2 / 100}%`);
     }
-    if (techniqueTier(c).index >= 2) {
-      bp += balance.coreBreakthrough.masteryBp;
-      factors.push(`功法大成 +${balance.coreBreakthrough.masteryBp / 100}%`);
+  } else {
+    const lv3 = target === 'nascent' ? balance.nascentBreakthrough.arrayLv3Bp : balance.deityBreakthrough.arrayLv3Bp;
+    if (array && array.level >= 3) {
+      bp += lv3;
+      factors.push(`聚靈陣 3 級 +${lv3 / 100}%`);
+    }
+  }
+  if (target !== 'foundation') {
+    const cave = caveAbodeAt(state, content, c.seat);
+    const caveBp = target === 'core' ? cave?.coreBonusBp : cave?.nascentBonusBp;
+    if (caveBp) {
+      bp += caveBp;
+      factors.push(`洞府 +${caveBp / 100}%`);
+    }
+    // 結丹看功法大成，凝嬰看功法圓滿
+    const masteryTier = target === 'core' ? 2 : 3;
+    if (b.masteryBp && techniqueTier(c).index >= masteryTier) {
+      bp += b.masteryBp;
+      factors.push(`功法${balance.technique.tiers[masteryTier]?.name ?? ''} +${b.masteryBp / 100}%`);
     }
   }
   if (c.health < b.lowHealthThreshold) {
@@ -179,64 +209,79 @@ export function breakthroughOdds(state: GameState, content: ContentPack, c: Char
   }
   bp = Math.max(0, Math.min(b.maxBp, bp));
   const where = content.regions.get(c.seat)?.name ?? '';
+  const pill = BREAKTHROUGH_PILL[target];
+  const pillName = RESOURCE_NAMES[pill];
+  const tech = techniqueOf(state, content);
+  const top = topStage(c.realm.major);
   let blocked: string | undefined;
-  if (toCore) {
-    const cb = balance.coreBreakthrough;
-    const tech = techniqueOf(state, content);
-    if (c.realm.major === 'core') blocked = atP1Cap(c) ? '元嬰突破於 P2 開放' : `金丹期正在累積修為（目前 ${realmName(c.realm)}）`;
-    else if (!readyForCore(c)) blocked = `需要築基圓滿且修為圓滿（目前 ${realmName(c.realm)}）`;
-    else if (isInjured(c)) blocked = '受傷中不能突破';
-    else if (c.insight < cb.requiredInsight)
-      blocked = `需要《${tech?.name ?? '主修功法'}》領悟小成（${c.insight} / ${cb.requiredInsight}，可在藏經閣研究）`;
-    else if (qiCapacity(state, content, c.seat) < cb.requiredQiCapacity)
-      blocked = `修煉地點（${where}）靈氣容量需達 ${cb.requiredQiCapacity}（聚靈陣 2 級加洞府）`;
-    else if (state.resources.pill_core < 1) blocked = '需要結丹靈液 1 份';
-  } else {
-    const fb = balance.breakthrough;
-    if (!readyForFoundation(c)) blocked = `需要煉氣九層且修為圓滿（目前 ${realmName(c.realm)}）`;
-    else if (isInjured(c)) blocked = '受傷中不能突破';
-    else if (qiCapacity(state, content, c.seat) < fb.requiredQiCapacity)
-      blocked = `修煉地點（${where}）靈氣容量需達 ${fb.requiredQiCapacity}（建造聚靈陣）`;
-    else if (state.resources.pill_foundation < 1) blocked = '需要築基丹 1 顆';
-  }
-  const pillName = toCore ? '結丹靈液' : '築基丹';
+  if (atRealmCap(c) || (c.realm.major === 'deity' && c.realm.stage === top)) blocked = '化神圓滿已是人界頂點，煉虛以上之後的版本開放';
+  else if (c.realm.stage < top || c.xp < xpToNext(c.realm))
+    blocked = `需要${MAJOR_NAMES[c.realm.major]}${c.realm.major === 'qi' ? '九層' : '圓滿'}且修為圓滿（目前 ${realmName(c.realm)}）`;
+  else if (isInjured(c)) blocked = '受傷中不能突破';
+  else if (c.insight < b.requiredInsight) {
+    const tier = balance.technique.tiers.find((t) => t.insight === b.requiredInsight)?.name ?? '';
+    blocked = `需要《${tech?.name ?? '主修功法'}》領悟${tier}（${c.insight} / ${b.requiredInsight}，可在藏經閣研究）`;
+  } else if (qiCapacity(state, content, c.seat) < b.requiredQiCapacity)
+    blocked = `修煉地點（${where}）靈氣容量需達 ${b.requiredQiCapacity}（${
+      target === 'foundation' ? '建造聚靈陣' : target === 'core' ? '聚靈陣 2 級加洞府' : '聚靈陣 3 級加洞府 3 級'
+    }）`;
+  else if (state.resources[pill] < 1) blocked = `需要${pillName} 1 份`;
+  const deathBp = b.failDeathBp;
+  const deathText = deathBp
+    ? `失敗時有 ${deathBp / 100}% 會身死道消（這次突破整體約 ${Math.round(((10000 - bp) * deathBp) / 1_000_000)}% 死亡）。`
+    : '不會死亡。';
   return {
-    target: toCore ? 'core' : 'foundation',
+    target,
     bp,
     factors,
-    failure: `消耗${pillName}；受傷 ${b.failInjuryMonths} 個月、健康降至 ${b.failHealth}、損失 ${b.failXpLossPct}% 修為。不會死亡。${
+    failure: `消耗${pillName}；受傷 ${b.failInjuryMonths} 個月、健康降至 ${b.failHealth}、損失 ${b.failXpLossPct}% 修為。${deathText}${
       blessingReady(state, content) ? '祖師殿可以免除這次失敗的受傷與修為損失。' : ''
     }`,
     blocked,
-    pill: toCore ? 'pill_core' : 'pill_foundation',
+    pill,
+    deathBp,
   };
 }
 
-/** 月結算第 4 步：突破判定。odds 在扣除丹藥之前計算。 */
+const SUCCESS_TEXT: Record<BreakthroughTarget, (name: string) => string> = {
+  foundation: (n) => `★ ${n}突破成功，踏入築基前期！`,
+  core: (n) => `★ ${n}結丹成功，凝成金丹！`,
+  nascent: (n) => `★ ${n}碎丹成嬰，踏入元嬰前期！`,
+  deity: (n) => `★ ${n}元神出竅，踏入化神前期！`,
+};
+
+/** 月結算第 4 步：突破判定。odds 在扣除丹藥之前計算。回傳 true 表示身死道消（由呼叫者處理後事）。 */
 export function resolveBreakthrough(
   state: GameState,
   content: ContentPack,
   c: Character,
   odds: BreakthroughOdds,
   lines: string[],
-): void {
-  const b = odds.target === 'core' ? balance.coreBreakthrough : balance.breakthrough;
-  const success = rng(state, 'cultivation').chance(odds.bp);
-  if (success) {
+): boolean {
+  const b = rulesOf(odds.target);
+  const name = BREAKTHROUGH_NAMES[odds.target];
+  c.schedule = 'cultivate';
+  if (rng(state, 'cultivation').chance(odds.bp)) {
     c.realm = { major: odds.target, stage: 1 };
     c.xp = 0;
-    lines.push(odds.target === 'core' ? `★ ${c.name}結丹成功，凝成金丹！` : `★ ${c.name}突破成功，踏入築基前期！`);
-  } else if (blessingReady(state, content)) {
+    lines.push(SUCCESS_TEXT[odds.target](c.name));
+    return false;
+  }
+  if (blessingReady(state, content)) {
     // 祖師殿 2 級：祖師顯靈，免除失敗懲罰（丹藥仍然耗掉）
     state.blessingReadyAt = monthIndex(state.date) + balance.lifespan.blessingCooldown;
-    lines.push(`✗ ${c.name}${odds.target === 'core' ? '結丹' : '突破'}失敗，但祖師顯靈護住心脈，沒有受傷，修為也未受損。`);
-  } else {
-    c.injuryMonths = Math.max(c.injuryMonths, b.failInjuryMonths);
-    c.health = Math.min(c.health, b.failHealth);
-    c.xp = Math.floor((c.xp * (100 - b.failXpLossPct)) / 100);
-    lines.push(`✗ ${c.name}${odds.target === 'core' ? '結丹' : '突破'}失敗，受傷 ${b.failInjuryMonths} 個月，修為受損。`);
+    lines.push(`✗ ${c.name}${name}失敗，但祖師顯靈護住心脈，沒有受傷，修為也未受損。`);
+    return false;
   }
-  c.schedule = 'cultivate';
+  if (odds.deathBp && rng(state, 'cultivation').chance(odds.deathBp)) {
+    lines.push(`✗ ${c.name}${name}失敗，經脈盡毀，身死道消。`);
+    return true;
+  }
+  c.injuryMonths = Math.max(c.injuryMonths, b.failInjuryMonths);
+  c.health = Math.min(c.health, b.failHealth);
+  c.xp = Math.floor((c.xp * (100 - b.failXpLossPct)) / 100);
+  lines.push(`✗ ${c.name}${name}失敗，受傷 ${b.failInjuryMonths} 個月，修為受損。`);
+  return false;
 }
 
 /** 月結算第 4 步：演武場切磋，日常修煉的內門有機會提升戰鬥技藝。 */

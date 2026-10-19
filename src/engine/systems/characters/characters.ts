@@ -3,7 +3,7 @@ import { MAIN_REGION } from '../../../content/registry';
 import { givenFemale, givenMale, surnames } from '../../../content/names';
 import { newId } from '../../ids';
 import { rng } from '../../rng';
-import type { Candidate, Character, Element, GameState, Realm, RootGrade, Skills, SpiritRoot } from '../../types';
+import type { Candidate, Character, Element, GameState, MajorRealm, Realm, ResourceId, RootGrade, Skills, SpiritRoot } from '../../types';
 
 export const ROOT_GRADE_NAMES: Record<RootGrade, string> = {
   low: '下品',
@@ -24,10 +24,28 @@ const ELEMENTS: Element[] = ['metal', 'wood', 'water', 'fire', 'earth'];
 const FOUNDATION_STAGE_NAMES = ['前期', '中期', '後期', '圓滿'];
 const QI_STAGE_NAMES = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
 
+export const MAJOR_NAMES: Record<MajorRealm, string> = { qi: '煉氣', foundation: '築基', core: '金丹', nascent: '元嬰', deity: '化神' };
+
+/** 大境界的順序；最後一個（化神）是人界的頂點，煉虛以上在 P3。 */
+export const MAJOR_ORDER: MajorRealm[] = ['qi', 'foundation', 'core', 'nascent', 'deity'];
+
+export type BreakthroughTarget = Exclude<MajorRealm, 'qi'>;
+
+/** 各大突破消耗的丹藥。 */
+export const BREAKTHROUGH_PILL: Record<BreakthroughTarget, ResourceId> = {
+  foundation: 'pill_foundation',
+  core: 'pill_core',
+  nascent: 'pill_nascent',
+  deity: 'pill_deity',
+};
+
+export function nextMajor(major: MajorRealm): MajorRealm | null {
+  return MAJOR_ORDER[MAJOR_ORDER.indexOf(major) + 1] ?? null;
+}
+
 export function realmName(realm: Realm): string {
   if (realm.major === 'qi') return `煉氣${QI_STAGE_NAMES[realm.stage - 1] ?? realm.stage}層`;
-  const major = realm.major === 'core' ? '金丹' : '築基';
-  return `${major}${FOUNDATION_STAGE_NAMES[realm.stage - 1] ?? realm.stage}`;
+  return `${MAJOR_NAMES[realm.major]}${FOUNDATION_STAGE_NAMES[realm.stage - 1] ?? realm.stage}`;
 }
 
 export function rootName(root: SpiritRoot): string {
@@ -38,14 +56,28 @@ export function rootName(root: SpiritRoot): string {
 export function xpToNext(realm: Realm): number {
   if (realm.major === 'qi') return realm.stage * balance.qiXpPerStage;
   if (realm.major === 'core') return balance.coreXpPerStage;
+  if (realm.major === 'nascent') return balance.nascentXpPerStage;
+  if (realm.major === 'deity') return balance.deityXpPerStage;
   return balance.foundationXpPerStage;
 }
 
-/** 戰鬥與能力計算用的綜合等級：煉氣 1–9、築基 12–21、金丹 25–37。 */
+/** 戰鬥與能力計算用的綜合等級：煉氣 1–9、築基 12–21、金丹 25–37、元嬰 42–57、化神 63–81。 */
 export function powerLevel(realm: Realm): number {
   if (realm.major === 'qi') return realm.stage;
   if (realm.major === 'foundation') return 9 + realm.stage * 3;
-  return 21 + realm.stage * 4;
+  if (realm.major === 'core') return 21 + realm.stage * 4;
+  if (realm.major === 'nascent') return 37 + realm.stage * 5;
+  return 57 + realm.stage * 6;
+}
+
+/** 目前大境界的最後一個小階段。 */
+export function topStage(major: MajorRealm): number {
+  return major === 'qi' ? 9 : 4;
+}
+
+/** 修為已滿、停在大境界門檻（可以嘗試突破到下一個大境界）。化神圓滿是人界頂點，不算。 */
+export function atMajorThreshold(c: Character): boolean {
+  return nextMajor(c.realm.major) !== null && c.realm.stage === topStage(c.realm.major) && c.xp >= xpToNext(c.realm);
 }
 
 /** 是否已達築基門檻（煉氣九層且修為滿）。 */
@@ -58,9 +90,9 @@ export function readyForCore(c: Character): boolean {
   return c.realm.major === 'foundation' && c.realm.stage === 4 && c.xp >= xpToNext(c.realm);
 }
 
-/** 已到 P1 上限（金丹圓滿且修為滿），元嬰於 P2 開放。 */
-export function atP1Cap(c: Character): boolean {
-  return c.realm.major === 'core' && c.realm.stage === 4 && c.xp >= xpToNext(c.realm);
+/** 已到人界頂點（化神圓滿且修為滿），煉虛以上在 P3 開放。 */
+export function atRealmCap(c: Character): boolean {
+  return c.realm.major === 'deity' && c.realm.stage === 4 && c.xp >= xpToNext(c.realm);
 }
 
 export function allCharacters(state: GameState): Character[] {
@@ -153,7 +185,7 @@ export function isInjured(c: Character): boolean {
 export function qiDemandOf(state: GameState, regionId: string = MAIN_REGION): number {
   const p = state.protagonist;
   let demand = 0;
-  const core = (c: Character) => (c.realm.major === 'core' ? balance.qiDemand.coreExtra : 0);
+  const core = (c: Character) => balance.qiDemand.majorExtra[c.realm.major];
   if (p.seat === regionId)
     demand += (p.schedule === 'seclusion' ? balance.qiDemand.protagonistSeclusion : balance.qiDemand.protagonist) + core(p);
   for (const d of state.disciples) if (d.seat === regionId) demand += balance.qiDemand.inner + core(d);

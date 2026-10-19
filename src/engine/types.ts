@@ -20,7 +20,9 @@ export type ResourceId =
   | 'artifact' // 法器（P1；可裝備，見 equipment）
   | 'beast_egg' // 靈獸蛋（P1 批次 C）
   | 'pill_core' // 結丹靈液（P1 批次 D）
-  | 'pill_life'; // 延壽丹（P2 批次 A）
+  | 'pill_life' // 延壽丹（P2 批次 A）
+  | 'pill_nascent' // 凝嬰丹（P2 批次 B）
+  | 'pill_deity'; // 化神丹（P2 批次 B）
 
 export type Resources = Record<ResourceId, number>;
 
@@ -43,11 +45,11 @@ export type RngStream =
 /** xoshiro128** 狀態，四個 32 位元無號整數。 */
 export type RngState = [number, number, number, number];
 
-export type MajorRealm = 'qi' | 'foundation' | 'core';
+export type MajorRealm = 'qi' | 'foundation' | 'core' | 'nascent' | 'deity';
 
 export interface Realm {
   major: MajorRealm;
-  /** 煉氣 1–9；築基、金丹 1–4（前期、中期、後期、圓滿） */
+  /** 煉氣 1–9；築基、金丹、元嬰、化神 1–4（前期、中期、後期、圓滿） */
   stage: number;
 }
 
@@ -502,6 +504,8 @@ export interface GameState {
   intel: IntelEntry[];
   /** 本月月中發生的事（接委託、探索結果、坊市買賣），月底寫進月報開頭。0.4.5 新增，舊存檔沒有。 */
   monthLog?: string[];
+  /** 暫代掌門升任前的忠誠，改立時恢復（0.6.0 新增） */
+  interimLoyalty?: Record<string, number>;
   /** 上次月結時的庫存，用來算月報的整月增減（含月中收支）。0.4.5 新增。 */
   monthStart?: Resources;
   /** 本月已接的委託件數，月底歸零。0.4.5 新增。 */

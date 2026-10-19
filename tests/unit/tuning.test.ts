@@ -23,7 +23,8 @@ describe('P1 優化', () => {
     s = run(s, { type: 'upgrade', buildingId: dormId });
     s = advance(s, 3);
     expect(outerCapacity(s, content)).toBe(60);
-    expect(upgradeOption(s, content, s.buildings.find((b) => b.id === hallId)!).blocked).toBe('已達本階段最高等級');
+    // P2 批次 B 起大殿可以再升到 4、5 級
+    expect(upgradeOption(s, content, s.buildings.find((b) => b.id === hallId)!).next?.level).toBe(4);
   });
 
   it('委託榜同時最多 2 件護衛委託', () => {

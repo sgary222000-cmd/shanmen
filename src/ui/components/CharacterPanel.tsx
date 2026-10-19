@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { formatAge, planMonth, type Character, type ScheduleKind } from '../../engine';
-import { realmName, rootName, xpToNext } from '../../engine/systems/characters/characters';
+import { nextMajor, realmName, rootName, topStage, xpToNext } from '../../engine/systems/characters/characters';
 import { isCraftSchedule } from '../../engine/systems/buildings/buildings';
 import { LOCKED_SCHEDULES, SCHEDULE_NAMES, seatOptions, seclusionInterruptCost, selectableSchedules } from '../../engine/systems/characters/schedule';
 import { breakthroughOdds, monthlyXp } from '../../engine/systems/cultivation/cultivation';
@@ -45,6 +45,8 @@ function LifeLine({ c }: { c: Character }) {
     </div>
   );
 }
+
+const TARGET_TITLES = { foundation: '築基突破', core: '結丹（金丹）', nascent: '凝嬰（元嬰）', deity: '化神' } as const;
 
 export const SKILL_NAMES = {
   alchemy: '煉丹',
@@ -250,11 +252,11 @@ export function CharacterPanel({ c }: { c: Character }) {
           : `每月服用培元丹（修為 +120，庫存 ${game.resources.pill_peiyuan}；沒有時改服聚氣丹 +30，庫存 ${game.resources.pill_qi}）`}
         {c.takePill && !plan.pillTakers.includes(c.id) && <span className="neg">本月丹藥不足</span>}
       </label>
-      {((c.realm.major === 'qi' && c.realm.stage === 9) || (c.realm.major === 'foundation' && c.realm.stage === 4)) && (
+      {c.realm.stage === topStage(c.realm.major) && nextMajor(c.realm.major) && (
         <div className="panel" style={{ background: 'var(--paper-2)', marginTop: '.5rem' }} data-testid={`odds-${c.id}`}>
-          <b>{odds.target === 'core' ? '結丹（金丹）' : '築基突破'}</b>：成功率 {odds.bp / 100}%（{odds.factors.join('，')}）
+          <b>{TARGET_TITLES[odds.target]}</b>：成功率 {odds.bp / 100}%（{odds.factors.join('，')}）
           <br />
-          <span className="small">失敗代價：{odds.failure}</span>
+          <span className={`small ${odds.deathBp ? 'neg' : ''}`}>失敗代價：{odds.failure}</span>
           {odds.blocked && <div className="small neg">尚不能突破：{odds.blocked}</div>}
         </div>
       )}

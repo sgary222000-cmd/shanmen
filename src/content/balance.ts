@@ -24,6 +24,8 @@ export const balance = {
       beast_egg: 0,
       pill_core: 0,
       pill_life: 0,
+      pill_nascent: 0,
+      pill_deity: 0,
     } satisfies Resources,
     outerCount: 12,
     protagonistAgeMonths: 18 * 12,
@@ -37,20 +39,22 @@ export const balance = {
     protagonist: 3,
     protagonistSeclusion: 4,
     inner: 2,
-    /** 金丹修士額外佔用的靈氣 */
-    coreExtra: 2,
+    /** 金丹以上修士額外佔用的靈氣 */
+    majorExtra: { qi: 0, foundation: 0, core: 2, nascent: 4, deity: 6 },
     /** 每 4 名修煉中的外門佔 1 */
     outerPerUnit: 4,
   },
   /** 煉氣各層升到下一層所需修為：stage × 60；築基各期 1500 */
   qiXpPerStage: 60,
   foundationXpPerStage: 1500,
-  /** 金丹各期 4000（P1 批次 D） */
+  /** 金丹各期 4000（P1 批次 D）；元嬰各期 50000、化神各期 100000（P2 批次 B） */
   coreXpPerStage: 4000,
+  nascentXpPerStage: 50000,
+  deityXpPerStage: 100000,
   /** 煉氣的每月基礎修為；築基、金丹見 baseXpByMajor */
   baseXpPerMonth: 10,
   /** 每月基礎修為依大境界提高，否則築基四期要上百年（docs/P1規劃.md §3.7） */
-  baseXpByMajor: { qi: 10, foundation: 20, core: 40 },
+  baseXpByMajor: { qi: 10, foundation: 20, core: 40, nascent: 70, deity: 120 },
   rootMultiplierPct: { low: 80, mid: 100, high: 130, heaven: 160 } satisfies Record<RootGrade, number>,
   /** 行程對修煉的倍率（百分比） */
   scheduleXpPct: {
@@ -185,18 +189,56 @@ export const balance = {
     failHealth: 40,
     failXpLossPct: 30,
   },
+  /** 元嬰、化神（P2 批次 B，暫定）。化神失敗有死亡風險，機率在突破前顯示。 */
+  nascentBreakthrough: {
+    baseBp: 3000,
+    maxBp: 8000,
+    /** 聚靈陣 3 級 */
+    arrayLv3Bp: 1000,
+    rootBp: { low: -1000, mid: 0, high: 500, heaven: 1000 } satisfies Record<RootGrade, number>,
+    /** 功法圓滿 */
+    masteryBp: 500,
+    lowHealthBp: -2000,
+    lowHealthThreshold: 70,
+    /** 聚靈陣 3 級加洞府 3 級 */
+    requiredQiCapacity: 70,
+    /** 需要主修功法「大成」 */
+    requiredInsight: 300,
+    failInjuryMonths: 9,
+    failHealth: 30,
+    failXpLossPct: 30,
+    failDeathBp: 0,
+  },
+  deityBreakthrough: {
+    baseBp: 2500,
+    maxBp: 7500,
+    arrayLv3Bp: 1000,
+    rootBp: { low: -1000, mid: 0, high: 500, heaven: 1000 } satisfies Record<RootGrade, number>,
+    masteryBp: 0,
+    lowHealthBp: -2000,
+    lowHealthThreshold: 70,
+    requiredQiCapacity: 70,
+    /** 需要主修功法「圓滿」 */
+    requiredInsight: 400,
+    failInjuryMonths: 12,
+    failHealth: 20,
+    failXpLossPct: 40,
+    /** 失敗時身死道消的機率（萬分比，佔失敗的比例） */
+    failDeathBp: 2500,
+  },
   /** 主修功法領悟度（批次 C） */
   technique: {
     tiers: [
       { name: '入門', insight: 0, pct: 0 },
       { name: '小成', insight: 100, pct: 10 },
       { name: '大成', insight: 300, pct: 20 },
+      { name: '圓滿', insight: 400, pct: 25 },
     ],
     maxInsight: 400,
     /** 研究行程的基礎領悟（另加藏經閣） */
     researchBase: 8,
     /** 平時修煉自然領悟：每月依大境界 */
-    passive: { qi: 1, foundation: 2, core: 3 },
+    passive: { qi: 1, foundation: 2, core: 3, nascent: 4, deity: 5 },
     /** 閉關另加 */
     seclusionPassive: 1,
   },
@@ -317,7 +359,7 @@ export const balance = {
   /** 壽元與繼承（P2 批次 A，暫定）。 */
   lifespan: {
     /** 各大境界的壽元上限（歲） */
-    years: { qi: 100, foundation: 200, core: 400 },
+    years: { qi: 100, foundation: 200, core: 400, nascent: 800, deity: 1500 },
     /** 剩下這些百分比時預警 */
     warnPct: [20, 10],
     /** 延壽丹：每顆增加該境界基礎壽元的百分比、一生最多服用幾顆 */

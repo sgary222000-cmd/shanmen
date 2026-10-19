@@ -4,6 +4,7 @@ import { monthIndex, STATE_VERSION } from '../../src/engine';
 import { xpToNext } from '../../src/engine/systems/characters/characters';
 import { lifespanMonths } from '../../src/engine/systems/characters/lifespan';
 import { breakthroughOdds, monthlyXp, resolveBreakthrough } from '../../src/engine/systems/cultivation/cultivation';
+import { foodNeed } from '../../src/engine/systems/economy/flows';
 import { decode } from '../../src/save/codec';
 import { advance, content, developed, edit, run, tryRun } from './helpers';
 
@@ -105,6 +106,7 @@ describe('掌門繼承', () => {
     let s = edit(second(developed()), (x) => {
       x.protagonist.ageMonths = 100 * 12 - 1;
     });
+    const loyalty = s.disciples.find((d) => d.id === 'c51')!.loyalty;
     s = run(s, { type: 'advanceMonth', expectMonth: monthIndex(s.date) });
     expect(s.protagonist.id).toBe('c51'); // 築基的韓立暫代
     const ev = s.events.find((e) => e.kind === 'succession');
@@ -115,6 +117,8 @@ describe('掌門繼承', () => {
     expect(s.protagonist.id).toBe('c50');
     expect(s.disciples.map((d) => d.id)).toEqual(['c51']);
     expect(s.disciples[0]?.role).toBe('inner');
+    expect(s.disciples[0]?.loyalty).toBe(loyalty);
+    expect(s.reports[0]?.lines.some((l) => l.startsWith('→ 葉若雪接任掌門'))).toBe(true);
     expect(s.events.some((e) => e.kind === 'succession')).toBe(false);
     s = advance(s, 3);
   });
@@ -123,8 +127,12 @@ describe('掌門繼承', () => {
     let s = edit(developed(), (x) => {
       x.disciples = [];
       x.protagonist.ageMonths = 100 * 12 - 1;
+      x.nextRecruitMonth = 999;
     });
+    const outer = s.outer.count;
     s = advance(s);
+    expect(s.outer.count).toBe(outer - 1);
+    expect(s.reports[0]?.lines.some((l) => l.includes('牌位暫供於大殿'))).toBe(true);
     expect(s.protagonist.name).not.toBe('林長風');
     expect(s.protagonist.role).toBe('protagonist');
     expect(s.ancestors).toHaveLength(1);
@@ -170,13 +178,20 @@ describe('祖師殿', () => {
 });
 
 describe('連續推進的停止條件', () => {
-  it('糧食快用完時要求停下', () => {
-    const s = edit(developed(), (x) => {
-      x.resources.food = 3;
+  it('糧食快用完時要求停下，同一次短缺只停一次', () => {
+    let s = edit(developed(), (x) => {
+      x.resources.food = foodNeed(x) * 4;
+      x.nextRecruitMonth = 999;
       x.buildings = x.buildings.filter((b) => b.defId !== 'building.field');
     });
-    const r = tryRun(s, { type: 'advanceMonth', expectMonth: monthIndex(s.date) });
-    expect(r.ok && r.report?.stops?.some((x) => x.kind === 'shortage')).toBe(true);
+    const kinds: boolean[] = [];
+    for (let i = 0; i < 4; i++) {
+      const r = tryRun(s, { type: 'advanceMonth', expectMonth: monthIndex(s.date) });
+      if (!r.ok) throw new Error(r.error);
+      kinds.push(!!r.report?.stops?.some((x) => x.kind === 'shortage' && x.text.includes('糧食')));
+      s = r.state;
+    }
+    expect(kinds.filter(Boolean)).toHaveLength(1);
   });
 
   it('修為圓滿、可以突破時要求停下（只在剛達成的那個月）', () => {

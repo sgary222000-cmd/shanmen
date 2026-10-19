@@ -10,7 +10,7 @@ export const FORMAT_VERSION = STATE_VERSION;
 const int = z.number().int();
 const nonneg = int.nonnegative();
 const resources = z.object(Object.fromEntries(resourceIds.map((id) => [id, nonneg])) as Record<(typeof resourceIds)[number], typeof nonneg>);
-const realm = z.object({ major: z.enum(['qi', 'foundation', 'core']), stage: int.min(1).max(9) });
+const realm = z.object({ major: z.enum(['qi', 'foundation', 'core', 'nascent', 'deity']), stage: int.min(1).max(9) });
 const schedule = z.enum([
   'cultivate',
   'seclusion',

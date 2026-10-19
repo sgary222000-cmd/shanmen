@@ -21,6 +21,8 @@ export const RESOURCE_IDS: ResourceId[] = [
   'beast_egg',
   'pill_core',
   'pill_life',
+  'pill_nascent',
+  'pill_deity',
 ];
 
 export const RESOURCE_NAMES: Record<ResourceId, string> = {
@@ -43,6 +45,8 @@ export const RESOURCE_NAMES: Record<ResourceId, string> = {
   beast_egg: '靈獸蛋',
   pill_core: '結丹靈液',
   pill_life: '延壽丹',
+  pill_nascent: '凝嬰丹',
+  pill_deity: '化神丹',
 };
 
 export function emptyResources(): Resources {
