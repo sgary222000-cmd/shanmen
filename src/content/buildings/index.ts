@@ -1,6 +1,6 @@
 import type { BuildingDef } from '../schema';
 
-// 建築：十七種（P2 批次 A 加入祖師殿），依大殿等級逐步開放。P1 起靈田、採石場、靈木場可蓋多座（受區域槽位限制），煉丹房最多兩座，聚靈陣每區一座。
+// 建築：十七種（P2 批次 A 加入祖師殿；批次 B 加入大殿 4–5 級，聚靈陣、洞府、藏經閣 3 級），依大殿等級逐步開放。P1 起靈田、採石場、靈木場可蓋多座（受區域槽位限制），煉丹房最多兩座，聚靈陣每區一座。
 // 批次 B 加入藥園、靈礦場、煉器坊、符陣閣、坊市；批次 C 加入藏經閣、演武場、洞府、靈獸苑。所有數值為暫定值（見 docs/暫定數值與決策.md）。
 
 export const buildings: BuildingDef[] = [
@@ -39,6 +39,24 @@ export const buildings: BuildingDef[] = [
         requiresHall: 2,
         effects: { innerLimit: 10, recruitOuterBonus: 4 },
         summary: '重建正殿：弟子居所可擴到 4 級。內門上限 10 人，招生人數再增加。',
+      },
+      {
+        level: 4,
+        cost: { stone: 300, wood: 240, lingshi: 800 },
+        months: 6,
+        maintenance: { lingshi: 8 },
+        requiresHall: 3,
+        effects: { innerLimit: 14, recruitOuterBonus: 6 },
+        summary: '宗門晉階：聚靈陣、洞府、藏經閣可升到 3 級（凝嬰所需）。內門上限 14 人。',
+      },
+      {
+        level: 5,
+        cost: { stone: 600, wood: 500, lingshi: 3000 },
+        months: 8,
+        maintenance: { lingshi: 15 },
+        requiresHall: 4,
+        effects: { innerLimit: 18, recruitOuterBonus: 8 },
+        summary: '名震一方：內門上限 18 人，招生人數再增加。宗門地位在之後的勢力外交中生效。',
       },
     ],
   },
@@ -223,6 +241,15 @@ export const buildings: BuildingDef[] = [
         effects: { qiCapacity: 25 },
         summary: '所在區域靈氣容量 +25；在此區突破成功率 +10%。',
       },
+      {
+        level: 3,
+        cost: { stone: 150, lingshi: 700 },
+        months: 4,
+        maintenance: { lingshi: 8 },
+        requiresHall: 4,
+        effects: { qiCapacity: 40 },
+        summary: '所在區域靈氣容量 +40；在此區凝嬰、化神成功率 +10%。',
+      },
     ],
   },
   {
@@ -392,6 +419,15 @@ export const buildings: BuildingDef[] = [
         effects: { researchPerMonth: 14, allowBranches: true },
         summary: '研究每月領悟 +22；可開設傳承分支（需典籍與主持人）。',
       },
+      {
+        level: 3,
+        cost: { stone: 120, wood: 160, lingshi: 500 },
+        months: 4,
+        maintenance: { lingshi: 4 },
+        requiresHall: 4,
+        effects: { researchPerMonth: 22, allowBranches: true },
+        summary: '研究每月領悟 +30，修到功法圓滿更快。',
+      },
     ],
   },
   {
@@ -449,6 +485,15 @@ export const buildings: BuildingDef[] = [
         requiresHall: 2,
         effects: { qiCapacity: 15, seclusionPct: 30, coreBonusBp: 1500 },
         summary: '後山靈氣容量 +15；閉關修煉 +30%；結丹成功率 +15%。',
+      },
+      {
+        level: 3,
+        cost: { stone: 240, wood: 160, lingshi: 800 },
+        months: 6,
+        maintenance: { lingshi: 6 },
+        requiresHall: 4,
+        effects: { qiCapacity: 20, seclusionPct: 40, coreBonusBp: 1500, nascentBonusBp: 1000 },
+        summary: '後山靈氣容量 +20；閉關修煉 +40%；凝嬰成功率 +10%。',
       },
     ],
   },

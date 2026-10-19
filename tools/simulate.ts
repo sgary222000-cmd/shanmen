@@ -1,7 +1,7 @@
 import { content } from '../src/content/registry';
 import { applyCommand, formatDate, monthIndex, newGame } from '../src/engine';
 import { RESOURCE_IDS } from '../src/engine/resources';
-import { hallLevel } from '../src/engine/systems/buildings/buildings';
+import { hallLevel, qiCapacity } from '../src/engine/systems/buildings/buildings';
 import { realmName } from '../src/engine/systems/characters/characters';
 import { botTurn, type BotLog, type BotRoute } from './bot';
 
@@ -58,6 +58,9 @@ for (let i = 0; i < years * 12; i++) {
   if (hallLevel(state) >= 1) mark('大殿修復');
   if (hallLevel(state) >= 2) mark('大殿 2 級');
   if (hallLevel(state) >= 3) mark('大殿 3 級');
+  if (hallLevel(state) >= 4) mark('大殿 4 級');
+  if (hallLevel(state) >= 5) mark('大殿 5 級');
+  if (qiCapacity(state, content, 'region.back') >= 70) mark('後山靈氣 70');
   if (state.outer.count >= 40) mark('外門 40 人');
   if (state.outer.count >= 60) mark('外門 60 人');
   if (i % 120 === 119) console.log(`第 ${(i + 1) / 12} 年：靈石 ${state.resources.lingshi}、外門 ${state.outer.count}、內門 ${state.disciples.length}、打零工 ${state.outer.jobs.errand}`);
@@ -79,7 +82,14 @@ for (let i = 0; i < years * 12; i++) {
   if (p.realm.major !== 'qi') mark('主角築基');
   if (p.realm.major === 'foundation' && p.realm.stage === 4) mark('主角築基圓滿');
   if (p.insight >= 100) mark('主角功法小成');
-  if (p.realm.major === 'core') mark('主角結丹');
+  if (['core', 'nascent', 'deity'].includes(p.realm.major)) mark('主角結丹');
+  if (p.realm.major === 'core' && p.realm.stage === 4) mark('主角金丹圓滿');
+  if (p.insight >= 300) mark('主角功法大成');
+  if (p.insight >= 400) mark('主角功法圓滿');
+  if (p.realm.major === 'nascent' || p.realm.major === 'deity') mark('主角凝嬰');
+  if (p.realm.major === 'deity') mark('主角化神');
+  if (state.recipes.includes('recipe.nascent_pill')) mark('購得凝嬰丹方');
+  if (state.recipes.includes('recipe.deity_pill')) mark('購得化神丹方');
   for (const realm of content.secretRealms.values()) if (state.realmClears[realm.id]) mark(`${realm.name}通關`);
   if (state.dispatches.length) mark('首次派遣');
   if (Object.values(state.positions).some(Boolean)) mark('首位執事');

@@ -138,7 +138,7 @@ function rankSuccessors(state: GameState): Character[] {
 }
 
 /** 掌門坐化：親傳弟子直接接任；沒有指定時由境界最高者暫代，並跳出繼承事件讓玩家改選。 */
-function succeed(state: GameState, lines: string[], stops: StopReason[]): void {
+function succeed(state: GameState, cause: DeathCause, lines: string[], stops: StopReason[]): void {
   const old = state.protagonist;
   (state.ancestors ??= []).push({
     name: old.name,
@@ -155,21 +155,26 @@ function succeed(state: GameState, lines: string[], stops: StopReason[]): void {
   let chosen = !!heir;
   if (!next) {
     // 沒有內門弟子：由外門推舉一人接任
+  }
+  const text = `${old.name}${deathText(old, cause)}${ancestralHall0(state) ? '牌位入祖師殿供奉。' : '牌位暫供於大殿。'}`;
+  lines.push(`✝ 掌門${text}`);
+  if (!next) {
+    // 沒有內門弟子：由外門推舉一人接任（外門人數減一）
     const cand = rollCandidate(state, 0);
     next = characterFromCandidate(state, cand, 3);
     chosen = true;
+    if (state.outer.count > 0) state.outer.count -= 1;
     lines.push(`宗門沒有內門弟子，外門推舉${next.name}接掌山門。`);
   }
-  const text = `${old.name}壽元已盡，以${realmName(old.realm)}之身坐化，享壽 ${Math.floor(old.ageMonths / 12)} 歲。牌位入祖師殿供奉。`;
-  lines.push(`✝ 掌門${text}`);
+  const interim = !chosen && state.disciples.length > 1;
+  if (interim) state.interimLoyalty = { [next.id]: next.loyalty };
   promote(state, next);
-  const interim = !chosen && state.disciples.length > 0;
   lines.push(
     interim
       ? `生前沒有指定親傳弟子，眾人暫推${next.name}代理掌門，請確認或改立繼承人。`
       : `★ ${next.name}接任掌門。宗門的建築、物資與傳承全部保留，境界與技藝是${next.name}自己的。`,
   );
-  stops.push({ kind: 'death', text: `掌門${old.name}坐化` });
+  stops.push({ kind: 'death', text: `掌門${old.name}${cause === 'age' ? '坐化' : '隕落'}` });
   if (interim) {
     const others = rankSuccessors(state).slice(0, 4);
     state.events.push({
@@ -183,6 +188,22 @@ function succeed(state: GameState, lines: string[], stops: StopReason[]): void {
   }
 }
 
+function ancestralHall0(state: GameState): boolean {
+  return state.buildings.some((b) => b.defId === ANCESTRAL && b.level >= 1);
+}
+
+/** 暫代掌門升任前的忠誠（升任時記下），退回內門時恢復。 */
+function interimLoyalty(state: GameState, id: string): number {
+  return state.interimLoyalty?.[id] ?? 80;
+}
+
+/** 繼承結果補記在宣布坐化的那份月報上，月報頁看得到最後由誰接任。 */
+function record(state: GameState, text: string): string {
+  state.reports[0]?.lines.push(`→ ${text}`);
+  if (state.interimLoyalty) delete state.interimLoyalty;
+  return text;
+}
+
 /** 處理繼承事件：確認暫代掌門，或改立其他弟子。 */
 export function resolveSuccession(state: GameState, eventId: string, characterId: string): string {
   const ev = state.events.find((e) => e.id === eventId);
@@ -190,16 +211,16 @@ export function resolveSuccession(state: GameState, eventId: string, characterId
   ensure(ev.successors?.includes(characterId), '這個人不在接任人選之中');
   state.events = state.events.filter((e) => e.id !== eventId);
   const keep = '宗門的建築、物資與傳承全部保留。';
-  if (characterId === state.protagonist.id) return `${state.protagonist.name}正式接任掌門。${keep}`;
+  if (characterId === state.protagonist.id) return record(state, `${state.protagonist.name}正式接任掌門。${keep}`);
   const chosen = state.disciples.find((d) => d.id === characterId);
   ensure(chosen, '找不到這名弟子');
   const interim = state.protagonist;
   const { seclusion: _s, ...rest } = interim;
-  const back: Character = { ...rest, role: 'inner', loyalty: 80 };
+  const back: Character = { ...rest, role: 'inner', loyalty: interimLoyalty(state, interim.id) };
   if (back.schedule === 'seclusion' || back.schedule === 'teach') back.schedule = 'cultivate';
   promote(state, chosen);
   state.disciples.push(back);
-  return `${chosen.name}接任掌門，${back.name}退回內門。${keep}`;
+  return record(state, `${chosen.name}接任掌門，${back.name}退回內門。${keep}`);
 }
 
 /** 月結算：年齡增長後檢查壽元預警與壽終。 */
@@ -223,14 +244,35 @@ export function tickLifespan(state: GameState, lines: string[], stops: StopReaso
       }
     }
   }
-  // 先處理弟子，再處理掌門，避免同月坐化的弟子被立為新掌門
-  for (const c of dead) {
-    if (c.role === 'protagonist') continue;
+  passAway(
+    state,
+    dead.map((c) => c.id),
+    'age',
+    lines,
+    stops,
+  );
+}
+
+export type DeathCause = 'age' | 'breakthrough';
+
+function deathText(c: Character, cause: DeathCause): string {
+  const age = Math.floor(c.ageMonths / 12);
+  return cause === 'age'
+    ? `壽元已盡，以${realmName(c.realm)}之身坐化，享壽 ${age} 歲。`
+    : `衝擊化神失敗，以${realmName(c.realm)}之身隕落，享年 ${age} 歲。`;
+}
+
+/** 人物死亡：弟子的職位與工作空出；掌門由親傳弟子接任（或跳出繼承選擇）。先處理弟子，再處理掌門，避免同月過世的弟子被立為新掌門。 */
+export function passAway(state: GameState, ids: string[], cause: DeathCause, lines: string[], stops: StopReason[]): void {
+  for (const id of ids) {
+    const c = state.disciples.find((d) => d.id === id);
+    if (!c) continue;
     releaseEverything(state, c.id);
     returnEquipment(state, c);
     state.disciples = state.disciples.filter((d) => d.id !== c.id);
-    lines.push(`✝ ${c.name}壽元已盡，以${realmName(c.realm)}之身坐化，享壽 ${Math.floor(c.ageMonths / 12)} 歲。職位與工作已空出。`);
-    stops.push({ kind: 'death', text: `${c.name}坐化` });
+    lines.push(`✝ ${c.name}${deathText(c, cause)}職位與工作已空出。`);
+    stops.push({ kind: 'death', text: `${c.name}${cause === 'age' ? '坐化' : '隕落'}` });
   }
-  if (dead.some((c) => c.role === 'protagonist')) succeed(state, lines, stops);
+  if (ids.includes(state.protagonist.id)) succeed(state, cause, lines, stops);
 }
+

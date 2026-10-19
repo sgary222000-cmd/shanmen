@@ -6,6 +6,7 @@ import { applyCommand, monthIndex, planMonth, STATE_VERSION, type GameState, typ
 import { RESOURCE_IDS } from '../../src/engine/resources';
 import { benchCount, newBuildOptions } from '../../src/engine/systems/buildings/buildings';
 import { runBattle, unitFromCharacter, unitFromEnemy } from '../../src/engine/systems/combat/combat';
+import { powerLevel } from '../../src/engine/systems/characters/characters';
 import { refreshBoard } from '../../src/engine/systems/commissions/commissions';
 import { craftOdds } from '../../src/engine/systems/economy/flows';
 import { buyPriceAt, MARKET_GOODS, rollMarket, sellPriceAt } from '../../src/engine/systems/economy/market';
@@ -512,7 +513,7 @@ describe('經營路線（模擬 100 年不卡死）', () => {
         s = r.state;
         expect(nonNegative(s)).toBe(true);
       }
-      expect(s.protagonist.realm.major).toBe('core');
+      expect(powerLevel(s.protagonist.realm)).toBeGreaterThanOrEqual(powerLevel({ major: 'core', stage: 1 }));
       if (route === 'craft') expect(crafted).toBeGreaterThan(50);
       else expect(jobs).toBeGreaterThan(200);
     }, 60_000);

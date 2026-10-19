@@ -11,7 +11,7 @@ import type { Beast, GameState, Skills } from '../types';
 import { emptyPositions } from '../systems/talent/positions';
 import { initialSects } from '../systems/world/sects';
 
-export const STATE_VERSION = 6;
+export const STATE_VERSION = 7;
 
 export interface NewGameOptions {
   sectName: string;

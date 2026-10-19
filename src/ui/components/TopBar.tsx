@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { advanceBlockers, computeAlerts, formatDate, planMonth, type ResourceId } from '../../engine';
 import { RESOURCE_IDS } from '../../engine/resources';
 import { content, useGame, useUi } from '../store';
@@ -13,6 +13,25 @@ export function TopBar() {
   const stopRun = useUi((s) => s.stopRun);
   const [menu, setMenu] = useState(false);
   const setPage = useUi((s) => s.setPage);
+  const page = useUi((s) => s.page);
+  const multiRef = useRef<HTMLSpanElement>(null);
+  // 選單打開時：點選單外面、按 Esc 或換頁都會收起
+  useEffect(() => {
+    if (!menu) return;
+    const onDown = (e: PointerEvent) => {
+      if (!multiRef.current?.contains(e.target as Node)) setMenu(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenu(false);
+    };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [menu]);
+  useEffect(() => setMenu(false), [page]);
   const alerts = useMemo(() => computeAlerts(game, content), [game]);
   const blockers = advanceBlockers(game);
   const r = game.resources;
@@ -64,7 +83,7 @@ export function TopBar() {
       >
         {running ? `推進中 ${running.done}/${running.total}` : '推進一月'}
       </button>
-      <span className="advance-multi">
+      <span className="advance-multi" ref={multiRef}>
         {running ? (
           <button className="btn small danger" data-testid="advance-stop" onClick={stopRun}>
             停止連續推進

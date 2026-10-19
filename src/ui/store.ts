@@ -167,7 +167,7 @@ export const useUi = create<UiState>((set, get) => ({
         busy: false,
         running: null,
         lastReport: last,
-        runSummary: done ? `連續推進了 ${done} 個月${reason ? `，因為「${reason}」停下` : '，已全部完成'}。這是最後一個月的月報，之前各月在「月報」頁。` : null,
+        runSummary: done ? `連續推進了 ${done} 個月${reason ? `${done === months ? '，最後一個月出現' : '，因為'}「${reason}」${done === months ? '' : '停下'}` : '，已全部完成'}。這是最後一個月的月報，之前各月在「月報」頁。` : null,
       });
       if (!done && reason) get().toast('info', `無法推進：${reason}`);
     }

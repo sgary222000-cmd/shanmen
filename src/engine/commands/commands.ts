@@ -103,7 +103,6 @@ const LOGGED_COMMANDS = new Set<Command['type']>([
   'enterTournament',
   'promoteOuter',
   'takeLongevityPill',
-  'resolveSuccession',
 ]);
 
 export function applyCommand(state: GameState, content: ContentPack, cmd: Command): CommandResult {

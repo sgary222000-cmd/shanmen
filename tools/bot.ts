@@ -12,7 +12,8 @@ import { seatOptions } from '../src/engine/systems/characters/schedule';
 import { breakthroughOdds } from '../src/engine/systems/cultivation/cultivation';
 import { canJoinExpedition } from '../src/engine/systems/exploration/exploration';
 import { dispatchBlocked, dispatchOdds } from '../src/engine/systems/exploration/dispatch';
-import { powerLevel, readyForFoundation, xpToNext } from '../src/engine/systems/characters/characters';
+import { atMajorThreshold, powerLevel, readyForFoundation, xpToNext } from '../src/engine/systems/characters/characters';
+import { canAfford } from '../src/engine/resources';
 import { ascendBlocked, guardianBeast, guardianNextCost, hatchBlocked, raiseBlocked } from '../src/engine/systems/beasts/beasts';
 import { libraryResearch } from '../src/engine/systems/talent/techniques';
 import { tournamentBlocked } from '../src/engine/systems/world/tournament';
@@ -42,6 +43,41 @@ export interface BotLog {
  * - commission：委託外事流，外門大量做勞務委託，主角與內門接護衛委託，缺料上坊市買。
  */
 export type BotRoute = 'alchemy' | 'craft' | 'commission';
+
+/** 主角金丹後期起準備凝嬰丹、元嬰後期起準備化神丹：要的丹方與材料（含煉製用靈石）。 */
+function lateGoal(s: GameState, content: ContentPack): (Partial<Record<ResourceId, number>> & { recipe: string }) | undefined {
+  const p = s.protagonist;
+  const goal =
+    p.realm.major === 'core' && p.realm.stage >= 3 && s.resources.pill_nascent < 1
+      ? 'recipe.nascent_pill'
+      : p.realm.major === 'nascent' && p.realm.stage >= 3 && s.resources.pill_deity < 1
+        ? 'recipe.deity_pill'
+        : undefined;
+  if (!goal || !s.recipes.includes(goal)) return undefined;
+  return { recipe: goal, ...content.recipes.get(goal)?.inputs };
+}
+
+/** 金丹以後下一個要升的關鍵建築（大殿 4 級、後山聚靈陣 3 級、洞府 3 級）需要的石木。 */
+function lateBuildNeed(s: GameState, content: ContentPack): { stone: number; wood: number; lingshi: number; buildingId?: string } {
+  if (!['core', 'nascent', 'deity'].includes(s.protagonist.realm.major)) return { stone: 0, wood: 0, lingshi: 0 };
+  const targets: [string, number][] = [['building.hall', 4], ['building.cave_abode', 3], ['building.array', 3]];
+  for (const [defId, level] of targets) {
+    const b = s.buildings.find((x) => x.defId === defId && (defId === 'building.hall' || x.region === 'region.back'));
+    if (!b || b.level >= level || b.construction) continue;
+    const cost = upgradeOption(s, content, b).cost;
+    return { stone: cost.stone ?? 0, wood: cost.wood ?? 0, lingshi: cost.lingshi ?? 0, buildingId: b.id };
+  }
+  return { stone: 0, wood: 0, lingshi: 0 };
+}
+
+/** 金丹以後要存的靈石：下一個關鍵建築，或還沒買的凝嬰丹、化神丹丹方。 */
+function lateReserve(s: GameState, content: ContentPack, need: { lingshi: number }): number {
+  const p = s.protagonist;
+  if (!['core', 'nascent'].includes(p.realm.major)) return 0;
+  const recipe = p.realm.major === 'core' ? 'recipe.nascent_pill' : 'recipe.deity_pill';
+  const price = s.recipes.includes(recipe) ? 0 : (content.recipes.get(recipe)?.marketPrice ?? 0);
+  return Math.max(need.lingshi, price);
+}
 
 function tryCmd(state: GameState, content: ContentPack, cmd: Command): GameState {
   const r = applyCommand(state, content, cmd);
@@ -80,14 +116,20 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
   // 交易：坊市開了就照行情賣多餘物資（價格較好），沒有坊市時賣給山下商隊
   // 御獸傳承結丹後要養護宗神獸，獸材與靈藥多留一些
   const keepForGuardian = s.lineage === 'lineage.beast' && s.protagonist.realm.major === 'core' ? guardianNextCost(s) : undefined;
+  // 準備凝嬰、化神：存丹藥材料，不夠時上坊市買
+  const late = lateGoal(s, content);
+  // 金丹以後要蓋大殿 4 級、後山聚靈陣與洞府 3 級，石木先存起來
+  const lateBuild = lateBuildNeed(s, content);
+  // 大殿 3 級（P1 建設大致完成）後才開始為後期存錢；100 靈石以內的小工程照蓋
+  const lateSave = hallLevel(s) >= 3 ? lateReserve(s, content, lateBuild) + (late?.lingshi ?? 0) : 0;
   const keepStock: Partial<Record<ResourceId, number>> = {
-    stone: 150,
-    wood: 150,
+    stone: Math.max(150, lateBuild.stone),
+    wood: Math.max(150, lateBuild.wood),
     herb: 60,
-    ore: route === 'craft' ? 20 : 8,
+    ore: Math.max(route === 'craft' ? 20 : 8, late?.ore ?? 0),
     paper: 12,
-    spirit_herb: Math.max(12, keepForGuardian?.spirit_herb ?? 0),
-    beast_mat: Math.max(6, keepForGuardian?.beast_mat ?? 0),
+    spirit_herb: Math.max(12, keepForGuardian?.spirit_herb ?? 0, late?.spirit_herb ?? 0),
+    beast_mat: Math.max(6, keepForGuardian?.beast_mat ?? 0, late?.beast_mat ?? 0),
     artifact: 2,
     talisman_fire: 6,
     talisman_guard: 6,
@@ -102,6 +144,15 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
       const lots = Math.min(demandLeft(s, content, res), Math.floor((s.resources[res] - keep) / lot));
       if (lots > 0) s = tryCmd(s, content, { type: 'marketSell', resource: res, lots });
     }
+    // 準備凝嬰、化神丹的材料
+    for (const res of ['spirit_herb', 'ore', 'beast_mat'] as const) {
+      const need = late?.[res] ?? 0;
+      while (s.resources[res] < need && stockLeft(s, content, res) > 0 && s.resources.lingshi >= buyPrice(s, res) + (late?.lingshi ?? 0)) {
+        const before = s;
+        s = tryCmd(s, content, { type: 'marketBuy', resource: res, lots: 1 });
+        if (s === before) break;
+      }
+    }
     // 缺糧或缺藥草時買一點
     for (const [res, low] of [['food', 60], ['herb', 15]] as const) {
       if (s.resources[res] >= low || stockLeft(s, content, res) < 1 || s.resources.lingshi < buyPrice(s, res) + 40) continue;
@@ -109,14 +160,15 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     }
     // 有餘裕時買配方
     for (const r of recipesForSale(s, content)) {
-      if (s.resources.lingshi >= (r.marketPrice ?? 0) + 200) {
+      const lateRecipe = r.id === 'recipe.nascent_pill' || r.id === 'recipe.deity_pill';
+      if (s.resources.lingshi >= (r.marketPrice ?? 0) + 200 + (lateRecipe ? 0 : lateSave)) {
         const before = s;
         s = tryCmd(s, content, { type: 'buyRecipe', recipeId: r.id });
         if (s !== before) note(`購買配方：${r.name}`);
       }
     }
   }
-  for (const [res, keep] of [['stone', 150], ['wood', 150], ['herb', 60]] as const) {
+  for (const [res, keep] of [['stone', keepStock.stone ?? 150], ['wood', keepStock.wood ?? 150], ['herb', 60]] as const) {
     const extra = s.resources[res] - keep;
     for (const amount of [extra, Math.floor(extra / 2), Math.floor(extra / 4), 20]) {
       if (amount <= 0 || amount > extra) continue;
@@ -154,11 +206,18 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     (guardianBeast(s) ? !!guardianNextCost(s) : s.beasts.some((b) => b.stage === 'adult'))
       ? guardianNextCost(s)
       : undefined;
-  const reserve = guardianGoal ? (guardianGoal.lingshi ?? 0) + 30 : 30;
+  const reserve = (guardianGoal ? (guardianGoal.lingshi ?? 0) + 30 : 30) + lateSave;
   for (const b of s.buildings) {
+    if (b.id === lateBuild.buildingId) {
+      const before = s;
+      s = tryCmd(s, content, { type: 'upgrade', buildingId: b.id });
+      if (s !== before) note(`開工：${upgradeOption(before, content, b).def.name} → ${b.level + 1} 級`);
+      continue;
+    }
     if (coreFocus && !(b.region === 'region.back' && (b.defId === 'building.array' || b.defId === 'building.cave_abode'))) continue;
     const opt = upgradeOption(s, content, b);
-    if (!opt.blocked && (!opt.cost.lingshi || s.resources.lingshi - opt.cost.lingshi >= (coreFocus ? 0 : reserve))) {
+    const keep = (opt.cost.lingshi ?? 0) <= 100 ? reserve - lateSave : reserve;
+    if (!opt.blocked && (!opt.cost.lingshi || s.resources.lingshi - opt.cost.lingshi >= (coreFocus ? 0 : keep))) {
       const before = s;
       s = tryCmd(s, content, { type: 'upgrade', buildingId: b.id });
       if (s !== before) note(`開工：${opt.def.name} → ${opt.next?.level} 級`);
@@ -186,7 +245,8 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     if (allByDef(s, defId).length >= count) continue;
     for (const regionId of prefer) {
       const opt = newBuildOptions(s, content, regionId).find((o) => o.def.id === defId);
-      if (!opt || opt.blocked || (opt.cost.lingshi && s.resources.lingshi - opt.cost.lingshi < reserve)) continue;
+      const keep = (opt?.cost.lingshi ?? 0) <= 100 ? reserve - lateSave : reserve;
+      if (!opt || opt.blocked || (opt.cost.lingshi && s.resources.lingshi - opt.cost.lingshi < keep)) continue;
       const before = s;
       s = tryCmd(s, content, { type: 'build', defId, regionId });
       if (s !== before) {
@@ -279,7 +339,10 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     s.recipes.includes('recipe.foundation_pill') &&
     s.resources.pill_foundation < 1 &&
     s.disciples.some((d) => readyForFoundation(d));
-  const recipeId = needFoundation || (discipleFoundation && s.resources.herb >= 10)
+  const lateRecipe = late && canAfford(s.resources, late) ? late.recipe : undefined;
+  const recipeId = lateRecipe
+    ? lateRecipe
+    : needFoundation || (discipleFoundation && s.resources.herb >= 10)
     ? 'recipe.foundation_pill'
     : needCore && s.resources.spirit_herb >= 10 && s.resources.ore >= 5 && s.resources.lingshi >= 100
       ? 'recipe.core_liquid'
@@ -464,7 +527,8 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
 
   // 主角：築基後功法未小成且有藏經閣時去研究，否則閉關
   const me = s.protagonist;
-  const wantResearch = me.realm.major === 'foundation' && me.insight < 100 && libraryResearch(s, content) !== null;
+  const needInsight = atMajorThreshold(me) && me.insight < (me.realm.major === 'core' ? 300 : me.realm.major === 'nascent' ? 400 : 0);
+  const wantResearch = ((me.realm.major === 'foundation' && me.insight < 100) || needInsight) && libraryResearch(s, content) !== null;
   if (wantResearch && (me.schedule === 'cultivate' || me.schedule === 'seclusion')) {
     if (me.seclusion) s = tryCmd(s, content, { type: 'interruptSeclusion' });
     s = tryCmd(s, content, { type: 'setSchedule', characterId: me.id, schedule: 'research' });
