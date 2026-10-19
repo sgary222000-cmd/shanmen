@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { formatAge, planMonth, type Character, type ScheduleKind } from '../../engine';
 import { nextMajor, realmName, rootName, topStage, xpToNext } from '../../engine/systems/characters/characters';
 import { isCraftSchedule } from '../../engine/systems/buildings/buildings';
-import { LOCKED_SCHEDULES, SCHEDULE_NAMES, seatOptions, seclusionInterruptCost, selectableSchedules } from '../../engine/systems/characters/schedule';
+import { LOCKED_SCHEDULES, SCHEDULE_NAMES, seatOptions, seclusionInterruptCost, seclusionMax, selectableSchedules } from '../../engine/systems/characters/schedule';
 import { breakthroughOdds, monthlyXp } from '../../engine/systems/cultivation/cultivation';
 import { content, useGame, useUi } from '../store';
 import { insightGain, libraryResearch, techniqueOf, techniqueTier } from '../../engine/systems/talent/techniques';
@@ -219,7 +219,7 @@ export function CharacterPanel({ c }: { c: Character }) {
                 >
                   閉關
                 </button>
-                <input type="number" min={1} max={12} value={months} onChange={(e) => setMonths(Number(e.target.value))} /> 個月
+                <input type="number" min={1} max={seclusionMax(c)} value={months} onChange={(e) => setMonths(Number(e.target.value))} /> 個月
               </span>
             ) : (
               <button

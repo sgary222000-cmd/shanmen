@@ -11,6 +11,7 @@ import { runBattle, unitFromCharacter, type Unit } from '../combat/combat';
 import { allyUnit } from '../combat/party';
 import { canJoinExpedition } from '../exploration/exploration';
 import { sectPowerCap } from './sects';
+import { neighborSects } from './diplomacy';
 
 // 三年大比（每 3 年 9 月）：各宗派三名弟子一對一切磋，三戰兩勝為勝一場。
 // 我宗與三個電腦宗門循環對戰，依勝場排名，名次決定聲望與獎品。切磋點到為止，不會受傷。
@@ -122,7 +123,7 @@ export function enterTournament(state: GameState, content: ContentPack, teamIds:
   });
   const sides: { sectId: string | null; name: string; units: Unit[] }[] = [
     { sectId: null, name: state.sectName, units: ours },
-    ...state.sects.map((s) => ({ sectId: s.id, name: content.sects.get(s.id)?.name ?? s.id, units: sectFighters(state, content, s) })),
+    ...neighborSects(state, content).map((s) => ({ sectId: s.id, name: content.sects.get(s.id)?.name ?? s.id, units: sectFighters(state, content, s) })),
   ];
   const table: TournamentStanding[] = sides.map((s) => ({ sectId: s.sectId, name: s.name, points: 0, duelWins: 0 }));
   const log: string[] = [];
@@ -149,7 +150,7 @@ export function enterTournament(state: GameState, content: ContentPack, teamIds:
   const { reputation = 0, ...items } = reward;
   gain(state.resources, items as Partial<Resources>);
   state.reputation += reputation;
-  for (const s of state.sects) {
+  for (const s of neighborSects(state, content)) {
     const place = order.findIndex((x) => x.sectId === s.id);
     s.power = Math.max(s.power, Math.min(sectPowerCap(state, content, s), s.power + Math.max(0, 3 - place)));
   }

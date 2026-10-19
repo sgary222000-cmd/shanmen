@@ -174,9 +174,22 @@ describe('化神', () => {
     if (!fell) return;
     expect(fell.protagonist.id).toBe('c50');
     expect(fell.ancestors?.[0]?.realm.major).toBe('nascent');
+    expect(fell.ancestors?.[0]?.cause).toBe('breakthrough');
     expect(fell.reports[0]?.lines.some((l) => l.includes('衝擊化神失敗') && l.includes('隕落'))).toBe(true);
     expect(fell.reports[0]?.stops?.some((x) => x.kind === 'death')).toBe(true);
     expect(nonNegative(advance(fell, 3))).toBe(true);
+  });
+
+  it('修為不夠時寫出差多少；元嬰可以閉關到五年', () => {
+    const s = edit(lateReady('nascent'), (x) => {
+      x.protagonist.xp = 100;
+    });
+    expect(breakthroughOdds(s, content, s.protagonist).blocked).toContain(`100 / ${xpToNext(s.protagonist.realm)}`);
+    expect(tryRun(s, { type: 'setSchedule', characterId: 'c0', schedule: 'seclusion', months: 60 }).ok).toBe(true);
+    const core = edit(s, (x) => {
+      x.protagonist.realm = { major: 'core', stage: 1 };
+    });
+    expect(tryRun(core, { type: 'setSchedule', characterId: 'c0', schedule: 'seclusion', months: 60 }).ok).toBe(false);
   });
 
   it('化神圓滿是目前的頂點', () => {

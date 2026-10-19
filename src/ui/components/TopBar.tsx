@@ -43,14 +43,15 @@ export function TopBar() {
     for (const id of RESOURCE_IDS) out[id] = (plan.production[id] ?? 0) + (plan.expected[id] ?? 0) - (plan.consumption[id] ?? 0);
     return out;
   }, [game]);
-  const pillDelta = (d.pill_qi ?? 0) + (d.pill_heal ?? 0) + (d.pill_foundation ?? 0) + (d.pill_peiyuan ?? 0);
+  const pills = ['pill_qi', 'pill_heal', 'pill_foundation', 'pill_peiyuan', 'pill_core', 'pill_life', 'pill_nascent', 'pill_deity'] as const;
+  const pillDelta = pills.reduce((n, id) => n + (d[id] ?? 0), 0);
   const chips: [string, string, number, number, string | undefined][] = [
     ['lingshi', '靈石', r.lingshi, d.lingshi ?? 0, 'res-lingshi'],
     ['food', '糧食', r.food, d.food ?? 0, undefined],
     ['stone', '石材', r.stone, d.stone ?? 0, undefined],
     ['wood', '靈木', r.wood, d.wood ?? 0, undefined],
     ['herb', '藥草', r.herb, d.herb ?? 0, undefined],
-    ['pill', '丹藥', r.pill_qi + r.pill_heal + r.pill_foundation + r.pill_peiyuan, pillDelta, undefined],
+    ['pill', '丹藥', pills.reduce((n, id) => n + r[id], 0), pillDelta, undefined],
     ['reputation', '聲望', game.reputation, 0, 'reputation'],
   ];
   return (
@@ -92,7 +93,7 @@ export function TopBar() {
           <>
             {menu && (
               <span className="menu" data-testid="advance-menu">
-                {[3, 6, 12].map((n) => (
+                {[3, 6, 12, 60].map((n) => (
                   <button
                     key={n}
                     className="btn small"
@@ -102,7 +103,7 @@ export function TopBar() {
                       void advanceMany(n);
                     }}
                   >
-                    {n === 12 ? '一年' : `${n} 個月`}
+                    {n === 60 ? '五年' : n === 12 ? '一年' : `${n} 個月`}
                   </button>
                 ))}
                 <span className="muted small">遇到重要事件會自動停下（可在設定頁調整）</span>

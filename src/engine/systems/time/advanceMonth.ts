@@ -20,6 +20,7 @@ import { tickPositions } from '../talent/positions';
 import { tickBeasts } from '../beasts/beasts';
 import { resolveDispatches } from '../exploration/dispatch';
 import { tickSects } from '../world/sects';
+import { tickDiplomacy } from '../world/diplomacy';
 import { maybeStartAuction, resolveAuction } from '../world/auction';
 import { closeTournament, maybeOpenTournament } from '../world/tournament';
 
@@ -66,7 +67,6 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
 
   // 2. 依優先順序扣除糧食、維護、丹藥與煉丹材料
   const plan = planMonth(state, content);
-  const shortageBefore = shortageText(state, plan);
   for (const id of RESOURCE_IDS) state.resources[id] -= plan.consumption[id] ?? 0;
   for (const b of state.buildings) {
     if (plan.unpaidBuildings.includes(b.id)) {
@@ -131,7 +131,8 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
   rollMarket(state);
 
   // 6. 電腦宗門行動（影響下個月的坊市行情）、靈脈開標、大比截止
-  tickSects(state, content);
+  tickSects(state, content, lines, stops);
+  tickDiplomacy(state, content, lines, stops);
   resolveAuction(state, content, lines);
   closeTournament(state, lines);
 
@@ -155,10 +156,11 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
   }
   if (state.tournament?.status === 'open' && state.tournament.year !== tournamentBefore) stops.push({ kind: 'tournament', text: '三年大比開始報名' });
   if (state.auction && state.auction.id !== auctionBefore) stops.push({ kind: 'auction', text: `靈脈競標開始：${state.auction.name}` });
-  // 短缺只在剛出現時停一次，避免缺糧期間每個月都停
-  const shortage = shortageText(state, planMonth(state, content));
-  if (shortage && !shortageBefore) stops.push({ kind: 'shortage', text: shortage });
-  if (lines.some((l) => l.includes('不堪飢餓離開'))) stops.push({ kind: 'shortage', text: '外門弟子挨餓離開' });
+  // 短缺只在惡化時停下（快用完 → 不夠吃 → 有人挨餓離開），避免缺糧期間每個月都停
+  const left = lines.some((l) => l.includes('不堪飢餓離開'));
+  const shortage = left ? { level: 3, text: '外門弟子挨餓離開' } : shortageOf(state, planMonth(state, content));
+  if (shortage && shortage.level > (state.shortageLevel ?? 0)) stops.push({ kind: 'shortage', text: shortage.text });
+  state.shortageLevel = shortage?.level ?? 0;
   if (state.events.some((e) => e.blocking)) stops.push({ kind: 'event', text: state.events.find((e) => e.blocking)?.title ?? '有事件待處理' });
   const delta: Partial<Resources> = {};
   for (const id of RESOURCE_IDS) {
@@ -173,13 +175,14 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
   return report;
 }
 
-/** 連續推進要停下的短缺原因（缺糧、付不出維護費、糧食或靈石快用完）。 */
-function shortageText(state: GameState, plan: MonthPlan): string | undefined {
-  if (plan.foodShortfall > 0) return '下個月糧食不夠吃';
-  if (plan.unpaidBuildings.length) return '下個月靈石不夠付建築維護';
+/** 連續推進要停下的短缺原因與程度（2：缺糧或付不出維護費；1：糧食或靈石快用完）。 */
+function shortageOf(state: GameState, plan: MonthPlan): { level: number; text: string } | undefined {
+  if (plan.foodShortfall > 0) return { level: 2, text: '下個月糧食不夠吃' };
+  if (plan.unpaidBuildings.length) return { level: 2, text: '下個月靈石不夠付建築維護' };
   for (const id of ['food', 'lingshi'] as const) {
     const left = monthsUntilEmpty(state, plan, id);
-    if (left !== null && left <= balance.lifespan.shortageMonths) return `${id === 'food' ? '糧食' : '靈石'}約 ${left} 個月後用完`;
+    if (left !== null && left <= balance.lifespan.shortageMonths)
+      return { level: 1, text: `${id === 'food' ? '糧食' : '靈石'}約 ${left} 個月後用完` };
   }
   return undefined;
 }

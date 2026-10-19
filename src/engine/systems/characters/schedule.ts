@@ -66,9 +66,15 @@ export function setSchedule(
   c.schedule = schedule;
   if (schedule === 'seclusion') {
     const m = months ?? 1;
-    ensure(Number.isInteger(m) && m >= 1 && m <= 12, '閉關月數需為 1–12');
+    const max = seclusionMax(c);
+    ensure(Number.isInteger(m) && m >= 1 && m <= max, `閉關月數需為 1–${max}`);
     state.protagonist.seclusion = { plannedMonths: m, remainingMonths: m, streak: 0 };
   }
+}
+
+/** 閉關最長月數：元嬰以上可以閉長關（最多五年）。 */
+export function seclusionMax(c: Character): number {
+  return c.realm.major === 'nascent' || c.realm.major === 'deity' ? 60 : 12;
 }
 
 export function interruptSeclusion(state: GameState): string {

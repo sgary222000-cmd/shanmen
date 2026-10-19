@@ -135,7 +135,7 @@ export const worldSchema = z
     armory: z.array(z.string()),
     items: z.array(z.string()),
     branches: z.array(z.object({ lineageId: z.string(), hostId: z.string() })),
-    dispatches: z.array(z.object({ id: z.string(), realmId: z.string(), teamIds: z.array(z.string()), monthsLeft: nonneg })),
+    dispatches: z.array(z.object({ id: z.string(), realmId: z.string(), teamIds: z.array(z.string()), monthsLeft: nonneg, aidSectId: z.string().optional() })),
     sects: z.array(
       z
         .object({

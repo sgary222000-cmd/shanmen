@@ -7,11 +7,12 @@ const KEY = 'shanmen.autoStop';
 /** 可以在設定頁關掉的條件；有事件要處理（招生、繼承等）一定會停。 */
 export const STOP_OPTIONS: { kind: StopKind; label: string }[] = [
   { kind: 'lifespan', label: '壽元預警（剩兩成、一成）' },
-  { kind: 'death', label: '有人壽終坐化' },
+  { kind: 'death', label: '有人坐化或突破隕落' },
   { kind: 'breakthrough', label: '修為圓滿、可以突破' },
   { kind: 'shortage', label: '糧食或靈石快用完' },
   { kind: 'tournament', label: '三年大比開始報名' },
   { kind: 'auction', label: '靈脈競標開始' },
+  { kind: 'diplomacy', label: '盟友求援、條約期滿、商隊被騷擾' },
 ];
 
 export function readDisabledStops(): StopKind[] {

@@ -9,9 +9,10 @@ import { refreshBoard } from '../systems/commissions/commissions';
 import { emptyMarket, rollMarket } from '../systems/economy/market';
 import type { Beast, GameState, Skills } from '../types';
 import { emptyPositions } from '../systems/talent/positions';
+import { initialSites } from '../systems/world/diplomacy';
 import { initialSects } from '../systems/world/sects';
 
-export const STATE_VERSION = 7;
+export const STATE_VERSION = 8;
 
 export interface NewGameOptions {
   sectName: string;
@@ -111,6 +112,7 @@ export function newGame(content: ContentPack, opts: NewGameOptions): GameState {
     dispatches: [],
     sects: initialSects(content),
     intel: [],
+    sites: initialSites(),
     monthLog: [],
     heirId: null,
     ancestors: [],

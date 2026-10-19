@@ -204,7 +204,7 @@ export function planMonth(state: GameState, content: ContentPack): MonthPlan {
   pool.food -= eaten;
   if (eaten) consumption.food = eaten;
   const foodShortfall = need - eaten;
-  if (foodShortfall > 0) notes.push(`糧食不足 ${foodShortfall} 份，外門弟子將挨餓。`);
+  if (foodShortfall > 0) notes.push(`糧食不足 ${foodShortfall} 份，${state.outer.count > 0 ? '外門弟子將挨餓' : '弟子將挨餓'}。`);
 
   // 1b. 靈獸食量（人先吃，剩下的才餵靈獸；沒吃飽的靈獸不成長、不採集）
   const fedBeasts: string[] = [];

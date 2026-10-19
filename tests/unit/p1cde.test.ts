@@ -11,6 +11,7 @@ import { dispatchOdds } from '../../src/engine/systems/exploration/dispatch';
 import { insightGain, techniqueTier } from '../../src/engine/systems/talent/techniques';
 import { mentorPct } from '../../src/engine/systems/talent/positions';
 import { giftFavor, sectPowerCap, sectTradePrice, tickSects } from '../../src/engine/systems/world/sects';
+import { neighborSects } from '../../src/engine/systems/world/diplomacy';
 import { decode } from '../../src/save/codec';
 import { advance, content, developed, edit, run, tryRun } from './helpers';
 
@@ -271,14 +272,14 @@ describe('電腦宗門', () => {
     for (let m = 0; m < 1200; m++) {
       tickSects(s, content);
       for (const x of s.sects) expect(x.power).toBeLessThanOrEqual(sectPowerCap(s, content, x));
-      if (s.date.year === 10 && s.date.month === 12) for (const x of s.sects) expect(x.power).toBeLessThan(100);
+      if (s.date.year === 10 && s.date.month === 12) for (const x of neighborSects(s, content)) expect(x.power).toBeLessThan(100);
       s.date = s.date.month === 12 ? { year: s.date.year + 1, month: 1 } : { year: s.date.year, month: s.date.month + 1 };
       for (const x of s.sects) {
         for (const [k, v] of Object.entries(x.resources)) {
           expect(v).toBeGreaterThanOrEqual(0);
           expect(v).toBeLessThanOrEqual(balance.sects.resourceCap[k as keyof typeof x.resources]);
         }
-        expect(x.power).toBeLessThanOrEqual(balance.sects.maxPower);
+        expect(x.power).toBeLessThanOrEqual(Math.max(balance.sects.maxPower, balance.sects.distantMaxPower));
         expect(x.buildings).toBeLessThanOrEqual(balance.sects.maxBuildings);
       }
     }
@@ -288,9 +289,9 @@ describe('電腦宗門', () => {
   it('同一年送禮效果遞減', () => {
     let s = developed();
     const id = s.sects[0]!.id;
-    const first = giftFavor(s, s.sects[0]!, 100);
+    const first = giftFavor(s, content, s.sects[0]!, 100);
     s = run(s, { type: 'giftSect', sectId: id, lingshi: 100 });
-    const second = giftFavor(s, s.sects[0]!, 100);
+    const second = giftFavor(s, content, s.sects[0]!, 100);
     expect(second).toBeLessThan(first);
   });
 
@@ -372,7 +373,7 @@ describe('存檔 v4 → v5', () => {
     expect(s.protagonist.insight).toBe(0);
     expect(s.protagonist.equipment).toBeNull();
     expect(s.beasts[0]).toMatchObject({ stage: 'young', task: 'follow', ownerId: v4.world.beasts[0].ownerId });
-    expect(s.sects).toHaveLength(3);
+    expect(s.sects).toHaveLength(6);
     expect(Object.values(s.positions).every((v) => v === null)).toBe(true);
   });
 

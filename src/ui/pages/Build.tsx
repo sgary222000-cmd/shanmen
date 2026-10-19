@@ -72,7 +72,7 @@ function BuildingCard({ b }: { b: Building }) {
           {blocked && <span className="muted small"> {blocked}</span>}
         </div>
       ) : (
-        <p className="muted small">本階段已達最高等級（之後的批次開放更高等級）。</p>
+        <p className="muted small">已達最高等級。</p>
       )}
       {b.defId === 'building.field' && b.level > 0 && (
         <div className="row small" style={{ marginTop: '.4rem' }}>

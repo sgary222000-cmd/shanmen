@@ -1,6 +1,7 @@
 import type { ContentPack } from '../../content/registry';
 import { RuleError } from '../errors';
-import type { BeastTask, GameState, MonthReport, OuterDisciples, PositionId, ResourceId, Row, ScheduleKind, Station } from '../types';
+import type { BeastTask, GameState, MonthReport, OuterDisciples, PositionId, ResourceId, Row, ScheduleKind, Station, TreatyKind } from '../types';
+import { breakTreaty, resolveAid, signTreaty, type AidChoice } from '../systems/world/diplomacy';
 import { setPosition } from '../systems/talent/positions';
 import { equipItem } from '../systems/talent/equipment';
 import { buyScripture, openBranch } from '../systems/talent/branches';
@@ -52,6 +53,9 @@ export type Command =
   | { type: 'promoteOuter' }
   | { type: 'resolveRecruitment'; eventId: string; candidateId: string | null }
   | { type: 'dismissEvent'; eventId: string }
+  | { type: 'signTreaty'; sectId: string; kind: TreatyKind }
+  | { type: 'breakTreaty'; sectId: string }
+  | { type: 'resolveAid'; eventId: string; choice: AidChoice }
   | { type: 'startExploration'; realmId: string; teamIds: string[]; rows: Record<string, Row> }
   | { type: 'exploreMove'; nodeId: string }
   | { type: 'exploreChoice'; choiceId: string }
@@ -103,6 +107,9 @@ const LOGGED_COMMANDS = new Set<Command['type']>([
   'enterTournament',
   'promoteOuter',
   'takeLongevityPill',
+  'signTreaty',
+  'breakTreaty',
+  'resolveAid',
 ]);
 
 export function applyCommand(state: GameState, content: ContentPack, cmd: Command): CommandResult {
@@ -163,6 +170,15 @@ export function applyCommand(state: GameState, content: ContentPack, cmd: Comman
         next.events = next.events.filter((e) => e.id !== cmd.eventId);
         break;
       }
+      case 'signTreaty':
+        message = signTreaty(next, content, cmd.sectId, cmd.kind);
+        break;
+      case 'breakTreaty':
+        message = breakTreaty(next, content, cmd.sectId);
+        break;
+      case 'resolveAid':
+        message = resolveAid(next, content, cmd.eventId, cmd.choice);
+        break;
       case 'startExploration':
         startExploration(next, content, cmd.realmId, cmd.teamIds, cmd.rows);
         break;

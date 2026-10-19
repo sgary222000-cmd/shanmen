@@ -5,71 +5,257 @@ import { allCharacters, realmName } from '../../engine/systems/characters/charac
 import { goodDef } from '../../engine/systems/economy/market';
 import { canJoinExpedition } from '../../engine/systems/exploration/exploration';
 import { RESOURCE_NAMES } from '../../engine/resources';
-import { envoyGiftPct } from '../../engine/systems/talent/positions';
-import { favorName, giftFavor, GOAL_NAMES, sectTradeBlocked, sectTradePrice, TEMPERAMENT_NAMES } from '../../engine/systems/world/sects';
+import { favorName, giftEnvoyPct, giftFavor, GOAL_NAMES, sectTradeBlocked, sectTradeLots, sectTradePrice, TEMPERAMENT_NAMES } from '../../engine/systems/world/sects';
+import {
+  aidBlocked,
+  aidTroops,
+  breakCostText,
+  contactBlocked,
+  SITE_KIND_NAMES,
+  treatyBlocked,
+  treatyCapacity,
+  treatyCount,
+  TREATY_NAMES,
+  trustName,
+  trustOf,
+} from '../../engine/systems/world/diplomacy';
+import type { SectState } from '../../engine/types';
 import { nextTournamentYear, tournamentBlocked } from '../../engine/systems/world/tournament';
 import { Art } from '../components/Art';
 import { useTabs } from '../components/Layout';
 import { content, useGame, useUi } from '../store';
 
-// 宗門往來（P1 批次 E）：鄰近三宗、送禮與交易、情報、三年大比、靈脈競標。P1 沒有宣戰（前期保護中）。
+// 宗門往來（P1 批次 E；P2 批次 C 加入遠方勢力、信任、條約、盟友求援、資源據點）。宣戰在批次 D。
 
-function Sects() {
+function AidRequests() {
   const game = useGame();
   const dispatch = useUi((s) => s.dispatch);
-  const [gift, setGift] = useState(50);
+  const now = monthIndex(game.date);
+  const requests = game.events.filter((e) => e.kind === 'aid' && e.aid);
+  if (!requests.length) return null;
+  const troops = aidTroops(game);
   return (
-    <div className="grid two">
-      {game.sects.map((s) => {
-        const def = content.sects.get(s.id);
-        const lot = goodDef(s.wants).lot;
-        const tradeBlocked = sectTradeBlocked(game, s, 1);
+    <div className="panel" data-testid="aid-requests" style={{ borderLeft: '3px solid var(--danger, #a8352a)' }}>
+      <h3>盟友求援</h3>
+      {requests.map((ev) => {
+        const aid = ev.aid!;
+        const left = aid.deadline - now;
         return (
-          <div key={s.id} className="panel sect-card2" data-testid={`sect-${s.id}`}>
-            {def?.art && (
-              <div className="room-head">
-                <Art path={def.art} alt={def.name} />
-                <span className="favor">好感 {s.favor}・{favorName(s.favor)}</span>
-              </div>
-            )}
-            <h3>
-              {def?.name} <span className="tag">{content.lineages.get(def?.lineage ?? '')?.name}</span>{' '}
-              <span className="tag">{TEMPERAMENT_NAMES[def?.temperament ?? 'steady']}</span>
-            </h3>
-            <p className="small">{def?.description}</p>
-            <p className="small">
-              好感 <b>{s.favor}</b>（{favorName(s.favor)}）・實力 {s.power}・弟子 {s.population} 人・建築 {s.buildings} 級・今年目標：
-              {GOAL_NAMES[s.goal]}
+          <div key={ev.id} className="small" style={{ marginBottom: '.5rem' }}>
+            <p>
+              <b>{ev.title}</b>：{ev.text}（{left > 0 ? `還有 ${left} 個月可以回覆` : '本月底前要回覆'}）
             </p>
-            <div className="row small">
-              送禮靈石
-              <input type="number" min={balance.diplomacy.minGift} step={10} value={gift} onChange={(e) => setGift(Number(e.target.value))} />
-              <button className="btn small" data-testid={`gift-${s.id}`} onClick={() => dispatch({ type: 'giftSect', sectId: s.id, lingshi: gift })}>
-                拜訪送禮（好感 +{giftFavor(game, s, gift)}）
+            <div className="row">
+              <button
+                className="btn small"
+                data-testid={`aid-money-${aid.sectId}`}
+                disabled={!!aidBlocked(game, ev.id, 'money')}
+                title={aidBlocked(game, ev.id, 'money')}
+                onClick={() => dispatch({ type: 'resolveAid', eventId: ev.id, choice: 'money' })}
+              >
+                出資 {aid.lingshi} 靈石
               </button>
-            </div>
-            <p className="muted small">
-              每 {balance.diplomacy.giftUnit} 靈石好感 +1；同一年第 2 份禮效果減半、第 3 份剩三分之一，以此類推（今年已送 {s.giftsThisYear} 次）
-              {envoyGiftPct(game) ? `；外事執事 +${envoyGiftPct(game)}%` : ''}。
-            </p>
-            <div className="row small">
-              本月想收購：{RESOURCE_NAMES[s.wants]}（一批 {lot}，每批 {sectTradePrice(game, s)} 靈石）
+              <button
+                className="btn small"
+                data-testid={`aid-troops-${aid.sectId}`}
+                disabled={!!aidBlocked(game, ev.id, 'troops')}
+                title={aidBlocked(game, ev.id, 'troops')}
+                onClick={() => dispatch({ type: 'resolveAid', eventId: ev.id, choice: 'troops' })}
+              >
+                出兵（{troops.length ? troops.map((c) => c.name).join('、') : '沒有可派的人'}）
+              </button>
               <button
                 className="btn small secondary"
-                data-testid={`sect-trade-${s.id}`}
-                disabled={!!tradeBlocked}
-                title={tradeBlocked}
-                onClick={() => dispatch({ type: 'sectTrade', sectId: s.id, lots: 1 })}
+                data-testid={`aid-refuse-${aid.sectId}`}
+                onClick={() => dispatch({ type: 'resolveAid', eventId: ev.id, choice: 'refuse' })}
               >
-                賣一批
+                婉拒
               </button>
             </div>
-            <p className="muted small">
-              好感 30 以上加價 5%、60 以上加價 10%；每月最多 {balance.diplomacy.tradeLots} 批（本月已賣 {s.tradedThisMonth}）。
-            </p>
           </div>
         );
       })}
+      <p className="muted small">
+        履行援助：信任 +{balance.diplomacy.trustOnAid}、好感 +{balance.diplomacy.favorOnAid}；婉拒或逾期：信任 −{balance.diplomacy.trustOnRefuse}、好感 −
+        {balance.diplomacy.favorOnRefuse}，連續 {balance.diplomacy.maxRefusals} 次盟友會解除聯盟。
+      </p>
+    </div>
+  );
+}
+
+function TreatyRow({ s }: { s: SectState }) {
+  const game = useGame();
+  const dispatch = useUi((st) => st.dispatch);
+  const now = monthIndex(game.date);
+  const t = s.treaty;
+  return (
+    <div className="small" data-testid={`treaty-${s.id}`}>
+      {t ? (
+        <p>
+          條約：<b>{TREATY_NAMES[t.kind]}</b>（還有約 {Math.max(1, Math.ceil((t.until - now) / 12))} 年到期）{' '}
+          <button
+            className="btn small secondary"
+            data-testid={`break-${s.id}`}
+            title={`提前解約：${breakCostText(t.kind)}`}
+            onClick={() => dispatch({ type: 'breakTreaty', sectId: s.id })}
+          >
+            提前解約
+          </button>
+        </p>
+      ) : (
+        <p>條約：無</p>
+      )}
+      <div className="row">
+        {(['peace', 'alliance'] as const).map((kind) => {
+          const blocked = treatyBlocked(game, content, s.id, kind);
+          if (t?.kind === kind || (t?.kind === 'alliance' && kind === 'peace')) return null;
+          const T = balance.diplomacy.treaties[kind];
+          return (
+            <button
+              key={kind}
+              className="btn small"
+              data-testid={`sign-${kind}-${s.id}`}
+              disabled={!!blocked}
+              title={blocked}
+              onClick={() => dispatch({ type: 'signTreaty', sectId: s.id, kind })}
+            >
+              締結{TREATY_NAMES[kind]}（好感 {T.favor}、信任 {T.trust}、靈石 {T.lingshi}）
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SectCard({ s }: { s: SectState }) {
+  const game = useGame();
+  const dispatch = useUi((st) => st.dispatch);
+  const [gift, setGift] = useState(50);
+  const def = content.sects.get(s.id);
+  const distant = def?.scope === 'distant';
+  const contact = contactBlocked(game, content, s.id);
+  const lot = goodDef(s.wants).lot;
+  const tradeBlocked = sectTradeBlocked(game, content, s, 1);
+  const trust = trustOf(s);
+  const owned = (game.sites ?? []).filter((x) => x.owner === s.id);
+  return (
+    <div className="panel sect-card2" data-testid={`sect-${s.id}`}>
+      {def?.art && (
+        <div className="room-head">
+          <Art path={def.art} alt={def.name} />
+          <span className="favor">好感 {s.favor}・{favorName(s.favor)}</span>
+        </div>
+      )}
+      <h3>
+        {def?.name} <span className="tag">{content.lineages.get(def?.lineage ?? '')?.name}</span>{' '}
+        <span className="tag">{TEMPERAMENT_NAMES[def?.temperament ?? 'steady']}</span>
+        {distant && <span className="tag">遠方</span>}
+      </h3>
+      <p className="small">{def?.description}</p>
+      <p className="small">
+        好感 <b>{s.favor}</b>（{favorName(s.favor)}）・信任 <b>{trust}</b>（{trustName(trust)}）・實力 {s.power}・弟子 {s.population} 人
+        {!distant && `・今年目標：${GOAL_NAMES[s.goal]}`}
+        {owned.length > 0 && `・據點：${owned.map((x) => x.name).join('、')}`}
+      </p>
+      {contact ? (
+        <p className="muted small">{contact}。</p>
+      ) : (
+        <>
+          <TreatyRow s={s} />
+          <div className="row small">
+            送禮靈石
+            <input type="number" min={balance.diplomacy.minGift} step={10} value={gift} onChange={(e) => setGift(Number(e.target.value))} />
+            <button className="btn small" data-testid={`gift-${s.id}`} onClick={() => dispatch({ type: 'giftSect', sectId: s.id, lingshi: gift })}>
+              拜訪送禮（好感 +{giftFavor(game, content, s, gift)}）
+            </button>
+          </div>
+          <p className="muted small">
+            每 {balance.diplomacy.giftUnit} 靈石好感 +1；同一年第 2 份禮效果減半、第 3 份剩三分之一，以此類推（今年已送 {s.giftsThisYear} 次）
+            {giftEnvoyPct(game, content) ? `；外事執事 +${giftEnvoyPct(game, content)}%` : ''}。禮物只增加好感，信任要靠履行約定。
+          </p>
+          {!distant && (
+            <>
+              <div className="row small">
+                本月想收購：{RESOURCE_NAMES[s.wants]}（一批 {lot}，每批 {sectTradePrice(game, s)} 靈石）
+                <button
+                  className="btn small secondary"
+                  data-testid={`sect-trade-${s.id}`}
+                  disabled={!!tradeBlocked}
+                  title={tradeBlocked}
+                  onClick={() => dispatch({ type: 'sectTrade', sectId: s.id, lots: 1 })}
+                >
+                  賣一批
+                </button>
+              </div>
+              <p className="muted small">
+                好感 30 以上加價 5%、60 以上加價 10%{s.treaty?.kind === 'alliance' ? `、盟友再 +${balance.diplomacy.allianceTradePct}%` : ''}；每月最多{' '}
+                {sectTradeLots(s)} 批（本月已賣 {s.tradedThisMonth}）。
+              </p>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function Sects() {
+  const game = useGame();
+  const cap = treatyCapacity(game, content);
+  const near = game.sects.filter((s) => content.sects.get(s.id)?.scope !== 'distant');
+  const far = game.sects.filter((s) => content.sects.get(s.id)?.scope === 'distant');
+  return (
+    <div>
+      <AidRequests />
+      <p className="small">
+        {cap
+          ? `議事堂：可同時維持 ${cap} 份條約（目前 ${treatyCount(game)} 份）。`
+          : '在主峰蓋好議事堂（大殿 3 級）後，可以和各宗締結互不侵犯、聯盟條約。'}
+        互不侵犯：對方不再騷擾我宗。聯盟：交易優待，盟友被攻打時會求援。
+      </p>
+      <h3>鄰近宗門</h3>
+      <div className="grid two">
+        {near.map((s) => (
+          <SectCard key={s.id} s={s} />
+        ))}
+      </div>
+      <h3>遠方勢力</h3>
+      <div className="grid two">
+        {far.map((s) => (
+          <SectCard key={s.id} s={s} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Sites() {
+  const game = useGame();
+  return (
+    <div className="panel" data-testid="sites">
+      <h3>資源據點</h3>
+      <p className="muted small">
+        山門附近的礦脈、藥田、靈泉，佔有的宗門每月多一份收入。鄰近宗門會搶佔無主據點、也會攻打較弱宗門的據點；被攻打的若是我宗盟友，會向我宗求援。我宗出兵爭奪據點要等之後的版本（衝突與戰爭）。
+      </p>
+      <table className="small">
+        <tbody>
+          {(game.sites ?? []).map((x) => {
+            const inc = balance.sites.income[x.kind] as Partial<Record<'lingshi' | 'wood', number>>;
+            return (
+              <tr key={x.id}>
+                <td>{x.name}</td>
+                <td>{SITE_KIND_NAMES[x.kind]}</td>
+                <td>{x.owner ? content.sects.get(x.owner)?.name : '無主'}</td>
+                <td className="muted">
+                  每月 {inc.lingshi ? `靈石 ${inc.lingshi}` : ''}
+                  {inc.wood ? `、靈木 ${inc.wood}` : ''}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -190,7 +376,8 @@ function Auction() {
 export function WorldPage() {
   const game = useGame();
   const { tab, bar } = useTabs([
-    { id: 'sects', label: '鄰近宗門' },
+    { id: 'sects', label: <>各方勢力{game.events.some((e) => e.kind === 'aid') ? <small> 求援</small> : null}</> },
+    { id: 'sites', label: '資源據點' },
     { id: 'tournament', label: '三年大比' },
     { id: 'auction', label: '靈脈競標' },
     { id: 'intel', label: <>情報 <small>{game.intel.length}</small></> },
@@ -198,9 +385,10 @@ export function WorldPage() {
   return (
     <div>
       <p className="muted small">
-        <span className="tag gold">前期保護中</span> 目前各宗不會宣戰或攻打山門；往來只有送禮、交易、大比與競標。</p>
+        <span className="tag gold">前期保護中</span> 目前各宗不會宣戰或攻打山門；好戰而冷淡的宗門可能騷擾我宗商隊，締結互不侵犯可以避免。</p>
       {bar}
       {tab === 'sects' && <Sects />}
+      {tab === 'sites' && <Sites />}
       {tab === 'tournament' && <Tournament />}
       {tab === 'auction' && <Auction />}
       {tab === 'intel' && (

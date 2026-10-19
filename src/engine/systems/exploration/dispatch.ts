@@ -10,6 +10,7 @@ import { findCharacter } from '../characters/characters';
 import { estimatePower } from '../combat/combat';
 import { allyUnit, companions } from '../combat/party';
 import { canJoinExpedition, realmDef } from './exploration';
+import { returnAidTeam } from '../world/diplomacy';
 
 // 秘境派遣（企畫書 §12）：已通關的秘境，可派小隊花 1–2 個月自動結算。
 // 收益為節點物資的 30–50%，沒有唯一獎勵；小隊實力不足時可能失手、負傷。
@@ -45,7 +46,7 @@ export function dispatchBlocked(state: GameState, content: ContentPack, realmId:
   const realm = content.secretRealms.get(realmId);
   if (!realm) return '沒有這個秘境';
   if (!(state.realmClears[realmId] ?? 0)) return '需要先親自通關一次才能派遣';
-  if (state.dispatches.some((d) => d.realmId === realmId)) return '已有小隊在這個秘境';
+  if (state.dispatches.some((d) => d.realmId === realmId && !d.aidSectId)) return '已有小隊在這個秘境';
   if (!teamIds.length) return '至少需要一名隊員';
   if (teamIds.length > realm.maxTeam) return `隊伍最多 ${realm.maxTeam} 人`;
   if (new Set(teamIds).size !== teamIds.length) return '隊伍中有重複人物';
@@ -83,6 +84,10 @@ export function resolveDispatches(state: GameState, content: ContentPack, produc
     d.monthsLeft -= 1;
     if (d.monthsLeft > 0) {
       remaining.push(d);
+      continue;
+    }
+    if (d.aidSectId) {
+      returnAidTeam(state, content, d.teamIds, d.aidSectId, lines);
       continue;
     }
     const realm = realmDef(content, d.realmId);

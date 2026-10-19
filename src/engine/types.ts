@@ -209,10 +209,33 @@ export interface Dispatch {
   realmId: string;
   teamIds: string[];
   monthsLeft: number;
+  /** 出兵援助盟友（P2 批次 C）：此時 realmId 不是秘境 */
+  aidSectId?: string;
 }
 
-export type SectTemperament = 'steady' | 'merchant' | 'warlike';
-export type SectGoal = 'build' | 'recruit' | 'train' | 'trade';
+export type SectTemperament = 'steady' | 'merchant' | 'warlike' | 'scholarly' | 'honorable';
+export type SectGoal = 'build' | 'recruit' | 'train' | 'trade' | 'expand';
+export type TreatyKind = 'peace' | 'alliance';
+
+/** 與我宗的條約（P2 批次 C）。 */
+export interface Treaty {
+  kind: TreatyKind;
+  /** 締約月份（monthIndex） */
+  since: number;
+  /** 到期月份（monthIndex） */
+  until: number;
+  /** 連續拒絕援助的次數（聯盟） */
+  refusals?: number;
+}
+
+/** 資源據點（P2 批次 C）：各宗佔有、每月帶來收入；爭奪在批次 D。 */
+export interface ResourceSite {
+  id: string;
+  name: string;
+  kind: 'ore' | 'herb' | 'lingshi' | 'wood';
+  /** 佔有的宗門 ID；null 為無主 */
+  owner: string | null;
+}
 
 /** 電腦宗門（P1 批次 E）。只做合法行動：缺料就不能建設。 */
 export interface SectState {
@@ -232,6 +255,9 @@ export interface SectState {
   goal: SectGoal;
   /** 本月想收購的物資 */
   wants: ResourceId;
+  /** 對我宗的信任 0–100：只能靠履行約定累積，禮物買不到（P2 批次 C，舊存檔遷移時補上） */
+  trust?: number;
+  treaty?: Treaty | null;
 }
 
 export interface IntelEntry {
@@ -399,7 +425,7 @@ export interface Candidate {
 
 export interface PendingEvent {
   id: string;
-  kind: 'recruitment' | 'notice' | 'succession';
+  kind: 'recruitment' | 'notice' | 'succession' | 'aid';
   title: string;
   text: string;
   /** 阻擋推進月份，直到處理 */
@@ -408,10 +434,12 @@ export interface PendingEvent {
   outerJoined?: number;
   /** 繼承事件：可以接任掌門的人物 ID（第一位是暫代的新掌門） */
   successors?: string[];
+  /** 盟友求援（P2 批次 C）：哪一宗、出資金額、回覆期限（monthIndex） */
+  aid?: { sectId: string; lingshi: number; deadline: number };
 }
 
 /** 連續推進的停止原因。 */
-export type StopKind = 'event' | 'lifespan' | 'death' | 'breakthrough' | 'tournament' | 'auction' | 'shortage';
+export type StopKind = 'event' | 'lifespan' | 'death' | 'breakthrough' | 'tournament' | 'auction' | 'shortage' | 'diplomacy';
 
 export interface StopReason {
   kind: StopKind;
@@ -426,6 +454,8 @@ export interface Ancestor {
   ageMonths: number;
   /** 坐化的年月 */
   date: GameDate;
+  /** 死因：壽終坐化或突破隕落（0.7.0 新增，舊資料視為坐化） */
+  cause?: 'age' | 'breakthrough';
 }
 
 export interface MonthReport {
@@ -502,6 +532,10 @@ export interface GameState {
   sects: SectState[];
   /** 情報紀錄（新的在前） */
   intel: IntelEntry[];
+  /** 上次月結的短缺程度（0 無、1 快用完、2 不夠吃、3 有人挨餓離開），用來只在惡化時停下連續推進（0.7.0 新增） */
+  shortageLevel?: number;
+  /** 資源據點（P2 批次 C） */
+  sites: ResourceSite[];
   /** 本月月中發生的事（接委託、探索結果、坊市買賣），月底寫進月報開頭。0.4.5 新增，舊存檔沒有。 */
   monthLog?: string[];
   /** 暫代掌門升任前的忠誠，改立時恢復（0.6.0 新增） */

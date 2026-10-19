@@ -68,7 +68,7 @@ export const regions: RegionDef[] = [
     slots: 4,
     baseQi: 0,
     unlock: { cost: { stone: 60, wood: 40, lingshi: 60 }, months: 2, requiresHall: 1, action: '修復山門' },
-    allows: ['building.market', 'building.library'],
+    allows: ['building.market', 'building.library', 'building.council'],
     bonus: { buildCostPct: 0, productionPct: {}, alchemyBonusBp: 0, forgeBonusBp: 0, cultivationPct: 0, tradeCapPct: 50 },
     bonusText: '山下商隊每月收購額度 +50%；坊市只能蓋在這裡',
     art: 'final/region-gate.webp',
