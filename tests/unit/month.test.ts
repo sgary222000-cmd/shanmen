@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { monthIndex, planMonth } from '../../src/engine';
 import { RESOURCE_IDS } from '../../src/engine/resources';
-import { advance, content, developed, edit, fresh, run, tryRun } from './helpers';
+import { advance, content, developed, edit, fresh, roomy, run, tryRun } from './helpers';
 
 describe('月份結算', () => {
   it('一次推進只前進一個月', () => {
@@ -40,7 +40,7 @@ describe('月份結算', () => {
   });
 
   it('預覽與實際結算的確定部分一致', () => {
-    let s = developed();
+    let s = roomy(developed());
     s = run(s, { type: 'setOuterJobs', jobs: { field: 4, quarry: 3, lumber: 3, errand: 2 } });
     const plan = planMonth(s, content);
     const after = run(s, { type: 'advanceMonth', expectMonth: monthIndex(s.date) });

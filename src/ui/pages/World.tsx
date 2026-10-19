@@ -37,6 +37,7 @@ import {
   warOdds,
   warTeam,
   warThreatBp,
+  warUnavailable,
 } from '../../engine/systems/world/war';
 import { nextTournamentYear, tournamentBlocked } from '../../engine/systems/world/tournament';
 import { Art } from '../components/Art';
@@ -346,7 +347,7 @@ function WarCard({ war }: { war: War }) {
         <summary>指定出戰的人</summary>
         <div className="row small">
           {people.map((c) => {
-            const reason = canJoinExpedition(game, c);
+            const reason = warUnavailable(game, c, defending);
             const on = odds.team.some((x) => x.id === c.id);
             return (
               <label key={c.id} title={reason}>
@@ -375,7 +376,7 @@ function WarCard({ war }: { war: War }) {
       <p className="muted small">
         {defending
           ? `守住：對方賠償靈石、聲望 +${W.defendWinReputation}。失守：被搶 ${W.lootLingshiPct}% 靈石（撤離的不算）與 ${W.lootFoodPct}% 糧食、${W.damagedBuildings} 座建築損毀待修、割讓一處據點；宗門不會被滅。`
-          : `得勝：可以要求割地賠款、收為附屬，或在對方夠弱時吞併。落敗：聲望 −${W.attackLoseReputation}。`}
+          : `得勝：可以要求割地賠款、收為附屬（${W.vassalYears} 年），或在對方夠弱時吞併。落敗：聲望 −${W.attackLoseReputation}。`}
       </p>
     </div>
   );
@@ -413,7 +414,7 @@ function Wars() {
                   <td>實力 {s.power}</td>
                   <td>
                     {s.vassal
-                      ? `附屬，每月進貢約 ${vassalTribute(s)} 靈石`
+                      ? `附屬，每月進貢約 ${vassalTribute(s)} 靈石${s.vassalUntil !== undefined ? `（約 ${Math.ceil((s.vassalUntil - now) / 12)} 年後期滿）` : ''}`
                       : s.truceUntil !== undefined && s.truceUntil > now
                         ? `停戰中（約 ${Math.ceil((s.truceUntil - now) / 12)} 年）`
                         : threat

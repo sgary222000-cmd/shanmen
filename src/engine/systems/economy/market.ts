@@ -6,6 +6,7 @@ import { rng } from '../../rng';
 import type { GameState, MarketGood, MarketState, ResourceId } from '../../types';
 import { effectsOf, isOperating, MARKET } from '../buildings/buildings';
 import { envoyDiscount } from '../talent/positions';
+import { storageRoom } from './storage';
 
 // 坊市（山門區建築）：每種商品以「一批」為單位買賣，每月有限貨量與收購量。
 // 買價比賣價高約 25%，價格在基準價 ±30% 內每月浮動（亂數存在存檔裡，讀檔不會變）。
@@ -85,6 +86,7 @@ export function marketBuy(state: GameState, content: ContentPack, id: ResourceId
   ensure(lots <= left, `坊市本月只剩 ${left} 批${RESOURCE_NAMES[id]}`);
   const cost = buyPrice(state, id) * lots;
   ensure(state.resources.lingshi >= cost, `靈石不足（需要 ${cost}）`);
+  ensure(def.lot * lots <= storageRoom(state, content, id), `倉庫放不下（${RESOURCE_NAMES[id]}還能放 ${storageRoom(state, content, id)}）`);
   state.resources.lingshi -= cost;
   state.resources[id] += def.lot * lots;
   good(state, id).bought += lots;

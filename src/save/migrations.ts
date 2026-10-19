@@ -2,7 +2,9 @@
 // 讀到舊存檔時依序執行；遷移前原檔會另存為升版前備份（見 storage.ts）。
 
 import { content } from '../content/registry';
-import type { GameState } from '../engine';
+import { balance } from '../content/balance';
+import type { GameDate, GameState } from '../engine';
+import { monthIndex } from '../engine/date';
 import { refreshBoard } from '../engine/systems/commissions/commissions';
 import { emptyMarket, rollMarket } from '../engine/systems/economy/market';
 import { RESOURCE_IDS } from '../engine/resources';
@@ -136,6 +138,12 @@ export const migrations: Record<number, (w: World) => World> = {
   },
   // 0.7.x → 0.8.0（P2 批次 D）：戰事、吞併整合費
   8: (w) => ({ ...w, version: 9, wars: [], integrations: [] }),
+  // 0.8.x → 0.9.0（P2 批次 E）：宗門試煉紀錄；已有的附屬從現在起算 30 年期滿
+  9: (w) => {
+    const until = monthIndex(w.date as GameDate) + balance.war.vassalYears * 12;
+    const sects = (w.sects as Record<string, unknown>[]).map((s) => (s.vassal && s.vassalUntil === undefined ? { ...s, vassalUntil: until } : s));
+    return { ...w, version: 10, sects, trials: {} };
+  },
 };
 
 export function migrate(world: World, from: number, to: number): World {

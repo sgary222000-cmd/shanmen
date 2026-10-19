@@ -6,7 +6,7 @@ import { qiEfficiencyPct } from '../../engine/systems/cultivation/cultivation';
 import { currentStep, TUTORIAL_STEPS } from '../../engine/systems/tutorial';
 import { regionState } from '../../engine/systems/regions/regions';
 import { AlertList } from '../components/Alerts';
-import { artUrl, portraitOf } from '../art';
+import { artUrl, panoramaFor, portraitOf } from '../art';
 import { ResList } from '../components/Res';
 import { content, useGame, useUi } from '../store';
 
@@ -62,11 +62,12 @@ function TutorialCard() {
 export function SceneBackdrop() {
   const game = useGame();
   const setPage = useUi((s) => s.setPage);
+  const pano = artUrl(panoramaFor(hallLevel(game)));
   return (
     <div className="scene">
-      <img className="blur" src={artUrl('final/panorama.webp')} alt="" />
+      <img className="blur" src={pano} alt="" />
       <div className="scene-inner">
-        <img src={artUrl('final/panorama.webp')} alt="宗門全景" />
+        <img src={pano} alt="宗門全景" />
         {[...content.buildings.values()].map((def) => {
           const pos = SPOTS[def.id];
           if (!pos) return null;

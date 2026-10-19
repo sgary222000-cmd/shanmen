@@ -9,6 +9,7 @@ import { planMonth } from '../../src/engine/systems/economy/flows';
 import { neighborSects } from '../../src/engine/systems/world/diplomacy';
 import {
   annexBlocked,
+  availableFighters,
   contestBlocked,
   declareBlocked,
   PLAYER,
@@ -16,6 +17,7 @@ import {
   tickWar,
   warOdds,
   warThreatBp,
+  warUnavailable,
 } from '../../src/engine/systems/world/war';
 import { decode } from '../../src/save/codec';
 import { advance, content, developed, edit, run, tryRun } from './helpers';
@@ -274,6 +276,20 @@ describe('0.7.0 試玩修正', () => {
     s = run(s, { type: 'advanceMonth', expectMonth: monthIndex(s.date) });
     expect(s.events.some((e) => e.kind === 'recruitment')).toBe(false);
     expect(s.reports[0]?.lines.some((l) => l.includes('內門已達大殿上限'))).toBe(true);
+  });
+});
+
+describe('0.8.0 試玩修正', () => {
+  it('守山門時閉關、突破中的人也能上場；外出派遣的人趕不回來；攻打時照探索規則', () => {
+    const s = edit(wartime(true), (x) => {
+      x.protagonist.schedule = 'breakthrough';
+      x.disciples[0]!.schedule = 'dispatch';
+    });
+    const home = availableFighters(s, true).map((c) => c.id);
+    expect(home).toContain('c0');
+    expect(home).not.toContain(s.disciples[0]!.id);
+    expect(warUnavailable(s, s.disciples[0]!, true)).toContain('外出');
+    expect(availableFighters(s, false).map((c) => c.id)).not.toContain('c0');
   });
 });
 

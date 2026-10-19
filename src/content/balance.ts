@@ -438,6 +438,9 @@ export const balance = {
     /** 附屬：每月進貢 5 + 實力 ÷ 10 靈石 */
     vassalBase: 5,
     vassalPerPower: 10,
+    /** 附屬 30 年期滿後恢復自立（好感 50，再停戰 10 年）（P2 批次 E） */
+    vassalYears: 30,
+    vassalEndFavor: 50,
     /** 吞併：大殿 5 級、對方實力不到我宗的 50% 才能吞併；得到三分之一的弟子當外門、2 名內門（忠誠 50）、一半靈石與全部據點；
      *  每月整合費 30 靈石、10 年；外門滿意度 −15；其他宗門好感 −10 */
     annexPowerPct: 50,
@@ -451,6 +454,31 @@ export const balance = {
     annexSatisfaction: 15,
     annexFear: 10,
     annexReputation: 30,
+  },
+  /** 倉庫（P2 批次 E）：材料與糧食有存放上限，月底超出上限的新進貨損耗掉；靈石、丹藥、符籙、法器不設上限 */
+  storage: {
+    /** 沒有倉庫時：糧食 1,000，其他材料各 500；倉庫每級加的量見建築，糧食加倍 */
+    baseFood: 1000,
+    base: 500,
+    /** 存量達上限的幾成時警告 */
+    warnPct: 90,
+  },
+  /** 宗門試煉（P2 批次 E）：大殿 2 級起；每人每年一次；敵人依隊伍最強者的境界配置，失敗不受傷 */
+  trial: {
+    hall: 2,
+    maxTeam: 3,
+    /** 每位參加者的花費 */
+    lingshiPer: 20,
+    /** 三種難度：對手等級相對隊伍最強者（-2、0、+2），通關給下一階修為的百分比與領悟度 */
+    tiers: [
+      { id: 'easy', name: '入門', levelOffset: -2, xpPct: 10, insight: 5 },
+      { id: 'normal', name: '精進', levelOffset: 0, xpPct: 20, insight: 10 },
+      { id: 'hard', name: '登峰', levelOffset: 2, xpPct: 35, insight: 20 },
+    ],
+    /** 失敗時：生命降到 50%、修為 +5%（只是不受傷） */
+    loseHealth: 50,
+    loseXpPct: 5,
+    previewRuns: 30,
   },
   /** 三年大比：每 3 年 9 月 */
   tournament: {

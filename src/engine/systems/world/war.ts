@@ -8,7 +8,7 @@ import { newId } from '../../ids';
 import { nextUint32, rng, seedState } from '../../rng';
 import type { Building, Character, GameState, Realm, ResourceSite, SectState, StopReason, War } from '../../types';
 import { activeEffects, hallLevel, innerLimit, levelDef, outerCapacity } from '../buildings/buildings';
-import { characterFromCandidate, findCharacter, powerLevel, rollCandidate } from '../characters/characters';
+import { characterFromCandidate, findCharacter, isInjured, powerLevel, rollCandidate } from '../characters/characters';
 import { passAway } from '../characters/lifespan';
 import { estimatePower, runBattle, unitFromCharacter, type Unit } from '../combat/combat';
 import { allyUnit, healPctFor } from '../combat/party';
@@ -57,32 +57,37 @@ function topLevelOf(power: number): number {
   return 2 + Math.floor(power / 6);
 }
 
+/** 給戰鬥用的假人物（電腦宗門高手、試煉傀儡）。 */
+export function fakeFighter(id: string, name: string, realm: Realm, combat: number): Character {
+  return {
+    id,
+    name,
+    gender: 'male',
+    role: 'inner',
+    ageMonths: 600,
+    realm,
+    xp: 0,
+    root: { grade: 'mid', elements: [] },
+    health: 100,
+    injuryMonths: 0,
+    loyalty: 100,
+    skills: { alchemy: 0, farming: 0, combat, forging: 0, talisman: 0, beast: 0, affairs: 0 },
+    schedule: 'cultivate',
+    takePill: false,
+    seat: '',
+    specialty: null,
+    insight: 0,
+    equipment: null,
+  };
+}
+
 /** 實力 power 的宗門出戰的高手（強弱依實力，前兩人站前排）。 */
 function fightersOf(power: number, lineage: LineageDef, sectName: string, sectId: string, count: number): Unit[] {
   const top = topLevelOf(power);
   const cs = Math.min(30, 2 + Math.floor(power / 8));
   return Array.from({ length: count }, (_, i) => {
     const realm = realmOfLevel(Math.max(1, top - i * 3));
-    const fake: Character = {
-      id: `${sectId}#w${i}`,
-      name: `${sectName}・${['首座', '長老', '執事'][i] ?? '弟子'}`,
-      gender: 'male',
-      role: 'inner',
-      ageMonths: 600,
-      realm,
-      xp: 0,
-      root: { grade: 'mid', elements: [] },
-      health: 100,
-      injuryMonths: 0,
-      loyalty: 100,
-      skills: { alchemy: 0, farming: 0, combat: cs, forging: 0, talisman: 0, beast: 0, affairs: 0 },
-      schedule: 'cultivate',
-      takePill: false,
-      seat: '',
-      specialty: null,
-      insight: 0,
-      equipment: null,
-    };
+    const fake = fakeFighter(`${sectId}#w${i}`, `${sectName}・${['首座', '長老', '執事'][i] ?? '弟子'}`, realm, cs);
     return { ...unitFromCharacter(fake, i < 2 ? 'front' : 'back', lineage), side: 'enemy' as const };
   });
 }
@@ -118,11 +123,17 @@ export function playerPower(state: GameState, content: ContentPack): number {
   return lo;
 }
 
-/** 能出戰的人（受傷、外出、突破中的不算），強的在前。守山門時，閉關中的掌門也會出關迎戰。 */
+/** 不能出戰的原因：守山門時人在宗內就能上場（閉關、突破中也一樣），只有受傷與外出派遣的人不行。 */
+export function warUnavailable(state: GameState, c: Character, defending = false): string | undefined {
+  if (!defending) return canJoinExpedition(state, c);
+  if (isInjured(c)) return `${c.name}受傷中`;
+  if (c.schedule === 'dispatch') return `${c.name}外出派遣中，趕不回來`;
+  return undefined;
+}
+
 export function availableFighters(state: GameState, defending = false): Character[] {
-  const p = state.protagonist;
-  return [p, ...state.disciples]
-    .filter((c) => !canJoinExpedition(state, c) || (defending && c.id === p.id && p.seclusion && !p.injuryMonths && c.schedule !== 'breakthrough'))
+  return [state.protagonist, ...state.disciples]
+    .filter((c) => !warUnavailable(state, c, defending))
     .sort((a, b) => powerLevel(b.realm) - powerLevel(a.realm) || b.xp - a.xp);
 }
 
@@ -147,7 +158,7 @@ export function deathBp(state: GameState, content: ContentPack, defending: boole
 
 type Rand = { int(n: number): number; chance(bp: number): boolean };
 
-function localRng(seed: number): Rand {
+export function localRng(seed: number): Rand {
   const s = seedState(seed);
   return {
     int: (n) => (n <= 0 ? 0 : nextUint32(s) % n),
@@ -545,9 +556,10 @@ export function resolveVictory(state: GameState, content: ContentPack, eventId: 
   }
   if (choice === 'vassal') {
     sect.vassal = true;
+    sect.vassalUntil = monthIndex(state.date) + W.vassalYears * 12;
     sect.treaty = null;
     sect.favor = Math.max(sect.favor, 40);
-    return `${name}成為我宗附屬，每月進貢約 ${vassalTribute(sect)} 靈石，不再與我宗為敵。`;
+    return `${name}成為我宗附屬 ${W.vassalYears} 年，每月進貢約 ${vassalTribute(sect)} 靈石，期間不再與我宗為敵。`;
   }
   // 吞併
   sect.annexed = true;
@@ -689,6 +701,14 @@ export function tickWar(state: GameState, content: ContentPack, lines: string[],
   const now = monthIndex(state.date);
   for (const sect of state.sects) {
     if (sect.annexed || !sect.vassal) continue;
+    if (sect.vassalUntil !== undefined && now >= sect.vassalUntil) {
+      sect.vassal = false;
+      delete sect.vassalUntil;
+      sect.favor = W.vassalEndFavor;
+      sect.truceUntil = now + W.truceYears * 12;
+      lines.push(`${nameOf(content, sect.id)}附屬 ${W.vassalYears} 年期滿，恢復自立（好感 ${W.vassalEndFavor}，之後停戰 ${W.truceYears} 年）。`);
+      continue;
+    }
     const pay = Math.min(sect.resources.lingshi, vassalTribute(sect));
     sect.resources.lingshi -= pay;
     state.resources.lingshi += pay;

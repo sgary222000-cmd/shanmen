@@ -13,7 +13,7 @@ import { buyPriceAt, MARKET_GOODS, rollMarket, sellPriceAt } from '../../src/eng
 import { balance as B } from '../../src/content/balance';
 import { decode } from '../../src/save/codec';
 import { botTurn, type BotRoute } from '../../tools/bot';
-import { advance, content, developed, edit, fresh, run, tryRun } from './helpers';
+import { advance, content, developed, edit, fresh, roomy, run, tryRun } from './helpers';
 
 // P1 批次 B：新資源與建築、煉器與製符、坊市、委託榜與聲望、v3 → v4 存檔升級。
 
@@ -226,7 +226,7 @@ describe('戰鬥中的符籙', () => {
 });
 
 describe('坊市', () => {
-  const withMarket = (s = developed()) => place(openAll(s), 'building.market', 'region.gate');
+  const withMarket = (s = developed()) => place(openAll(roomy(s)), 'building.market', 'region.gate');
 
   it('沒有坊市不能交易；有坊市後可買賣，貨量用完就不能再買', () => {
     const s0 = developed();

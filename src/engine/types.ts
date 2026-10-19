@@ -266,6 +266,8 @@ export interface SectState {
   truceUntil?: number;
   /** 戰敗後成為我宗附屬：每月進貢、不再與我宗為敵 */
   vassal?: boolean;
+  /** 附屬到哪個月期滿（monthIndex），期滿後恢復自立（P2 批次 E） */
+  vassalUntil?: number;
   /** 已被我宗吞併：不再出現在世界上 */
   annexed?: boolean;
 }
@@ -433,6 +435,8 @@ export interface ExplorationRun {
   log: string[];
   /** 是否為首次通關的路線（決定首領獎勵） */
   firstClear: boolean;
+  /** 事件池節點抽到的事件：節點 ID → 事件 ID（P2 批次 E） */
+  events?: Record<string, string>;
 }
 
 export interface BattleRecord {
@@ -577,6 +581,8 @@ export interface GameState {
   wars: War[];
   /** 吞併後的整合費用（P2 批次 D） */
   integrations: Integration[];
+  /** 宗門試煉：人物 ID → 上次參加的年份（每人每年一次，P2 批次 E） */
+  trials: Record<string, number>;
   /** 本月月中發生的事（接委託、探索結果、坊市買賣），月底寫進月報開頭。0.4.5 新增，舊存檔沒有。 */
   monthLog?: string[];
   /** 暫代掌門升任前的忠誠，改立時恢復（0.6.0 新增） */

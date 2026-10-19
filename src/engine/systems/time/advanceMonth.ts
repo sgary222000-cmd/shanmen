@@ -22,6 +22,7 @@ import { resolveDispatches } from '../exploration/dispatch';
 import { tickSects } from '../world/sects';
 import { tickDiplomacy } from '../world/diplomacy';
 import { tickWar } from '../world/war';
+import { applyStorage } from '../economy/storage';
 import { maybeStartAuction, resolveAuction } from '../world/auction';
 import { closeTournament, maybeOpenTournament } from '../world/tournament';
 
@@ -147,6 +148,7 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
   maybeStartAuction(state, lines);
   if (state.market.rumor) lines.push(`坊市消息：${state.market.rumor}`);
 
+  applyStorage(state, content, before, lines);
   for (const id of RESOURCE_IDS) {
     if (state.resources[id] < 0) throw new Error(`結算後資源為負：${id}`);
   }

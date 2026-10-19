@@ -8,6 +8,7 @@ export const abandonedCave: SecretRealmDef = {
   supplies: { food: 10, lingshi: 10 },
   maxTeam: 5,
   startNode: 'entrance',
+  eventPool: [],
   repeatLootPct: 50,
   retreatLootPct: 50,
   art: 'final/cave.webp',

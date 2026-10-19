@@ -74,3 +74,10 @@ export function developed(seed = 1): GameState {
     });
   });
 }
+
+/** 加一座 3 級倉庫，讓大量庫存的測試不受存放上限影響（P2 批次 E）。 */
+export function roomy(state: GameState): GameState {
+  return edit(state, (s) => {
+    s.buildings.push({ id: `b${s.nextId++}`, defId: 'building.warehouse', region: 'region.main', level: 3, status: 'active', construction: null });
+  });
+}

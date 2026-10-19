@@ -8,6 +8,7 @@ import { beastSpecies } from './beasts';
 import { commissions } from './commissions';
 import { abandonedCave } from './secret-realms/abandoned-cave';
 import { ancientRuins, beastValley, undergroundMine } from './secret-realms/p1-realms';
+import { taixuEnemies, taixuFloors } from './secret-realms/taixu';
 import { techniques } from './techniques';
 import { equipment } from './equipment';
 import { sects } from './sects';
@@ -135,6 +136,14 @@ export function buildContent(raw: RawContent): ContentPack {
     }
     const open = realm.firstClear.openRegion;
     if (open && !pack.regions.has(open)) throw new Error(`秘境引用不存在的區域：${realm.id} → ${open}`);
+    if (realm.requires && !pack.secretRealms.has(realm.requires)) throw new Error(`秘境引用不存在的前一層：${realm.id} → ${realm.requires}`);
+    if (realm.nodes.some((n) => n.pool) && !realm.eventPool.length) throw new Error(`秘境有事件池節點卻沒有事件：${realm.id}`);
+    for (const ev of realm.eventPool) {
+      for (const e of ev.unique?.equipment ?? []) {
+        if (!pack.equipment.has(e) || e === 'equip.common') throw new Error(`事件引用不存在的獨特法器：${realm.id} ${ev.id} → ${e}`);
+      }
+      if (ev.choices.some((c) => c.unique) !== !!ev.unique) throw new Error(`事件的機緣選項與機緣不一致：${realm.id} ${ev.id}`);
+    }
   }
   for (const b of pack.buildings.values()) {
     for (const r of b.onlyRegions ?? []) {
@@ -163,9 +172,9 @@ export function buildContent(raw: RawContent): ContentPack {
 export const rawContent: RawContent = {
   buildings,
   recipes,
-  enemies,
+  enemies: [...enemies, ...taixuEnemies],
   lineages,
-  secretRealms: [abandonedCave, undergroundMine, beastValley, ancientRuins],
+  secretRealms: [abandonedCave, undergroundMine, beastValley, ancientRuins, ...taixuFloors],
   regions,
   beasts: beastSpecies,
   commissions,

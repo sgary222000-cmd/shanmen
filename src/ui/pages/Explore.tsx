@@ -2,9 +2,11 @@ import { isCraftSchedule } from '../../engine/systems/buildings/buildings';
 import { useState } from 'react';
 import { formatDate, type BattleRecord, type Row } from '../../engine';
 import { allCharacters, findCharacter, powerLevel, realmName } from '../../engine/systems/characters/characters';
-import { canJoinExpedition, retreatPct } from '../../engine/systems/exploration/exploration';
+import { canJoinExpedition, nodeView, realmLocked, retreatPct } from '../../engine/systems/exploration/exploration';
 import { dispatchBlocked, dispatchOdds, realmNodeLoot } from '../../engine/systems/exploration/dispatch';
 import { scaleResources } from '../../engine/resources';
+import { trialBlocked, trialOdds, trialUnavailable } from '../../engine/systems/exploration/trial';
+import { balance } from '../../content/balance';
 import { Art } from '../components/Art';
 import { artUrl, portraitOf } from '../art';
 import { ResList } from '../components/Res';
@@ -78,8 +80,9 @@ function ActiveRun() {
   const realm = content.secretRealms.get(run.realmId);
   const node = realm?.nodes.find((n) => n.id === run.nodeId);
   if (!realm || !node) return null;
+  const view = nodeView(realm, run, node);
   const chosen = !!run.choices[node.id];
-  const needsChoice = !!node.choices && !chosen;
+  const needsChoice = !!view.choices && !chosen;
   const lastBattle = game.battles[0];
   const finished = run.status !== 'active';
   return (
@@ -87,7 +90,7 @@ function ActiveRun() {
       <div className="room-head run-head">
         <Art path={realm.art} alt={realm.name} />
         <h3>
-          {realm.name}・{node.title}
+          {realm.name}・{view.title}
         </h3>
       </div>
       <div className="panel">
@@ -96,12 +99,12 @@ function ActiveRun() {
             const n = realm.nodes.find((x) => x.id === id);
             return (
               <span key={i} className={`n ${id === run.nodeId ? 'here' : 'done'}`}>
-                {n?.title}
+                {n && nodeView(realm, run, n).title}
               </span>
             );
           })}
         </div>
-        <p>{node.text}</p>
+        <p>{view.text}</p>
         <div className="row small">
           隊伍：
           {run.teamIds.map((id) => {
@@ -128,8 +131,8 @@ function ActiveRun() {
         {!finished && (
           <div className="row">
             {needsChoice &&
-              node.choices?.map((ch) => (
-                <button key={ch.id} className="btn" onClick={() => dispatch({ type: 'exploreChoice', choiceId: ch.id })}>
+              view.choices?.map((ch) => (
+                <button key={ch.id} className="btn" data-testid={`choice-${ch.id}`} onClick={() => dispatch({ type: 'exploreChoice', choiceId: ch.id })}>
                   {ch.label}
                   {ch.hpLossPct ? `（全隊損失 ${ch.hpLossPct}% 生命）` : ''}
                 </button>
@@ -137,7 +140,7 @@ function ActiveRun() {
             {!needsChoice &&
               node.next.map((id) => {
                 const n = realm.nodes.find((x) => x.id === id);
-                const danger = n?.enemies?.length ? `（敵人 ${n.enemies.length}）` : '';
+                const danger = n?.enemies?.length ? `（敵人 ${n.enemies.length}）` : n?.pool ? '（隨機事件）' : '';
                 return (
                   <button key={id} className="btn" data-testid={`go-${id}`} onClick={() => dispatch({ type: 'exploreMove', nodeId: id })}>
                     前往：{n?.title}
@@ -253,8 +256,8 @@ function Prepare() {
         {[...content.secretRealms.values()].map((r) => (
           <button key={r.id} className={`realm-card ${r.id === realmId ? 'on' : ''}`} data-testid={`realm-tab-${r.id}`} onClick={() => setRealmId(r.id)}>
             <Art path={r.art} alt="" />
-            <span className="nm">{r.name}</span>
-            <span className="rc">建議實力 {r.recommend}</span>
+            <span className="nm">{r.group ? `${r.group.name} 第 ${r.group.floor} 層` : r.name}</span>
+            <span className="rc">{realmLocked(game, content, r) ? '未開放' : `建議實力 ${r.recommend}`}</span>
             {(game.realmClears[r.id] ?? 0) > 0 && <span className="cleared">已通關</span>}
           </button>
         ))}
@@ -271,12 +274,25 @@ function Prepare() {
             建議實力：<b>{realm.recommend}</b>
           </p>
           <p className="small">已知風險：{realm.risk}</p>
+          {realmLocked(game, content, realm) && (
+            <p className="neg small" data-testid="realm-locked">
+              {realmLocked(game, content, realm)}才能進入。
+            </p>
+          )}
           <p className="small">
-            首次通關：{realm.firstClear.recipes.map((r) => `丹方「${content.recipes.get(r)?.name}」`).join('、')}
-            {realm.firstClear.openRegion ? `開放${content.regions.get(realm.firstClear.openRegion)?.name}、` : ''}
-            {realm.firstClear.equipment.map((e) => `法器「${content.equipment.get(e)?.name}」`).join('、')}
-            {realm.firstClear.items.length ? '、珍貴典籍或秘法' : ''}
-            {realm.firstClear.insight ? `、隊員功法領悟 +${realm.firstClear.insight}` : ''}
+            首次通關：
+            {[
+              ...realm.firstClear.recipes.map((r) => `丹方「${content.recipes.get(r)?.name}」`),
+              ...(realm.firstClear.openRegion ? [`開放${content.regions.get(realm.firstClear.openRegion)?.name}`] : []),
+              ...realm.firstClear.equipment.map((e) => `法器「${content.equipment.get(e)?.name}」`),
+              ...(realm.firstClear.items.length ? ['珍貴典籍或秘法'] : []),
+              ...(realm.firstClear.insight ? [`隊員功法領悟 +${realm.firstClear.insight}`] : []),
+            ].join('、')}
+            {Object.keys(realm.firstClear.resources).length > 0 && (
+              <>
+                ・<ResList value={realm.firstClear.resources} />
+              </>
+            )}
             {game.claimedRewards.includes(realm.firstClear.rewardId) && <span className="tag">已領取</span>}
           </p>
           <p className="small">
@@ -350,7 +366,7 @@ function Prepare() {
           className="btn gold"
           style={{ marginTop: '.5rem' }}
           data-testid="explore-start"
-          disabled={!team.length || game.exploredThisMonth}
+          disabled={!team.length || game.exploredThisMonth || !!realmLocked(game, content, realm)}
           onClick={() => dispatch({ type: 'startExploration', realmId: realm.id, teamIds: team, rows })}
         >
           出發探索
@@ -366,12 +382,69 @@ function Prepare() {
   );
 }
 
+function TrialPanel() {
+  const game = useGame();
+  const dispatch = useUi((s) => s.dispatch);
+  const [team, setTeam] = useState<string[]>([]);
+  const [tier, setTier] = useState('normal');
+  const T = balance.trial;
+  const picked = team.filter((id) => game.disciples.some((d) => d.id === id && !trialUnavailable(game, d)));
+  const blocked = trialBlocked(game, picked);
+  const toggle = (id: string) => setTeam(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id].slice(0, T.maxTeam));
+  return (
+    <details className="panel" data-testid="trial-panel">
+      <summary>
+        <b>宗門試煉</b>
+        <span className="muted small">（大殿 {T.hall} 級起；弟子每人每年一次，失敗不受傷）</span>
+      </summary>
+      <p className="small">
+        讓內門弟子與試煉傀儡過招。傀儡依隊伍最強者的境界配置；通過的人得到下一階修為的一部分與功法領悟，沒通過只是生命降到一半、修為 +{T.loseXpPct}%。每人花費靈石 {T.lingshiPer}。
+      </p>
+      <div className="row small">
+        {game.disciples.map((d) => {
+          const why = trialUnavailable(game, d);
+          return (
+            <label key={d.id} title={why}>
+              <input type="checkbox" data-testid={`trial-member-${d.id}`} disabled={!!why} checked={picked.includes(d.id)} onChange={() => toggle(d.id)} />
+              {d.name}（{realmName(d.realm)}）{why ? <span className="muted">・{why}</span> : null}
+            </label>
+          );
+        })}
+        {!game.disciples.length && <span className="muted">還沒有內門弟子。</span>}
+      </div>
+      <div className="row small">
+        {T.tiers.map((t) => (
+          <label key={t.id}>
+            <input type="radio" name="trial-tier" data-testid={`trial-tier-${t.id}`} checked={tier === t.id} onChange={() => setTier(t.id)} />
+            {t.name}（修為 +{t.xpPct}%、領悟 +{t.insight}
+            {picked.length > 0 && !blocked ? `，勝算約 ${trialOdds(game, content, picked, t.id)}%` : ''}）
+          </label>
+        ))}
+      </div>
+      <button className="btn" data-testid="trial-start" disabled={!!blocked} title={blocked} onClick={() => dispatch({ type: 'runTrial', teamIds: picked, tier })}>
+        開始試煉
+      </button>
+      {blocked && picked.length > 0 && <span className="small neg"> {blocked}</span>}
+      {game.battles[0]?.title.startsWith('宗門試煉') && game.battles[0].date.year === game.date.year && game.battles[0].date.month === game.date.month && (
+        <BattleView b={game.battles[0]} />
+      )}
+    </details>
+  );
+}
+
 export function ExplorePage() {
   const game = useGame();
   return (
     <div>
       <h2>探索</h2>
-      {game.exploration ? <ActiveRun /> : <Prepare />}
+      {game.exploration ? (
+        <ActiveRun />
+      ) : (
+        <>
+          <Prepare />
+          <TrialPanel />
+        </>
+      )}
     </div>
   );
 }

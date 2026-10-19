@@ -40,6 +40,8 @@ export const buildingLevelSchema = z.object({
   requiresHall: z.number().int().nonnegative(),
   effects: z.object({
     workerSlots: z.number().int().optional(),
+    /** 倉庫：材料存放上限增加量（糧食加倍） */
+    storageBonus: z.number().int().optional(),
     foodPerWorker: z.number().int().optional(),
     herbPerWorker: z.number().int().optional(),
     stonePerWorker: z.number().int().optional(),
@@ -146,6 +148,26 @@ const choiceSchema = z.object({
   /** 隊伍每人損失最大生命的百分比 */
   hpLossPct: z.number().int().min(0).max(100).optional(),
   loot: resourceMap.optional(),
+  /** 事件池：選這個選項時領取該事件的一次性機緣 */
+  unique: z.boolean().optional(),
+});
+
+/** 事件池裡的事件（P2 批次 E）：每次走到標著 pool 的節點時隨機抽一個；有一次性機緣的事件領過後不再出現。 */
+export const poolEventSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  text: z.string(),
+  choices: z.array(choiceSchema).min(1),
+  unique: z
+    .object({
+      rewardId: z.string(),
+      text: z.string(),
+      resources: resourceMap.default({}),
+      equipment: z.array(z.string()).default([]),
+      /** 每位倖存隊員增加的功法領悟度 */
+      insight: z.number().int().nonnegative().default(0),
+    })
+    .optional(),
 });
 
 export const nodeSchema = z.object({
@@ -157,10 +179,12 @@ export const nodeSchema = z.object({
   loot: resourceMap.optional(),
   enemies: z.array(z.string()).optional(),
   choices: z.array(choiceSchema).optional(),
+  /** 從秘境的事件池抽事件（P2 批次 E） */
+  pool: z.boolean().optional(),
 });
 
 export const secretRealmSchema = z.object({
-  id: z.string().regex(/^secret\.[a-z_]+$/),
+  id: z.string().regex(/^secret\.[a-z0-9_]+$/),
   name: z.string(),
   description: z.string(),
   risk: z.string(),
@@ -168,6 +192,12 @@ export const secretRealmSchema = z.object({
   maxTeam: z.number().int().positive(),
   startNode: z.string(),
   nodes: z.array(nodeSchema).min(2),
+  /** 事件池（P2 批次 E） */
+  eventPool: z.array(poolEventSchema).default([]),
+  /** 要先通關哪個秘境才能進入（多層秘境的上一層） */
+  requires: z.string().optional(),
+  /** 多層秘境的名稱與層數，例如「太虛古境」第 2 層 */
+  group: z.object({ name: z.string(), floor: z.number().int().positive() }).optional(),
   firstClear: z.object({
     rewardId: z.string(),
     recipes: z.array(z.string()),
@@ -387,6 +417,8 @@ export type RecipeDef = z.infer<typeof recipeSchema>;
 export type EnemyDef = z.infer<typeof enemySchema>;
 export type SecretRealmDef = z.infer<typeof secretRealmSchema>;
 export type RealmNodeDef = z.infer<typeof nodeSchema>;
+export type PoolEventDef = z.infer<typeof poolEventSchema>;
+export type ChoiceDef = z.infer<typeof choiceSchema>;
 export type LineageDef = z.infer<typeof lineageSchema>;
 export type RegionDef = z.infer<typeof regionSchema>;
 export type BeastSpeciesDef = z.infer<typeof beastSpeciesSchema>;

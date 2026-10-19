@@ -25,6 +25,7 @@ let violations = 0;
 let deaths = 0;
 const warLines: string[] = [];
 let warDeaths = 0;
+let storageLosses = 0;
 
 for (let i = 0; i < years * 12; i++) {
   const before = state;
@@ -52,6 +53,7 @@ for (let i = 0; i < years * 12; i++) {
       if (l.includes('山門')) mark('首次山門戰');
     }
     if (l.includes('戰死')) warDeaths++;
+    if (l.startsWith('倉庫放不下')) storageLosses++;
     if (l.startsWith('✝ 掌門')) mark(`掌門繼承（第 ${(state.ancestors ?? []).length} 代）`);
     else if (l.startsWith('✝ ')) {
       deaths++;
@@ -79,6 +81,8 @@ for (let i = 0; i < years * 12; i++) {
   if (state.buildings.some((b) => b.defId === 'building.alchemy' && b.level >= 1)) mark('煉丹房完工');
   if (state.stats.explorations) mark('首次探索');
   if (state.realmClears['secret.abandoned_cave']) mark('荒廢洞府通關');
+  if (state.buildings.some((b) => b.defId === 'building.warehouse' && b.level >= 1)) mark('倉庫完工');
+  if (Object.keys(state.trials).length) mark('首次宗門試煉');
   if (state.buildings.some((b) => b.defId === 'building.market' && b.level >= 1)) mark('坊市完工');
   if (state.buildings.some((b) => b.defId === 'building.talisman' && b.level >= 1)) mark('符陣閣完工');
   if (state.buildings.some((b) => b.defId === 'building.forge' && b.level >= 1)) mark('煉器坊完工');
@@ -126,6 +130,7 @@ console.log(
 console.log(`戰鬥 ${state.battles.length} 場（保留最近 30 場）：${state.battles.slice(0, 5).map((b) => `${b.title} ${b.result}`).join('；')}`);
 console.log(`弟子坐化 ${deaths} 人；歷代掌門：${(state.ancestors ?? []).map((a) => `${a.name}（${realmName(a.realm)}、${Math.floor(a.ageMonths / 12)} 歲）`).join('、') || '無'}；現任掌門 ${state.protagonist.name}（${Math.floor(state.protagonist.ageMonths / 12)} 歲）`);
 console.log(`戰事 ${warLines.length} 則、戰死 ${warDeaths} 人；${state.sects.filter((x) => x.annexed).map((x) => `${content.sects.get(x.id)?.name}已被吞併`).concat(state.sects.filter((x) => x.vassal && !x.annexed).map((x) => `${content.sects.get(x.id)?.name}為附屬`)).join('、') || '沒有吞併或附屬'}`);
+console.log(`倉庫損耗 ${storageLosses} 個月；宗門試煉參加過 ${Object.keys(state.trials).length} 人`);
 for (const l of warLines.slice(0, 30)) console.log(`  ${l}`);
 console.log(`外交：${state.sects.map((x) => `${content.sects.get(x.id)?.name} 好感 ${x.favor} 信任 ${x.trust ?? 0}${x.treaty ? `（${x.treaty.kind}）` : ''}`).join('、')}；據點：${state.sites.map((x) => `${x.name}→${x.owner === 'player' ? '我宗' : x.owner ? content.sects.get(x.owner)?.name : '無主'}`).join('、')}`);
 console.log(`不變條件違反次數（資源為負或非整數）：${violations}`);

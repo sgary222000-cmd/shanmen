@@ -1,6 +1,6 @@
 import { balance } from '../../../content/balance';
 import type { ContentPack } from '../../../content/registry';
-import type { RealmNodeDef, SecretRealmDef } from '../../../content/schema';
+import type { ChoiceDef, PoolEventDef, RealmNodeDef, SecretRealmDef } from '../../../content/schema';
 import { ensure } from '../../errors';
 import { newId } from '../../ids';
 import { addInto, canAfford, formatResources, scaleResources, spend } from '../../resources';
@@ -28,6 +28,24 @@ export function nodeDef(realm: SecretRealmDef, id: string): RealmNodeDef {
   return node;
 }
 
+/** 事件池節點這次抽到的事件。 */
+export function poolEventOf(realm: SecretRealmDef, run: ExplorationRun, nodeId: string): PoolEventDef | undefined {
+  const id = run.events?.[nodeId];
+  return id ? realm.eventPool.find((e) => e.id === id) : undefined;
+}
+
+/** 節點顯示的標題、說明與選項（事件池節點用抽到的事件）。 */
+export function nodeView(realm: SecretRealmDef, run: ExplorationRun, node: RealmNodeDef): { title: string; text: string; choices?: ChoiceDef[] } {
+  const ev = node.pool ? poolEventOf(realm, run, node.id) : undefined;
+  return ev ? { title: ev.title, text: ev.text, choices: ev.choices } : { title: node.title, text: node.text, choices: node.choices };
+}
+
+/** 進入秘境的前提（多層秘境要先通關上一層）。 */
+export function realmLocked(state: GameState, content: ContentPack, realm: SecretRealmDef): string | undefined {
+  if (realm.requires && !(state.realmClears[realm.requires] ?? 0)) return `要先通關${content.secretRealms.get(realm.requires)?.name ?? '上一層'}`;
+  return undefined;
+}
+
 export function canJoinExpedition(state: GameState, c: Character): string | undefined {
   if (isInjured(c)) return `${c.name}受傷中`;
   if (c.role === 'protagonist' && state.protagonist.seclusion) return `${c.name}閉關中，需先中斷閉關`;
@@ -45,6 +63,8 @@ export function startExploration(
   rows: Record<string, Row>,
 ): void {
   const realm = realmDef(content, realmId);
+  const locked = realmLocked(state, content, realm);
+  ensure(!locked, locked ?? '');
   ensure(!state.exploration, '已有進行中的探索');
   ensure(!state.exploredThisMonth, '本月已進行過探索，請推進月份後再來');
   ensure(teamIds.length >= 1, '至少需要一名隊員');
@@ -81,6 +101,7 @@ export function startExploration(
     choices: {},
     log: [`補給：${formatResources(realm.supplies)}。進入${realm.name}。`],
     firstClear: !state.claimedRewards.includes(realm.firstClear.rewardId),
+    events: {},
   };
   state.exploredThisMonth = true;
 }
@@ -151,11 +172,18 @@ export function moveTo(state: GameState, content: ContentPack, nextId: string): 
   const realm = realmDef(content, run.realmId);
   const current = nodeDef(realm, run.nodeId);
   ensure(current.next.includes(nextId), '無法前往該處');
-  ensure(!current.choices || run.choices[current.id], '請先決定如何處理此處');
+  ensure(!nodeView(realm, run, current).choices || run.choices[current.id], '請先決定如何處理此處');
   const node = nodeDef(realm, nextId);
   run.nodeId = nextId;
   run.visited.push(nextId);
-  run.log.push(`前往「${node.title}」。${node.text}`);
+  if (node.pool) {
+    const taken = new Set(Object.values(run.events ?? {}));
+    const pool = realm.eventPool.filter((e) => !taken.has(e.id) && !(e.unique && state.claimedRewards.includes(e.unique.rewardId)));
+    const ev = pool[rng(state, 'combat').int(pool.length)];
+    if (ev) (run.events ??= {})[node.id] = ev.id;
+  }
+  const view = nodeView(realm, run, node);
+  run.log.push(`前往「${view.title}」。${view.text}`);
 
   if (node.enemies?.length) {
     const record = fight(state, content, realm, node);
@@ -178,7 +206,7 @@ export function chooseEvent(state: GameState, content: ContentPack, choiceId: st
   ensure(run && run.status === 'active', '沒有進行中的探索');
   const realm = realmDef(content, run.realmId);
   const node = nodeDef(realm, run.nodeId);
-  const choice = node.choices?.find((c) => c.id === choiceId);
+  const choice = nodeView(realm, run, node).choices?.find((c) => c.id === choiceId);
   ensure(choice, '沒有這個選項');
   ensure(!run.choices[node.id], '已經做過選擇');
   run.choices[node.id] = choice.id;
@@ -192,6 +220,23 @@ export function chooseEvent(state: GameState, content: ContentPack, choiceId: st
     }
   }
   if (choice.loot) addInto(run.loot, scaleResources(choice.loot, lootPct(state, realm)));
+  const unique = choice.unique ? poolEventOf(realm, run, node.id)?.unique : undefined;
+  if (unique && !state.claimedRewards.includes(unique.rewardId)) {
+    state.claimedRewards.push(unique.rewardId);
+    run.log.push(`機緣：${unique.text}${Object.keys(unique.resources).length ? `取得${formatResources(unique.resources)}（月底入庫，撤退或戰敗也不會失去）。` : ''}`);
+    addInto(state.pendingLoot, unique.resources);
+    for (const e of unique.equipment) {
+      state.armory.push(e);
+      run.log.push(`取得法器「${content.equipment.get(e)?.name ?? e}」（可在弟子頁裝備）。`);
+    }
+    if (unique.insight) {
+      for (const id of aliveTeam(run)) {
+        const c = findCharacter(state, id);
+        if (c) c.insight = Math.min(balance.technique.maxInsight, c.insight + unique.insight);
+      }
+      run.log.push(`倖存隊員功法領悟 +${unique.insight}。`);
+    }
+  }
 }
 
 export function retreat(state: GameState, content: ContentPack): void {
