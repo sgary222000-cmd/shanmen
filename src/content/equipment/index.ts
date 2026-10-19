@@ -37,4 +37,20 @@ export const equipment: EquipmentDef[] = [
     def: 3,
     hp: 20,
   },
+  {
+    id: 'equip.taixu_mirror',
+    name: '照虛古鏡',
+    description: '太虛古境中無名修士的遺物，鏡光護身，能化去大半攻勢。',
+    atk: 4,
+    def: 20,
+    hp: 150,
+  },
+  {
+    id: 'equip.taixu_sword',
+    name: '劍冢神兵',
+    description: '太虛古境劍冢之主的佩劍，劍意凜然。',
+    atk: 40,
+    def: 6,
+    hp: 60,
+  },
 ];

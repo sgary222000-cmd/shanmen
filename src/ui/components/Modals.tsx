@@ -139,7 +139,7 @@ function VictoryChoices({ eventId, sectId }: { eventId: string; sectId: string }
       text: `取得對方最多 ${W.cedeSites} 處據點，賠償約 ${Math.min(sect.resources.lingshi, W.indemnityBase + sect.power * W.indemnityPerPower)} 靈石。`,
       blocked: undefined,
     },
-    { choice: 'vassal' as const, label: '收為附屬', text: `對方每月進貢約 ${vassalTribute(sect)} 靈石，不再與我宗為敵。`, blocked: undefined },
+    { choice: 'vassal' as const, label: '收為附屬', text: `對方 ${balance.war.vassalYears} 年內每月進貢約 ${vassalTribute(sect)} 靈石，期間不再與我宗為敵。`, blocked: undefined },
     {
       choice: 'annex' as const,
       label: '吞併',

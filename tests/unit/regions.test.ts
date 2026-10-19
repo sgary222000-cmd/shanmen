@@ -10,7 +10,7 @@ import { sellCap } from '../../src/engine/systems/economy/trade';
 import { unitFromCharacter } from '../../src/engine/systems/combat/combat';
 import { decode } from '../../src/save/codec';
 import { botTurn } from '../../tools/bot';
-import { advance, content, developed, edit, fresh, run, tryRun } from './helpers';
+import { advance, content, developed, edit, fresh, roomy, run, tryRun } from './helpers';
 
 const LINEAGES = ['lineage.sword', 'lineage.alchemy', 'lineage.beast', 'lineage.talisman'];
 
@@ -120,7 +120,7 @@ describe('區域', () => {
   });
 
   it('靈泉谷的靈田產量 +25%，預覽等於實際結算', () => {
-    const base = edit(openAll(developed()), (x) => {
+    const base = edit(openAll(roomy(developed())), (x) => {
       x.buildings = x.buildings.filter((b) => b.defId !== 'building.field');
       x.outer.jobs = { field: 6, quarry: 0, lumber: 0, garden: 0, mine: 0, errand: 0 };
     });

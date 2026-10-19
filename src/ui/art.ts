@@ -23,3 +23,13 @@ export function portraitOf(c: { id: string; gender: 'male' | 'female'; role: str
   if (c.role === 'protagonist' && c.id === 'c0') return c.gender === 'female' ? 'final/portrait-female.webp' : 'final/portrait-male.webp';
   return disciplePortrait(c);
 }
+
+/**
+ * 宗門全景依大殿等級分四個階段（P2 批次 E）：殘破（0–1 級）、重建（2 級）、興盛（3 級）、鼎盛（4 級以上）。
+ * 各階段的正式圖放在 final/panorama-stage{1-4}.webp，構圖與現有全景相同（建築名牌位置共用）；圖還沒到時沿用現有全景。
+ */
+export function panoramaFor(hall: number): string {
+  const stage = hall <= 1 ? 1 : Math.min(4, hall);
+  const path = `final/panorama-stage${stage}.webp`;
+  return artUrl(path) ? path : 'final/panorama.webp';
+}

@@ -510,3 +510,86 @@ h3.sec::after { content: ''; flex: 1; height: 1px; background: linear-gradient(9
 @media (max-height: 520px) { .toasts { top: 3rem; } }
 /* 可捲動的面板：四角紋飾跟著內容捲動，不會壓在文字上 */
 .newgame { background-attachment: local; }
+
+/* ── 手機直拿（P2 批次 E）：頂欄兩行、資源列可左右滑；功能列在最下方可左右滑，推進朱印在它右邊；
+      掌門卡在上、任務與警報在下，中間露出全景；視窗佔滿頂欄與功能列之間 ── */
+@media (orientation: portrait) and (max-width: 700px) {
+  html { font-size: 14px; }
+  .game .topbar { flex-wrap: wrap; gap: .3rem .5rem; padding: .35rem .5rem .6rem; }
+  .topbar .sect { font-size: 1.05rem; padding: .05rem .5rem; letter-spacing: .08em; }
+  .topbar .date { font-size: .95rem; white-space: nowrap; }
+  .topbar .alerts { padding: .15rem .5rem; font-size: .85rem; }
+  .game .topbar .res {
+    order: 3; width: 100%; flex-wrap: nowrap; overflow-x: auto; gap: .25rem;
+    scrollbar-width: none; overscroll-behavior-x: contain;
+  }
+  .game .topbar .res::-webkit-scrollbar { display: none; }
+  .res-chip { flex: none; padding: .05rem .4rem .05rem .2rem; }
+  .res-chip .lbl, .res-chip .d { display: none; }
+  .res-chip svg { width: 15px; height: 15px; }
+  .res-chip b { font-size: .9rem; }
+
+  .dock {
+    left: 0; right: 5.2rem; bottom: 0; transform: none;
+    gap: 0; padding: .25rem .2rem .35rem; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+    border-width: 1px 1px 0 0; border-radius: 0 6px 0 0;
+  }
+  .dock::-webkit-scrollbar { display: none; }
+  .dock button { flex: none; width: 3.5rem; font-size: .72rem; gap: 1px; }
+  .dock button:hover { transform: none; }
+  .dock .seal { width: 2.3rem; height: 2.3rem; font-size: 1.05rem; }
+  .dock .home { margin-right: .2rem; padding-right: .3rem; }
+  .game .topbar .advance { width: 4.4rem; height: 4.4rem; font-size: .85rem; right: .4rem; bottom: .35rem; outline-offset: 1px; border-width: 2px; }
+  .advance-multi { right: .4rem; bottom: 5.3rem; width: 4.4rem; }
+  .advance-multi > .btn { font-size: .75rem; }
+  .advance-multi .menu { width: 10rem; }
+
+  .hud-left { top: 5.6rem; left: .5rem; right: .5rem; width: auto; gap: .4rem; }
+  .hud-left .sect-card { display: none; }
+  .leader { padding: .25rem .6rem .25rem .25rem; }
+  .leader .face { width: 3.4rem; height: 3.4rem; }
+  .leader .nm { font-size: 1.1rem; }
+  .hud-right {
+    top: auto; bottom: 8rem; left: .5rem; right: .5rem; width: auto; gap: .4rem;
+    max-height: 36vh; overflow: auto;
+  }
+  .hud-right .hud-card ul { display: none; }
+  .hud-card { padding: .45rem .6rem; font-size: .85rem; }
+  .scene .spot { padding: .15rem .5rem; }
+  .scene .spot .nm { font-size: .8rem; }
+  .scene .spot .lv { display: none; }
+
+  .window-back { padding: 5.4rem .5rem 8.8rem; }
+  .window { box-shadow: 0 0 0 3px rgba(17,33,31,.92), 0 0 0 4px rgba(220,196,139,.5), 0 12px 30px rgba(0,0,0,.6); }
+  .window::before, .window::after { height: 8px; left: -6px; right: -6px; }
+  .window::before { top: -7px; }
+  .window::after { bottom: -7px; }
+  .window-head { padding: .35rem 2.8rem .3rem; }
+  .window-head h2 { font-size: 1.2rem; letter-spacing: .25em; }
+  .window-head h2::before, .window-head h2::after { margin: 0 .3rem; font-size: .65rem; }
+  .window-close { width: 2.2rem; height: 2.2rem; right: .4rem; }
+  .window-body { padding: .6rem .6rem .9rem; }
+  .tutorial-strip { padding: .2rem .6rem; font-size: .8rem; }
+  .tabs { margin-bottom: .6rem; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .tabs button { flex: none; padding: .35rem .7rem; font-size: .95rem; }
+  .grid.two, .grid.three, .grid.three.fill { grid-template-columns: minmax(0, 1fr); }
+  .roster-layout, .detail { grid-template-columns: minmax(0, 1fr); }
+  .roster { max-height: 30vh; overflow: auto; }
+  .roster-item.on::after { display: none; }
+  .hero { position: relative; max-width: 12rem; margin: 0 auto; }
+  .window-body .panel { overflow-x: auto; }
+  .window-body table { white-space: nowrap; }
+  .room-head, .region-head { height: 70px; }
+  .room-head h3 { font-size: 1.2rem !important; }
+  .run-head { height: 80px; }
+  .realm-strip { display: flex; overflow-x: auto; scrollbar-width: none; }
+  .realm-card { flex: none; width: 10.5rem; height: 74px; }
+  .realm-info { grid-template-columns: 1fr; }
+  .realm-info > .art { display: none; }
+  .bcard > .art { aspect-ratio: 2 / 1; }
+  .toasts { top: 5.4rem; }
+  .title-screen { padding: .8rem; }
+  .title-logo { padding: .4rem 1.4rem; }
+  .title-logo h1 { font-size: 2.2rem; }
+  .newgame { max-height: none; margin: 0; }
+}

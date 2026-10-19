@@ -1,5 +1,8 @@
 import type { ContentPack } from '../../content/registry';
+import { balance } from '../../content/balance';
 import { monthIndex } from '../date';
+import { RESOURCE_NAMES } from '../resources';
+import { STORED, storageCap } from './economy/storage';
 import type { GameState } from '../types';
 import { allCharacters, isInjured } from './characters/characters';
 import { monthsUntilEmpty, planMonth } from './economy/flows';
@@ -31,6 +34,11 @@ export function computeAlerts(state: GameState, content: ContentPack): Alert[] {
   }
   for (const b of state.buildings)
     if (b.damaged) alerts.push({ level: 'warning', text: `${content.buildings.get(b.defId)?.name ?? b.defId}損毀停用，在建設頁修復` });
+  for (const id of STORED) {
+    const cap = storageCap(state, content, id);
+    if (cap && state.resources[id] * 100 >= cap * balance.storage.warnPct)
+      alerts.push({ level: 'info', text: `${RESOURCE_NAMES[id]}快放滿倉庫（${state.resources[id]} / ${cap}），月底多出的新進貨會損耗` });
+  }
   if (plan.foodShortfall > 0) alerts.push({ level: 'danger', text: `本月糧食不足 ${plan.foodShortfall} 份` });
   else {
     const m = monthsUntilEmpty(state, plan, 'food');

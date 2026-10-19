@@ -8,6 +8,7 @@ import { equipItem } from '../systems/talent/equipment';
 import { buyScripture, openBranch } from '../systems/talent/branches';
 import { ascendGuardian, hatchBeast, raiseGuardian, setBeast } from '../systems/beasts/beasts';
 import { startDispatch } from '../systems/exploration/dispatch';
+import { runTrial } from '../systems/exploration/trial';
 import { giftSect, sectTrade } from '../systems/world/sects';
 import { enterTournament } from '../systems/world/tournament';
 import { bidAuction } from '../systems/world/auction';
@@ -64,6 +65,7 @@ export type Command =
   | { type: 'setWarTeam'; warId: string; teamIds: string[] }
   | { type: 'resolveVictory'; eventId: string; choice: VictoryChoice }
   | { type: 'repairBuilding'; buildingId: string }
+  | { type: 'runTrial'; teamIds: string[]; tier: string }
   | { type: 'startExploration'; realmId: string; teamIds: string[]; rows: Record<string, Row> }
   | { type: 'exploreMove'; nodeId: string }
   | { type: 'exploreChoice'; choiceId: string }
@@ -124,6 +126,7 @@ const LOGGED_COMMANDS = new Set<Command['type']>([
   'evacuate',
   'resolveVictory',
   'repairBuilding',
+  'runTrial',
 ]);
 
 export function applyCommand(state: GameState, content: ContentPack, cmd: Command): CommandResult {
@@ -213,6 +216,9 @@ export function applyCommand(state: GameState, content: ContentPack, cmd: Comman
         break;
       case 'repairBuilding':
         message = repairBuilding(next, content, cmd.buildingId);
+        break;
+      case 'runTrial':
+        message = runTrial(next, content, cmd.teamIds, cmd.tier);
         break;
       case 'startExploration':
         startExploration(next, content, cmd.realmId, cmd.teamIds, cmd.rows);

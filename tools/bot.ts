@@ -12,7 +12,8 @@ import { isRegionOpen, openRegionBlocked } from '../src/engine/systems/regions/r
 import { jobCapacity } from '../src/engine/systems/characters/outer';
 import { seatOptions } from '../src/engine/systems/characters/schedule';
 import { breakthroughOdds } from '../src/engine/systems/cultivation/cultivation';
-import { canJoinExpedition } from '../src/engine/systems/exploration/exploration';
+import { canJoinExpedition, nodeView } from '../src/engine/systems/exploration/exploration';
+import { trialBlocked, trialOdds, trialUnavailable } from '../src/engine/systems/exploration/trial';
 import { dispatchBlocked, dispatchOdds } from '../src/engine/systems/exploration/dispatch';
 import { atMajorThreshold, powerLevel, readyForFoundation, xpToNext } from '../src/engine/systems/characters/characters';
 import { canAfford } from '../src/engine/resources';
@@ -28,6 +29,12 @@ const REALM_PLAN: [string, number][] = [
   ['secret.underground_mine', 7],
   ['secret.beast_valley', 12],
   ['secret.ancient_ruins', 18],
+  // P2 批次 E：太虛古境五層
+  ['secret.taixu_1', 42],
+  ['secret.taixu_2', 47],
+  ['secret.taixu_3', 57],
+  ['secret.taixu_4', 63],
+  ['secret.taixu_5', 75],
 ];
 
 // 自動玩家：用簡單規則代替人類操作，供模擬器與測試跑長時間遊戲。
@@ -302,6 +309,7 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     ['building.ancestral', ['region.main'], 1],
     ['building.council', ['region.gate', 'region.main'], 1],
     ['building.grand_array', ['region.gate', 'region.main'], 1],
+    ['building.warehouse', ['region.gate', 'region.main'], hallLevel(s) >= 3 ? 1 : 0],
     ['building.beast_garden', ['region.valley', 'region.back'], 1],
     ['building.talisman', ['region.back', 'region.main'], route === 'craft' ? 2 : 1],
     ['building.mine', ['region.fire', 'region.outer'], route === 'craft' ? 2 : 1],
@@ -459,8 +467,8 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     if (c.takePill !== want) s = tryCmd(s, content, { type: 'setTakePill', characterId: c.id, value: want });
   }
 
-  // 突破
-  if (!breakthroughOdds(s, content, s.protagonist).blocked) {
+  // 突破（有人要來攻山門時先不衝，失敗受傷就不能出戰）
+  if (!s.wars.some((w) => w.side === 'defend') && !breakthroughOdds(s, content, s.protagonist).blocked) {
     if (s.protagonist.seclusion) s = tryCmd(s, content, { type: 'interruptSeclusion' });
     s = tryCmd(s, content, { type: 'setSchedule', characterId: p.id, schedule: 'breakthrough' });
     note('主角嘗試突破');
@@ -494,8 +502,9 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
         while (e.exploration?.status === 'active' && guard++ < 20) {
           const realm = content.secretRealms.get(e.exploration.realmId);
           const node = realm?.nodes.find((x) => x.id === e.exploration?.nodeId);
-          if (node?.choices && !e.exploration.choices[node.id]) {
-            e = tryCmd(e, content, { type: 'exploreChoice', choiceId: node.choices[0]?.id ?? '' });
+          const choices = realm && node ? nodeView(realm, e.exploration, node).choices : undefined;
+          if (node && choices && !e.exploration.choices[node.id]) {
+            e = tryCmd(e, content, { type: 'exploreChoice', choiceId: choices[0]?.id ?? '' });
             continue;
           }
           const nxt = node?.next[0];
@@ -508,9 +517,27 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     }
   }
 
+  // 宗門試煉：每年一月，挑三名能參加的弟子，選勝算七成以上的最高難度
+  if (s.date.month === 1 && s.resources.lingshi >= 200) {
+    const ids = s.disciples
+      .filter((d) => !trialUnavailable(s, d))
+      .sort((a, b) => powerLevel(b.realm) - powerLevel(a.realm))
+      .slice(0, balance.trial.maxTeam)
+      .map((d) => d.id);
+    if (ids.length && !trialBlocked(s, ids)) {
+      const tier = [...balance.trial.tiers].reverse().find((t) => trialOdds(s, content, ids, t.id) >= 70);
+      if (tier) {
+        s = tryCmd(s, content, { type: 'runTrial', teamIds: ids, tier: tier.id });
+        note(`宗門試煉：${tier.name}`);
+      }
+    }
+  }
+
   // 派遣：閒置內門組隊去最難、成功率夠高的已通關秘境
   const idle = s.disciples.filter((d) => d.schedule === 'cultivate' && !d.injuryMonths && !Object.values(s.positions).includes(d.id));
-  if (idle.length >= 2) {
+  // 有人要來攻山門時不派人出去
+  const underAttack = s.wars.some((w) => w.side === 'defend');
+  if (idle.length >= 2 && !underAttack) {
     for (const [realmId] of [...REALM_PLAN].reverse()) {
       const teamIds = idle.slice(0, 3).map((d) => d.id);
       if (dispatchBlocked(s, content, realmId, teamIds)) continue;
