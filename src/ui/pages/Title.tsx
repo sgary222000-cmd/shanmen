@@ -1,6 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import type { SlotInfo } from '../../save/storage';
-import { Art } from '../components/Art';
+import { artUrl } from '../art';
+
+/** 標題與開新局畫面的背景：宗門全景，慢慢飄移。 */
+export function TitleBackdrop() {
+  return (
+    <div className="scene title-scene">
+      <img className="blur" src={artUrl('final/panorama.webp')} alt="" />
+      <div className="scene-inner">
+        <img src={artUrl('final/panorama.webp')} alt="" />
+      </div>
+    </div>
+  );
+}
 import { useUi } from '../store';
 
 export function TitlePage() {
@@ -37,12 +49,12 @@ export function TitlePage() {
 
   return (
     <div className="title-screen">
-      <h1>山門長生錄</h1>
-      <p className="muted">單機修仙宗門經營・P0 核心試玩版（暫名）</p>
-      <div className="box">
-        <Art path="final/panorama.webp" alt="宗門全景" />
+      <TitleBackdrop />
+      <div className="title-logo">
+        <h1>山門長生錄</h1>
+        <p>單機修仙宗門經營・人界前期試玩版（暫名）</p>
       </div>
-      <div className="box stack">
+      <div className="box stack title-menu">
         {storageError && <p className="neg">{storageError}</p>}
         {latest?.summary && (
           <button className="btn gold" data-testid="continue" onClick={() => void loadSlot(latest.slot)}>

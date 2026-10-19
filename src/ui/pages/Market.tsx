@@ -17,6 +17,7 @@ import {
 import { priceText, SELLABLE, sellCap, type Sellable } from '../../engine/systems/economy/trade';
 import { canJoinExpedition } from '../../engine/systems/exploration/exploration';
 import { ResList } from '../components/Res';
+import { useTabs } from '../components/Layout';
 import { content, useGame, useUi } from '../store';
 
 const KIND_NAMES = { labor: '勞務', deliver: '交付', escort: '護衛' } as const;
@@ -33,11 +34,10 @@ function CommissionCard({ c }: { c: Commission }) {
   const n = Math.min(workers || max, max);
   const reward = commissionReward(game, content, c, c.kind === 'labor' ? Math.max(1, n) : 0);
   return (
-    <div className="panel" data-testid={`commission-${c.templateId}`}>
-      <h3>
-        {c.title} <span className="tag">{KIND_NAMES[c.kind]}</span>
-        <span className="tag">{left <= 1 ? '本月截止' : `剩 ${left} 個月`}</span>
-      </h3>
+    <div className={`panel notice kind-${c.kind}`} data-testid={`commission-${c.templateId}`}>
+      <span className="kind-stamp">{KIND_NAMES[c.kind]}</span>
+      <h3>{c.title}</h3>
+      <span className={`due ${left <= 1 ? 'soon' : ''}`}>{left <= 1 ? '本月截止' : `剩 ${left} 個月`}</span>
       <p className="small">{c.text}</p>
       {c.kind === 'labor' && (
         <p className="small">
@@ -119,7 +119,6 @@ function Board() {
   const game = useGame();
   return (
     <div>
-      <h3>委託榜</h3>
       <p className="muted small">
         每月月底更新，榜上至少有一件勞務委託（只要有閒置的外門就能接）。接下即當場結算，報酬立即入庫。
         <span className="tag provisional">數值暫定</span>
@@ -287,19 +286,34 @@ function Caravan() {
 export function MarketPage() {
   const game = useGame();
   const recruit = reputationRecruitBonus(game);
+  const { tab, bar } = useTabs([
+    { id: 'board', label: <>委託榜 <small>{game.commissions.length}</small></> },
+    { id: 'market', label: '坊市' },
+    { id: 'caravan', label: '山下商隊' },
+  ]);
   return (
     <div>
       <h2>坊市與委託</h2>
-      <p>
-        聲望 <b>{game.reputation}</b>
-        <span className="muted small">
-          ・招生外門 +{recruit} 人・坊市買價 −{discountPct(game)}%（每 {balance.reputation.recruitPer} 聲望招生 +1，最多 +
-          {balance.reputation.recruitMax}；每 {balance.market.repPerDiscount} 聲望買價 −1%，最多 −{balance.market.maxDiscount}%）
-        </span>
-      </p>
-      <Board />
-      <MarketTable />
-      <Caravan />
+      <div className="stats">
+        <div className="stat hl">
+          <div className="k">聲望</div>
+          <div className="v">{game.reputation}</div>
+        </div>
+        <div className="stat">
+          <div className="k">招生外門</div>
+          <div className="v">+{recruit}<small> 人</small></div>
+          <div className="s">每 {balance.reputation.recruitPer} 聲望 +1，最多 +{balance.reputation.recruitMax}</div>
+        </div>
+        <div className="stat">
+          <div className="k">坊市買價</div>
+          <div className="v">−{discountPct(game)}<small>%</small></div>
+          <div className="s">每 {balance.market.repPerDiscount} 聲望 −1%，最多 −{balance.market.maxDiscount}%</div>
+        </div>
+      </div>
+      {bar}
+      {tab === 'board' && <Board />}
+      {tab === 'market' && <MarketTable />}
+      {tab === 'caravan' && <Caravan />}
     </div>
   );
 }

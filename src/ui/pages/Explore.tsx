@@ -6,6 +6,7 @@ import { canJoinExpedition, retreatPct } from '../../engine/systems/exploration/
 import { dispatchBlocked, dispatchOdds, realmNodeLoot } from '../../engine/systems/exploration/dispatch';
 import { scaleResources } from '../../engine/resources';
 import { Art } from '../components/Art';
+import { artUrl, portraitOf } from '../art';
 import { ResList } from '../components/Res';
 import { content, useGame, useUi } from '../store';
 
@@ -83,10 +84,13 @@ function ActiveRun() {
   const finished = run.status !== 'active';
   return (
     <div>
-      <div className="panel">
+      <div className="room-head run-head">
+        <Art path={realm.art} alt={realm.name} />
         <h3>
           {realm.name}・{node.title}
         </h3>
+      </div>
+      <div className="panel">
         <div className="node-path small">
           {run.visited.map((id, i) => {
             const n = realm.nodes.find((x) => x.id === id);
@@ -231,16 +235,13 @@ function Prepare() {
   const toggle = (id: string) => setTeam(team.includes(id) ? team.filter((x) => x !== id) : [...team, id].slice(0, realm.maxTeam));
   return (
     <div>
-      <div className="row" style={{ marginBottom: '.5rem' }}>
+      <div className="realm-strip">
         {[...content.secretRealms.values()].map((r) => (
-          <button
-            key={r.id}
-            className={`btn small ${r.id === realmId ? '' : 'secondary'}`}
-            data-testid={`realm-tab-${r.id}`}
-            onClick={() => setRealmId(r.id)}
-          >
-            {r.name}
-            {(game.realmClears[r.id] ?? 0) > 0 ? '（已通關）' : ''}
+          <button key={r.id} className={`realm-card ${r.id === realmId ? 'on' : ''}`} data-testid={`realm-tab-${r.id}`} onClick={() => setRealmId(r.id)}>
+            <Art path={r.art} alt="" />
+            <span className="nm">{r.name}</span>
+            <span className="rc">建議實力 {r.recommend}</span>
+            {(game.realmClears[r.id] ?? 0) > 0 && <span className="cleared">已通關</span>}
           </button>
         ))}
       </div>
@@ -274,38 +275,33 @@ function Prepare() {
       <div className="panel">
         <h3>組隊</h3>
         {game.exploredThisMonth && <p className="neg">本月已經探索過，請推進月份後再來。</p>}
-        <table>
-          <tbody>
-            {people.map((c) => {
-              const reason = canJoinExpedition(game, c);
-              return (
-                <tr key={c.id}>
-                  <td>
-                    <label>
-                      <input
-                        type="checkbox"
-                        data-testid={`team-${c.id}`}
-                        disabled={!!reason}
-                        checked={team.includes(c.id)}
-                        onChange={() => toggle(c.id)}
-                      />{' '}
+        <div className="team-grid">
+          {people.map((c) => {
+            const reason = canJoinExpedition(game, c);
+            const on = team.includes(c.id);
+            return (
+              <div key={c.id} className={`member ${on ? 'on' : ''} ${reason ? 'off' : ''}`}>
+                <label>
+                  <img src={artUrl(portraitOf(c))} alt="" />
+                  <span className="t">
+                    <b>
+                      <input type="checkbox" data-testid={`team-${c.id}`} disabled={!!reason} checked={on} onChange={() => toggle(c.id)} />
                       {c.name}
-                    </label>
-                  </td>
-                  <td>{realmName(c.realm)}</td>
-                  <td>健康 {c.health}</td>
-                  <td>
-                    <select value={rows[c.id] ?? 'front'} onChange={(e) => setRows({ ...rows, [c.id]: e.target.value as Row })}>
-                      <option value="front">前排</option>
-                      <option value="back">後排</option>
-                    </select>
-                  </td>
-                  <td className="muted small">{reason ?? (isCraftSchedule(c.schedule) ? '出發後會離開工坊' : '')}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </b>
+                    <span>
+                      {realmName(c.realm)}・健康 {c.health}
+                    </span>
+                  </span>
+                </label>
+                <select value={rows[c.id] ?? 'front'} onChange={(e) => setRows({ ...rows, [c.id]: e.target.value as Row })} aria-label="站位">
+                  <option value="front">前排</option>
+                  <option value="back">後排</option>
+                </select>
+                <span className="muted small why">{reason ?? (isCraftSchedule(c.schedule) ? '出發後會離開工坊' : '')}</span>
+              </div>
+            );
+          })}
+        </div>
         <p className="muted small">前排有人時，敵人只能攻擊前排。出發的人本月行程改為探索，不能閉關或在工坊工作。</p>
         <div className="row">
           <label>

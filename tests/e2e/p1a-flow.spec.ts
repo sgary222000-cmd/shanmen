@@ -22,7 +22,10 @@ async function advance(page: Page, months: number) {
   }
 }
 
-const nav = (page: Page, id: string) => page.getByTestId(`nav-${id}`).click();
+const nav = async (page: Page, id: string, tab?: string) => {
+  await page.getByTestId(`nav-${id}`).click();
+  if (tab) await page.getByTestId(`tab-${tab}`).click();
+};
 
 test('御獸開局：靈獸隨行，修路開放靈泉谷並在谷中建靈田', async ({ page }) => {
   const errors: string[] = [];
@@ -55,7 +58,7 @@ test('御獸開局：靈獸隨行，修路開放靈泉谷並在谷中建靈田',
   await page.getByTestId('build-building.lumber').click();
   await shot(page, '03-外山');
   await advance(page, 1);
-  await nav(page, 'industry');
+  await nav(page, 'industry', 'jobs');
   await page.getByTestId('job-quarry').fill('5');
   await page.getByTestId('job-lumber').fill('5');
   await page.getByTestId('job-errand').fill('2');
@@ -78,7 +81,7 @@ test('御獸開局：靈獸隨行，修路開放靈泉谷並在谷中建靈田',
   await page.getByTestId('build-building.field').click();
   await expect(page.getByText('槽位 1 / 5')).toBeVisible();
   await advance(page, 1);
-  await nav(page, 'industry');
+  await nav(page, 'industry', 'jobs');
   await page.getByTestId('job-field').fill('6');
   await page.getByTestId('job-errand').fill('0');
   await page.getByTestId('apply-jobs').click();

@@ -8,7 +8,10 @@ const shot = async (page: Page, name: string) => {
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: `test-results/p1cde/${name}.png`, fullPage: true });
 };
-const nav = (page: Page, id: string) => page.getByTestId(`nav-${id}`).click();
+const nav = async (page: Page, id: string, tab?: string) => {
+  await page.getByTestId(`nav-${id}`).click();
+  if (tab) await page.getByTestId(`tab-${tab}`).click();
+};
 
 async function closeModals(page: Page) {
   for (let i = 0; i < 3; i++) {
@@ -90,9 +93,11 @@ test('職位、法器、分支、靈獸、大比、派遣、競標都能在介�
   await shot(page, '01-結丹預覽');
 
   // 弟子：南宮婉出任傳功長老，主角裝備礦魄刀
-  await nav(page, 'disciples');
+  await nav(page, 'disciples', 'positions');
   await page.getByTestId('position-mentor').selectOption('c7');
   await expect(page.getByTestId('positions')).toContainText('南宮婉');
+  await page.getByTestId('tab-inner').click();
+  await page.getByTestId('roster-c7').click();
   await page.getByTestId('equip-c7').selectOption('equip.common');
   await expect(page.getByTestId('equip-c7')).toHaveValue('equip.common');
   await shot(page, '02-職位與法器');
@@ -101,7 +106,7 @@ test('職位、法器、分支、靈獸、大比、派遣、競標都能在介�
   await expect(page.getByTestId('char-c0')).toContainText('礦魄刀');
 
   // 傳承與功法：以萬用典籍開設符籙分支，由南宮婉主持
-  await nav(page, 'lineage');
+  await nav(page, 'lineage', 'branches');
   await page.getByTestId('branch-host-lineage.talisman').selectOption('c7');
   await page.getByTestId('open-branch-lineage.talisman').click();
   await expect(page.getByTestId('branches')).toContainText('已開設');
@@ -121,9 +126,11 @@ test('職位、法器、分支、靈獸、大比、派遣、競標都能在介�
   await expect(page.getByTestId(`sect-${sect}`)).toBeVisible();
   await page.getByTestId(`gift-${sect}`).click();
   await expect(page.getByTestId(`sect-${sect}`)).toContainText('今年已送 1 次');
+  await page.getByTestId('tab-tournament').click();
   await page.getByTestId('t-team-c8').check();
   await page.getByTestId('enter-tournament').click();
   await expect(page.getByTestId('tournament')).toContainText('名');
+  await page.getByTestId('tab-auction').click();
   await page.getByTestId('bid').click();
   await expect(page.getByTestId('auction')).toContainText('我宗目前出價：50');
   await shot(page, '05-宗門往來');
@@ -162,7 +169,7 @@ test('批次 B 存檔匯入後自動升級，新頁面可以打開', async ({ pa
   await expect(page.locator('[data-testid^="beast-beast"]').first()).toContainText('幼年');
   await nav(page, 'world');
   await expect(page.getByText('前期保護中')).toBeVisible();
-  await nav(page, 'lineage');
+  await nav(page, 'lineage', 'branches');
   await expect(page.getByTestId('branches')).toBeVisible();
   await shot(page, '08-批次B存檔升級');
 });

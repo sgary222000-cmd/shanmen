@@ -17,3 +17,9 @@ export function disciplePortrait(c: { id: string; gender: 'male' | 'female' }): 
   for (const ch of c.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return `final/disciple-${c.gender}-0${(h % DISCIPLE_PORTRAITS[c.gender]) + 1}.webp`;
 }
+
+/** 任何人物的肖像：掌門用主角立繪，內門弟子用肖像庫。 */
+export function portraitOf(c: { id: string; gender: 'male' | 'female'; role: string }): string {
+  if (c.role === 'protagonist') return c.gender === 'female' ? 'final/portrait-female.webp' : 'final/portrait-male.webp';
+  return disciplePortrait(c);
+}

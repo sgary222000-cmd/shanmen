@@ -9,6 +9,8 @@ import { SCHEDULE_NAMES } from '../../engine/systems/characters/schedule';
 import { craftOdds } from '../../engine/systems/economy/flows';
 import { SKILL_NAMES } from '../components/CharacterPanel';
 import { ResList } from '../components/Res';
+import { Art } from '../components/Art';
+import { useTabs } from '../components/Layout';
 import { content, useGame, useUi } from '../store';
 
 /** 收支表一定列出的資源（P0 就有的八種）；批次 B 的新資源有庫存或有收支時才列出。 */
@@ -152,7 +154,10 @@ function Workshop({ station }: { station: Station }) {
   const list = benchList(game, station);
   return (
     <div className="panel" data-testid={`station-${station}`}>
-      <h3>{info.room}</h3>
+      <div className="room-head">
+        {roomArt[station] && <Art path={roomArt[station]} alt={info.room} />}
+        <h3>{info.room}</h3>
+      </div>
       {Array.from({ length: count }, (_, i) => {
         const f = list[i] ?? { alchemistId: null, recipeId: null, repeat: true };
         const fp = plan.furnaces.find((x) => x.station === station && x.index === i);
@@ -170,11 +175,15 @@ function Workshop({ station }: { station: Station }) {
         };
         const odds = f.recipeId && f.alchemistId ? craftOdds(game, content, station, f.recipeId, f.alchemistId, i) : null;
         return (
-          <div key={i} className="row" style={{ marginBottom: '.5rem', flexWrap: 'wrap' }}>
-            <b>
-              {info.bench} {i + 1}
-              <span className="muted small">（{content.regions.get(benchRoom(game, content, station, i)?.region ?? '')?.name}）</span>
-            </b>
+          <div key={i} className={`bench ${f.recipeId && f.alchemistId ? (fp && !fp.runs ? 'stopped' : 'running') : 'idle'}`}>
+            <div className="bench-head">
+              <b>
+                {info.bench} {i + 1}
+              </b>
+              <span className="muted small">{content.regions.get(benchRoom(game, content, station, i)?.region ?? '')?.name}</span>
+              <span className="state">{f.recipeId && f.alchemistId ? (fp && !fp.runs ? '停工' : '運作中') : '閒置'}</span>
+            </div>
+            <div className="row">
             {info.worker}：
             <select value={f.alchemistId ?? ''} data-testid={`${prefix}-${i}-alchemist`} onChange={(e) => set({ alchemistId: e.target.value || null })}>
               <option value="">（無）</option>
@@ -214,6 +223,7 @@ function Workshop({ station }: { station: Station }) {
                 {fp && !fp.runs && <span className="neg">（{fp.reason}）</span>}
               </span>
             )}
+            </div>
           </div>
         );
       })}
@@ -226,15 +236,25 @@ function Workshop({ station }: { station: Station }) {
   );
 }
 
+const roomArt: Record<Station, string> = {
+  alchemy: 'final/alchemy.webp',
+  forge: 'final/forge.webp',
+  talisman: 'final/talisman.webp',
+};
+
 export function IndustryPage() {
+  const { tab, bar } = useTabs([
+    { id: 'ledger', label: '本月收支' },
+    { id: 'jobs', label: '外門分工' },
+    ...STATIONS.map((st) => ({ id: st, label: STATION_INFO[st].room })),
+  ]);
   return (
     <div>
       <h2>產業</h2>
-      <Ledger />
-      <OuterJobs />
-      {STATIONS.map((st) => (
-        <Workshop key={st} station={st} />
-      ))}
+      {bar}
+      {tab === 'ledger' && <Ledger />}
+      {tab === 'jobs' && <OuterJobs />}
+      {STATIONS.map((st) => tab === st && <Workshop key={st} station={st} />)}
     </div>
   );
 }

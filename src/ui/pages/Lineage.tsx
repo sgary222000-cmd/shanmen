@@ -6,6 +6,7 @@ import { branchBlocked, scriptureBlocked } from '../../engine/systems/talent/bra
 import { ITEM_NAMES, scriptureItem } from '../../engine/systems/talent/items';
 import { insightGain, libraryResearch, techniqueOf, techniqueTier } from '../../engine/systems/talent/techniques';
 import { SKILL_NAMES } from '../components/CharacterPanel';
+import { useTabs } from '../components/Layout';
 import { content, useGame, useUi } from '../store';
 
 // 傳承與功法：主修功法領悟、藏經閣研究、傳承分支、典籍與庫房法器。
@@ -93,21 +94,30 @@ export function LineagePage() {
   const tech = techniqueOf(game, content);
   const lib = libraryResearch(game, content);
   const tiers = balance.technique.tiers;
+  const { tab, bar } = useTabs([
+    { id: 'tech', label: '主修功法' },
+    { id: 'branches', label: '傳承分支' },
+    { id: 'treasure', label: '珍藏' },
+  ]);
   return (
     <div>
       <h2>傳承與功法</h2>
+      {bar}
+      {tab === 'tech' && (
       <div className="panel">
         <h3>
           {lineage?.name}傳承・主修功法《{tech?.name}》
         </h3>
         <p className="small">{tech?.description}</p>
-        <ul className="small">
+        <ol className="tier-track">
           {tiers.map((t, i) => (
-            <li key={t.name}>
-              <b>{t.name}</b>（領悟 {t.insight}）：{tech?.tierText[i]}
+            <li key={t.name} className={game.protagonist.insight >= t.insight ? 'got' : ''}>
+              <b>{t.name}</b>
+              <span className="need">領悟 {t.insight}</span>
+              <span className="small">{tech?.tierText[i]}</span>
             </li>
           ))}
-        </ul>
+        </ol>
         <p className="small">
           領悟來源：平時修煉每月 +{balance.technique.passive.qi}（築基 +{balance.technique.passive.foundation}、金丹 +
           {balance.technique.passive.core}），閉關再 +{balance.technique.seclusionPassive}；在藏經閣「研究功法」每月 +
@@ -144,7 +154,9 @@ export function LineagePage() {
         </table>
         <p className="muted small">在「主角」或「弟子」頁把行程改成「研究功法」（需藏經閣）。</p>
       </div>
-      <Branches />
+      )}
+      {tab === 'branches' && <Branches />}
+      {tab === 'treasure' && (
       <div className="panel">
         <h3>珍藏</h3>
         <p className="small">
@@ -156,6 +168,7 @@ export function LineagePage() {
           ・制式法器 {game.resources.artifact} 件（在「弟子」或「主角」頁裝備）
         </p>
       </div>
+      )}
     </div>
   );
 }

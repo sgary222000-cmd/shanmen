@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { computeAlerts, formatDate } from '../../engine';
 import { hallLevel, innerLimit, outerCapacity, qiCapacity } from '../../engine/systems/buildings/buildings';
-import { qiDemandOf, realmName } from '../../engine/systems/characters/characters';
+import { qiDemandOf, realmName, xpToNext } from '../../engine/systems/characters/characters';
 import { qiEfficiencyPct } from '../../engine/systems/cultivation/cultivation';
 import { currentStep, TUTORIAL_STEPS } from '../../engine/systems/tutorial';
 import { regionState } from '../../engine/systems/regions/regions';
 import { AlertList } from '../components/Alerts';
-import { Art } from '../components/Art';
+import { artUrl } from '../art';
 import { ResList } from '../components/Res';
 import { content, useGame, useUi } from '../store';
 
@@ -28,41 +28,38 @@ function TutorialCard() {
   if (!step) return null;
   const done = game.tutorial.done.length;
   return (
-    <div className="panel" data-testid="tutorial">
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        <h3>
-          引導 {done + 1}/{TUTORIAL_STEPS.length}：{step.title}
-        </h3>
-        <button className="btn small secondary" onClick={() => dispatch({ type: 'skipTutorial' })}>
+    <div className="hud-card quest" data-testid="tutorial">
+      <div className="hud-title">
+        <span>
+          引導 {done + 1}/{TUTORIAL_STEPS.length}
+        </span>
+        <button className="link" onClick={() => dispatch({ type: 'skipTutorial' })}>
           略過引導
         </button>
       </div>
+      <b>{step.title}</b>
       <p>{step.hint}</p>
     </div>
   );
 }
 
-export function OverviewPage() {
+/** 宗門全景：鋪滿視窗（保持比例、裁切多餘部分），建築名牌可點，進入建設。 */
+export function SceneBackdrop() {
   const game = useGame();
   const setPage = useUi((s) => s.setPage);
-  const alerts = useMemo(() => computeAlerts(game, content), [game]);
-  const report = game.reports[0];
-  const p = game.protagonist;
   return (
-    <div>
-      <h2>宗門總覽</h2>
-      <TutorialCard />
-      <div className="panel panorama">
-        <Art path="final/panorama.webp" alt="宗門全景" />
+    <div className="scene">
+      <img className="blur" src={artUrl('final/panorama.webp')} alt="" />
+      <div className="scene-inner">
+        <img src={artUrl('final/panorama.webp')} alt="宗門全景" />
         {[...content.buildings.values()].map((def) => {
           const pos = SPOTS[def.id];
           if (!pos) return null;
           // 全景圖畫的是主峰一帶；同種建築有多座時顯示座數
           const all = game.buildings.filter((x) => x.defId === def.id);
           const b = all.find((x) => x.region === 'region.main') ?? all[0];
-          const label = b
-            ? `${def.name}${all.length > 1 ? ` ×${all.length}` : b.level ? ` ${b.level}級` : b.construction ? '' : '（殘破）'}${b.construction ? '・施工中' : ''}${b.status === 'disabled' ? '・停用' : ''}`
-            : `${def.name}（未建）`;
+          const level = b ? (all.length > 1 ? `×${all.length}` : b.level ? `${b.level} 級` : b.construction ? '' : '殘破') : '未建';
+          const state = b?.construction ? '施工中' : b?.status === 'disabled' ? '停用' : '';
           return (
             <button
               key={def.id}
@@ -70,88 +67,107 @@ export function OverviewPage() {
               style={{ left: `${pos[0]}%`, top: `${pos[1]}%` }}
               onClick={() => setPage('build')}
             >
-              {label}
+              <span className="nm">{def.name}</span>
+              <span className="lv">{[level, state].filter(Boolean).join('・')}</span>
             </button>
           );
         })}
       </div>
-      <div className="grid two">
-        <div className="panel">
-          <h3>警報</h3>
+    </div>
+  );
+}
+
+/** 主畫面上的浮動資訊：左上掌門與宗門，右側任務、警報與月報。 */
+export function OverviewPage() {
+  const game = useGame();
+  const setPage = useUi((s) => s.setPage);
+  const alerts = useMemo(() => computeAlerts(game, content), [game]);
+  const report = game.reports[0];
+  const p = game.protagonist;
+  const need = xpToNext(p.realm);
+  return (
+    <>
+      <aside className="hud-left">
+        <button className="leader" onClick={() => setPage('protagonist')}>
+          <span className="face">
+            <img src={artUrl(p.gender === 'female' ? 'final/portrait-female.webp' : 'final/portrait-male.webp')} alt="" />
+          </span>
+          <span className="info">
+            <span className="nm">{p.name}</span>
+            <span className="rl">掌門・{realmName(p.realm)}</span>
+            <span className="xp">
+              <i style={{ width: `${Math.min(100, (p.xp * 100) / need)}%` }} />
+            </span>
+            <span className="xpn">
+              修為 {p.xp} / {need}
+            </span>
+          </span>
+        </button>
+        <div className="hud-card sect-card">
+          <div className="row2">
+            <span>宗門大殿</span>
+            <b>{hallLevel(game) ? `${hallLevel(game)} 級` : '殘破'}</b>
+          </div>
+          <div className="row2">
+            <span>內門</span>
+            <b>
+              {game.disciples.length} / {innerLimit(game, content)}
+            </b>
+          </div>
+          <div className="row2">
+            <span>外門</span>
+            <b>
+              {game.outer.count} / {outerCapacity(game, content)}
+            </b>
+          </div>
+          <div className="row2">
+            <span>傳承</span>
+            <b>{content.lineages.get(game.lineage)?.name}</b>
+          </div>
+          {[...content.regions.values()]
+            .filter((r) => qiCapacity(game, content, r.id) > 0 && regionState(game, r.id).status === 'open')
+            .map((r) => (
+              <div className="row2" key={r.id}>
+                <span>{r.name}靈氣</span>
+                <b className={qiEfficiencyPct(game, content, r.id) < 100 ? 'neg' : ''}>
+                  {qiDemandOf(game, r.id)} / {qiCapacity(game, content, r.id)}
+                </b>
+              </div>
+            ))}
+          <div className="regions">
+            {[...content.regions.values()]
+              .map((r) => `${r.name}${regionState(game, r.id).status === 'open' ? '' : regionState(game, r.id).status === 'opening' ? '（施工中）' : '（未開放）'}`)
+              .join('、')}
+          </div>
+        </div>
+      </aside>
+      <aside className="hud-right">
+        <TutorialCard />
+        <div className="hud-card">
+          <div className="hud-title">
+            <span>警報</span>
+          </div>
           <AlertList alerts={alerts} />
         </div>
-        <div className="panel">
-          <h3>宗門概況</h3>
-          <table>
-            <tbody>
-              <tr>
-                <th>掌門</th>
-                <td>
-                  {p.name}・{realmName(p.realm)}・修為 {p.xp}
-                </td>
-              </tr>
-              <tr>
-                <th>大殿</th>
-                <td>{hallLevel(game) ? `${hallLevel(game)} 級` : '殘破待修'}</td>
-              </tr>
-              <tr>
-                <th>內門</th>
-                <td>
-                  {game.disciples.length} / {innerLimit(game, content)} 人
-                </td>
-              </tr>
-              <tr>
-                <th>外門</th>
-                <td>
-                  {game.outer.count} / {outerCapacity(game, content)} 人・滿意度 {game.outer.satisfaction}・培養度 {game.outer.training}
-                </td>
-              </tr>
-              <tr>
-                <th>傳承</th>
-                <td>{content.lineages.get(game.lineage)?.name}</td>
-              </tr>
-              <tr>
-                <th>聲望</th>
-                <td>
-                  {game.reputation}・委託榜 {game.commissions.length} 件
-                  {game.market.rumor && <span className="muted small">・坊市消息：{game.market.rumor}</span>}
-                </td>
-              </tr>
-              <tr>
-                <th>區域</th>
-                <td>
-                  {[...content.regions.values()]
-                    .map((r) => `${r.name}${regionState(game, r.id).status === 'open' ? '' : regionState(game, r.id).status === 'opening' ? '（施工中）' : '（未開放）'}`)
-                    .join('、')}
-                </td>
-              </tr>
-              {[...content.regions.values()]
-                .filter((r) => qiCapacity(game, content, r.id) > 0 && regionState(game, r.id).status === 'open')
-                .map((r) => (
-                  <tr key={r.id}>
-                    <th>{r.name}靈氣</th>
-                    <td>
-                      容量 {qiCapacity(game, content, r.id)}・需求 {qiDemandOf(game, r.id)}・修煉效率 {qiEfficiencyPct(game, content, r.id)}%
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      {report && (
-        <div className="panel">
-          <h3>上月月報（{formatDate(report.date)}）</h3>
-          <p>
-            資源變化：<ResList value={report.delta} signed />
-          </p>
-          <ul className="small">
-            {report.lines.slice(0, 8).map((l, i) => (
-              <li key={i}>{l}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+        {report && (
+          <div className="hud-card">
+            <div className="hud-title">
+              <span>上月月報・{formatDate(report.date)}</span>
+              <button className="link" onClick={() => setPage('reports')}>
+                全部
+              </button>
+            </div>
+            <p className="small">
+              <ResList value={report.delta} signed />
+            </p>
+            <ul className="small">
+              {report.lines.slice(0, 4).map((l, i) => (
+                <li key={i}>{l}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </aside>
+    </>
   );
 }

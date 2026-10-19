@@ -4,7 +4,10 @@ import { expect, test, type Page } from '@playwright/test';
 // 全程只透過玩家介面操作。截圖存到 test-results/p1b/。
 
 const shot = (page: Page, name: string) => page.screenshot({ path: `test-results/p1b/${name}.png`, fullPage: true });
-const nav = (page: Page, id: string) => page.getByTestId(`nav-${id}`).click();
+const nav = async (page: Page, id: string, tab?: string) => {
+  await page.getByTestId(`nav-${id}`).click();
+  if (tab) await page.getByTestId(`tab-${tab}`).click();
+};
 
 async function closeModals(page: Page) {
   for (let i = 0; i < 3; i++) {
@@ -67,6 +70,7 @@ test('委託、坊市、製符都能在介面操作', async ({ page }) => {
   await shot(page, '02-委託完成');
 
   // 坊市：賣出一批石材、買入配方
+  await page.getByTestId('tab-market').click();
   const lingshiBefore = Number(await page.getByTestId('res-lingshi').textContent());
   const sellPrice = Number(await page.getByTestId('good-stone').locator('td').nth(4).textContent());
   await page.getByTestId('sell-stone').click();
@@ -82,15 +86,16 @@ test('委託、坊市、製符都能在介面操作', async ({ page }) => {
   await shot(page, '07-山門坊市');
 
   // 戰報：委託的護衛戰鬥記錄
-  await nav(page, 'reports');
+  await nav(page, 'reports', 'battles');
   await expect(page.getByText('委託・除去傷人妖狼').first()).toBeVisible();
 
   // 符陣閣：南宮婉執筆製符紙，保留 20 份靈木
-  await nav(page, 'industry');
+  await nav(page, 'industry', 'talisman');
   await page.getByTestId('talisman-0-alchemist').selectOption('c7');
   await page.getByTestId('talisman-0-recipe').selectOption('recipe.paper');
   await page.getByTestId('talisman-0-keep').fill('20');
   await expect(page.getByTestId('station-talisman')).toContainText('成符率');
+  await page.getByTestId('tab-ledger').click();
   await expect(page.getByTestId('ledger')).toContainText('符紙');
   await shot(page, '04-符陣閣');
   await page.getByTestId('advance').click();
@@ -111,10 +116,11 @@ test('批次 A 存檔匯入後自動升級，委託榜可用、坊市提示要�
   await page.getByRole('button', { name: '讀取存檔' }).click();
   await page.getByRole('button', { name: '讀取', exact: true }).first().click();
   await expect(page.getByTestId('date')).toHaveText('第 9 年 1 月');
-  await nav(page, 'market');
+  await nav(page, 'market', 'market');
   await expect(page.getByText('尚未建成坊市')).toBeVisible();
+  await page.getByTestId('tab-board').click();
   await expect(page.locator('[data-testid^="commission-"]').first()).toBeVisible();
   await shot(page, '06-批次A存檔升級');
-  await nav(page, 'industry');
+  await nav(page, 'industry', 'alchemy');
   await expect(page.getByTestId('station-alchemy')).toBeVisible();
 });

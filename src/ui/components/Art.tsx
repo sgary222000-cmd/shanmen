@@ -9,3 +9,17 @@ export function Art({ path, alt, className }: { path: string; alt: string; class
     </span>
   );
 }
+
+/** 頁首橫幅：插圖裁成長條，左側壓暗放頁名。 */
+export function Banner({ path, title, subtitle }: { path: string; title: string; subtitle?: string }) {
+  const url = artUrl(path);
+  return (
+    <div className="banner">
+      {url && <img src={url} alt="" />}
+      <div className="t">
+        <h2>{title}</h2>
+        {subtitle && <p>{subtitle}</p>}
+      </div>
+    </div>
+  );
+}
