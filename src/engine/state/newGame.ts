@@ -13,7 +13,7 @@ import { emptyPositions } from '../systems/talent/positions';
 import { initialSites } from '../systems/world/diplomacy';
 import { initialSects } from '../systems/world/sects';
 
-export const STATE_VERSION = 12;
+export const STATE_VERSION = 13;
 
 export interface NewGameOptions {
   sectName: string;
@@ -124,6 +124,8 @@ export function newGame(content: ContentPack, opts: NewGameOptions): GameState {
     auction: null,
     veins: [],
     bazaar: emptyBazaar(),
+    minorTechs: [],
+    composing: null,
     stats: { commands: 0, monthsAdvanced: 0, explorations: 0 },
   };
   rollMarket(state);

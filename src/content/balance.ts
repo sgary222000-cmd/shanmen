@@ -276,6 +276,37 @@ export const balance = {
     /** 閉關另加 */
     seclusionPassive: 1,
   },
+  /** 輔修功法（0.14.0，docs/功法擴充規劃.md 第二節）：藏經閣撰寫，每人另學一部，10 層 */
+  minorTechnique: {
+    /** 撰寫：作者要金丹以上、行程為研究功法；研究滿這麼多個月寫成 */
+    months: 6,
+    authorMajor: 'core' as const,
+    cost: { mat_scroll: 2, lingshi: 800 } as Partial<Resources>,
+    /** 寫成機率：基本 60%，作者主修功法每高於第 5 層一層 +2%，最多 95%；失敗退還一半材料 */
+    baseBp: 6000,
+    bpPerLevel: 200,
+    bpFromLevel: 5,
+    maxBp: 9500,
+    /** 第 1–10 層的累計輔修領悟度 */
+    levels: [0, 10, 25, 45, 70, 100, 140, 190, 250, 320],
+    maxInsight: 320,
+    /** 每月輔修領悟 = 主修領悟（不計上限）÷ 2，無條件進位 */
+    gainDivisor: 2,
+    list: [
+      { id: 'minor.vajra', name: '金剛不壞體', library: 2, desc: '每層防禦 +2%、生命 +1%', per: { defPct: 2, hpPct: 1 } },
+      { id: 'minor.swift', name: '驚鴻步', library: 2, desc: '每層敏捷 +0.5、閃避 +0.5%', per: { agi: 0.5, dodgePct: 0.5 } },
+      { id: 'minor.army', name: '破軍訣', library: 2, desc: '每層攻擊 +2%、暴擊 +0.3%', per: { atkPct: 2, critPct: 0.3 } },
+      { id: 'minor.spring', name: '回春訣', library: 2, desc: '每層每場戰鬥後回復生命 +1%', per: { healPct: 1 } },
+      { id: 'minor.spirit', name: '養神篇', library: 3, desc: '每層大突破成功率 +0.3%', per: { breakBp: 30 } },
+      { id: 'minor.crafts', name: '百藝心經', library: 3, desc: '每層煉丹、煉器、製符成功率 +0.5%', per: { craftBp: 50 } },
+    ] as {
+      id: string;
+      name: string;
+      library: number;
+      desc: string;
+      per: Partial<Record<'atkPct' | 'hpPct' | 'defPct' | 'critPct' | 'dodgePct' | 'agi' | 'healPct' | 'breakBp' | 'craftBp', number>>;
+    }[],
+  },
   /** 職位（批次 C）：每職一人、限內門弟子；任職當月修煉 −20% */
   positions: {
     xpPenaltyPct: 20,

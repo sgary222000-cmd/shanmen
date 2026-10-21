@@ -25,6 +25,7 @@ import { buyFood, sell, type Sellable } from '../systems/economy/trade';
 import { buyRecipe, marketBuy, marketSell, sellGear } from '../systems/economy/market';
 import { acceptCommission } from '../systems/commissions/commissions';
 import { bidGrandAuction, buyTreasure, doExchange, fulfillOrder } from '../systems/economy/bazaar';
+import { learnMinor, startCompose } from '../systems/talent/minorTechniques';
 import { advanceMonth } from '../systems/time/advanceMonth';
 import { resolveSuccession, setHeir, takeLongevityPill } from '../systems/characters/lifespan';
 import { updateTutorial } from '../systems/tutorial';
@@ -93,6 +94,8 @@ export type Command =
   | { type: 'buyTreasure'; goodId: string }
   | { type: 'bidGrandAuction'; lotId: string; amount: number }
   | { type: 'fulfillOrder' }
+  | { type: 'composeTechnique'; techId: string; authorId: string }
+  | { type: 'learnMinor'; characterId: string; techId: string | null }
   | { type: 'openBranch'; lineageId: string; hostId: string }
   | { type: 'buyScripture'; lineageId: string }
   | { type: 'hatchBeast' }
@@ -308,6 +311,12 @@ export function applyCommand(state: GameState, content: ContentPack, cmd: Comman
         break;
       case 'fulfillOrder':
         message = fulfillOrder(next, content);
+        break;
+      case 'composeTechnique':
+        message = startCompose(next, cmd.techId, cmd.authorId);
+        break;
+      case 'learnMinor':
+        message = learnMinor(next, cmd.characterId, cmd.techId);
         break;
       case 'takePermPill':
         message = takePermPill(next, cmd.characterId, cmd.pill);

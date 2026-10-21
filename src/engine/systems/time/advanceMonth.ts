@@ -17,6 +17,7 @@ import { addXp, breakthroughOdds, monthlyXp, resolveBreakthrough, tickBody, tick
 import { monthsUntilEmpty, planMonth, type MonthPlan } from '../economy/flows';
 import { maybeRecruitment } from '../events/recruitment';
 import { progressRegions } from '../regions/regions';
+import { tickCompose, tickMinorInsight } from '../talent/minorTechniques';
 import { tickInsight } from '../talent/techniques';
 import { tickPositions } from '../talent/positions';
 import { tickBeasts } from '../beasts/beasts';
@@ -113,6 +114,8 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
   // 突破失敗身死道消的人（化神）：在修煉結算之後處理，掌門由繼承人接任
   passAway(state, fallen, 'breakthrough', lines, stops);
   tickInsight(state, content, allCharacters(state), lines);
+  tickMinorInsight(state, content, allCharacters(state), lines);
+  tickCompose(state, lines);
   tickTraining(state, content, lines);
   tickPositions(state, lines);
   tickBeasts(state, content, plan.fedBeasts, lines);

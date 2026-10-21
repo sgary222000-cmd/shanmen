@@ -7,6 +7,7 @@ import { ITEM_NAMES, scriptureItem } from '../../engine/systems/talent/items';
 import { insightGain, libraryResearch, techniqueOf, techniqueStats, techniqueStatsText, techniqueTier } from '../../engine/systems/talent/techniques';
 import { SKILL_NAMES } from '../components/CharacterPanel';
 import { useTabs } from '../components/Layout';
+import { MinorTechniques } from './MinorTechniques';
 import { content, useGame, useUi } from '../store';
 import type { ResourceId } from '../../engine';
 import { RESOURCE_NAMES } from '../../engine/resources';
@@ -105,6 +106,7 @@ export function LineagePage() {
   const me = techniqueTier(game.protagonist);
   const { tab, bar } = useTabs([
     { id: 'tech', label: '主修功法' },
+    { id: 'minor', label: '輔修功法' },
     { id: 'branches', label: '傳承分支' },
     { id: 'treasure', label: '珍藏' },
   ]);
@@ -175,6 +177,7 @@ export function LineagePage() {
         <p className="muted small">在「主角」或「弟子」頁把行程改成「研究功法」（需藏經閣）。</p>
       </div>
       )}
+      {tab === 'minor' && <MinorTechniques />}
       {tab === 'branches' && <Branches />}
       {tab === 'treasure' && (
       <div className="panel">

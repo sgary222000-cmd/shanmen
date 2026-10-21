@@ -6,6 +6,7 @@ import { LOCKED_SCHEDULES, SCHEDULE_NAMES, seatOptions, seclusionInterruptCost, 
 import { breakthroughOdds, monthlyXp } from '../../engine/systems/cultivation/cultivation';
 import { content, useGame, useUi } from '../store';
 import { artUrl, BREAKTHROUGH_PILL_ART } from '../art';
+import { minorDef, minorLevel, minorStatsText } from '../../engine/systems/talent/minorTechniques';
 import { insightGain, libraryResearch, techniqueOf, techniqueStats, techniqueStatsText, techniqueTier } from '../../engine/systems/talent/techniques';
 import { POSITION_NAMES, positionOf } from '../../engine/systems/talent/positions';
 import { BEAST_TASK_NAMES } from '../../engine/systems/beasts/beasts';
@@ -96,6 +97,17 @@ function TechniqueLine({ c }: { c: Character }) {
       功法《{tech?.name}》：<b>{tier.name}</b>（第 {tier.level} 層，領悟 {c.insight}
       {tier.next !== null ? ` / ${tier.next}` : ''}）・修煉 +{tier.pct}%・{techniqueStatsText(techniqueStats(game, content, c)) || '尚無屬性加成'}・本月領悟 +{gain.total}
       {gain.parts.length > 0 && <span className="muted">（{gain.parts.join('・')}）</span>}
+    </p>
+  );
+}
+
+function MinorLine({ c }: { c: Character }) {
+  if (!c.minor) return null;
+  const lv = minorLevel(c);
+  return (
+    <p className="small" data-testid={`minor-line-${c.id}`}>
+      輔修《{minorDef(c.minor.id)?.name}》：第 {lv.level} 層（{c.minor.insight}
+      {lv.next !== null ? ` / ${lv.next}` : ''}）・{minorStatsText(c)}
     </p>
   );
 }
@@ -232,6 +244,7 @@ export function CharacterPanel({ c }: { c: Character }) {
         ))}
       <LifeLine c={c} />
       <TechniqueLine c={c} />
+      <MinorLine c={c} />
       <StatsLine c={c} />
       <EquipLine c={c} />
       <PermPillLine c={c} />

@@ -14,6 +14,7 @@ import { localRng } from '../world/war';
 import { allyUnit, applyFormation, battleKit, companions, healPctFor, spendKit, type BattleKit } from '../combat/party';
 import { canJoinExpedition } from '../exploration/exploration';
 import { envoyRewardPct } from '../talent/positions';
+import { minorStats } from '../talent/minorTechniques';
 import { affairWeight, applyAffairs, maxEscortOnBoard, onCommissionDone } from '../economy/bazaar';
 
 // 委託榜（企畫書 §8）：每月月底補到 3–5 件，榜上一定有一件勞務委託，只要有外門就能接。
@@ -240,6 +241,7 @@ export function acceptCommission(state: GameState, content: ContentPack, id: str
     const u = outcome.allies.find((x) => x.key === m.id);
     if (!u) continue;
     m.health = Math.max(1, Math.floor((u.hp * 100) / u.maxHp));
+    if (u.hp > 0) m.health = Math.min(100, m.health + minorStats(m).healPct); // 輔修《回春訣》
     if (u.hp <= 0) {
       m.injuryMonths = Math.max(m.injuryMonths, balance.combat.koInjuryMonths);
       notes.push(`${m.name}重傷`);

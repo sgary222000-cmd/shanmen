@@ -20,6 +20,7 @@ import {
   xpToNext,
 } from '../characters/characters';
 import { RESOURCE_NAMES } from '../../resources';
+import { minorDef, minorStats } from '../talent/minorTechniques';
 import { levelNameAt, techniqueOf, techniqueTier } from '../talent/techniques';
 import { mentorPct, positionOf, POSITION_NAMES } from '../talent/positions';
 import { guardianBonus } from '../beasts/beasts';
@@ -206,6 +207,12 @@ export function breakthroughOdds(state: GameState, content: ContentPack, c: Char
       bp += b.masteryBp;
       factors.push(`功法${balance.technique.stages[(masteryLevel - 1) / 4] ?? ''} +${b.masteryBp / 100}%`);
     }
+  }
+  // 輔修功法《養神篇》（0.14.0）
+  const spirit = minorStats(c).breakBp;
+  if (spirit) {
+    bp += spirit;
+    factors.push(`《${minorDef(c.minor?.id ?? '')?.name ?? ''}》 +${spirit / 100}%`);
   }
   // 掌門護法（0.9.1）：掌門境界高於弟子要突破的境界、人在宗門時，替弟子護法
   const p = state.protagonist;

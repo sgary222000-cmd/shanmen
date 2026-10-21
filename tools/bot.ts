@@ -25,6 +25,7 @@ import { ascendBlocked, guardianBeast, guardianNextCost, hatchBlocked, raiseBloc
 import { libraryResearch } from '../src/engine/systems/talent/techniques';
 import { tournamentBlocked } from '../src/engine/systems/world/tournament';
 import { COMMON_EQUIPMENT } from '../src/content/equipment';
+import { composeAuthors, composeBlocked } from '../src/engine/systems/talent/minorTechniques';
 import { remainingLifePct } from '../src/engine/systems/characters/lifespan';
 
 /** 自動玩家探索秘境的順序與主角最低綜合等級（煉氣 n 層 = n；築基前期 12、後期 18）。 */
@@ -696,6 +697,23 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
 
   // 靈脈競標：靈石寬裕時出價一次
   if (s.auction && !s.auction.playerBid && s.resources.lingshi > 600) s = tryCmd(s, content, { type: 'bidAuction', amount: 200 });
+
+  // 0.14.0 輔修功法：有餘裕時派閒著的金丹以上弟子撰寫，寫成後每人學一部
+  if (!s.composing && s.resources.lingshi >= 800 + 400 + lateSave) {
+    const order = ['minor.army', 'minor.vajra', 'minor.spirit', 'minor.crafts', 'minor.swift', 'minor.spring'];
+    const authors = composeAuthors(s).filter((c) => c.role !== 'protagonist' && c.schedule === 'cultivate' && !Object.values(s.positions).includes(c.id));
+    const author = authors[0];
+    const tech = author && order.find((id) => !composeBlocked(s, id, author.id));
+    if (author && tech) {
+      s = tryCmd(s, content, { type: 'composeTechnique', techId: tech, authorId: author.id });
+      note(`撰寫輔修功法 ${tech}`);
+    }
+  }
+  for (const c of [s.protagonist, ...s.disciples]) {
+    if (c.minor || !s.minorTechs.length) continue;
+    const want = (c.role === 'protagonist' ? ['minor.spirit', 'minor.army'] : c.schedule === 'alchemy' || c.schedule === 'forge' ? ['minor.crafts'] : ['minor.army', 'minor.vajra']).find((id) => s.minorTechs.includes(id));
+    s = tryCmd(s, content, { type: 'learnMinor', characterId: c.id, techId: want ?? s.minorTechs[0] ?? '' });
+  }
 
   // 主角：築基後功法未小成且有藏經閣時去研究，否則閉關
   const me = s.protagonist;
