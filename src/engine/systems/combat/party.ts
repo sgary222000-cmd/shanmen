@@ -3,7 +3,7 @@ import { balance, type StatBonus } from '../../../content/balance';
 import { ensure } from '../../errors';
 import type { Character, GameState, ResourceId, Resources, Row } from '../../types';
 import { findCharacter } from '../characters/characters';
-import { techniqueTier } from '../talent/techniques';
+import { techniqueStats } from '../talent/techniques';
 import { guardianBonus } from '../beasts/beasts';
 import { characterGear } from '../talent/gear';
 import { estimatePower, unitFromBeast, unitFromCharacter, type Unit } from './combat';
@@ -17,7 +17,7 @@ export function allyUnit(state: GameState, content: ContentPack, c: Character, r
   const guard = guardianBonus(state, content);
   return unitFromCharacter(c, row, lineage, hp, {
     gear: characterGear(content, c),
-    techniquePct: techniqueTier(c).pct,
+    technique: techniqueStats(state, content, c),
     guardianAtkPct: guard.atkPct,
     guardianHpPct: guard.hpPct,
   });
@@ -39,6 +39,9 @@ export function companions(state: GameState, content: ContentPack, teamIds: stri
     if (!owner || !species) continue;
     if (hp && (hp[owner.id] ?? 0) <= 0) continue; // 主人倒下，靈獸護主撤離
     const u = unitFromBeast(beast, species, owner, lineage, hp?.[beast.id]);
+    // 萬靈御獸訣：功法每層隨行靈獸攻擊 +1%
+    const beastPct = techniqueStats(state, content, owner).beastAtkPct;
+    if (beastPct) u.atk = Math.floor((u.atk * (100 + beastPct)) / 100);
     if (u.hp > 0) out.push(u);
   }
   return out;
