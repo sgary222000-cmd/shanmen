@@ -26,6 +26,7 @@ let deaths = 0;
 const warLines: string[] = [];
 let warDeaths = 0;
 let storageLosses = 0;
+const discipleSnap: string[] = [];
 
 for (let i = 0; i < years * 12; i++) {
   const before = state;
@@ -78,6 +79,13 @@ for (let i = 0; i < years * 12; i++) {
   if (state.outer.count >= 60) mark('外門 60 人');
   if (i % 120 === 119) console.log(`第 ${(i + 1) / 12} 年：靈石 ${state.resources.lingshi}、外門 ${state.outer.count}、內門 ${state.disciples.length}、打零工 ${state.outer.jobs.errand}`);
   if (state.disciples.length) mark('第一位內門');
+  if (state.disciples.some((d) => d.realm.major !== 'qi')) mark('首位弟子築基');
+  if (state.disciples.some((d) => ['core', 'nascent', 'deity'].includes(d.realm.major))) mark('首位弟子結丹');
+  if (state.disciples.some((d) => ['nascent', 'deity'].includes(d.realm.major))) mark('首位弟子凝嬰');
+  if (state.date.month === 1 && state.date.year % 50 === 0) {
+    const n = (m: string[]) => state.disciples.filter((d) => m.includes(d.realm.major)).length;
+    discipleSnap.push(`第 ${state.date.year} 年 築基 ${n(['foundation'])}、金丹 ${n(['core'])}、元嬰以上 ${n(['nascent', 'deity'])}`);
+  }
   if (state.buildings.some((b) => b.defId === 'building.alchemy' && b.level >= 1)) mark('煉丹房完工');
   if (state.stats.explorations) mark('首次探索');
   if (state.realmClears['secret.abandoned_cave']) mark('荒廢洞府通關');
@@ -129,6 +137,7 @@ console.log(
 );
 console.log(`戰鬥 ${state.battles.length} 場（保留最近 30 場）：${state.battles.slice(0, 5).map((b) => `${b.title} ${b.result}`).join('；')}`);
 console.log(`弟子坐化 ${deaths} 人；歷代掌門：${(state.ancestors ?? []).map((a) => `${a.name}（${realmName(a.realm)}、${Math.floor(a.ageMonths / 12)} 歲）`).join('、') || '無'}；現任掌門 ${state.protagonist.name}（${Math.floor(state.protagonist.ageMonths / 12)} 歲）`);
+console.log(`內門境界：${discipleSnap.join('；')}`);
 console.log(`戰事 ${warLines.length} 則、戰死 ${warDeaths} 人；${state.sects.filter((x) => x.annexed).map((x) => `${content.sects.get(x.id)?.name}已被吞併`).concat(state.sects.filter((x) => x.vassal && !x.annexed).map((x) => `${content.sects.get(x.id)?.name}為附屬`)).join('、') || '沒有吞併或附屬'}`);
 console.log(`倉庫損耗 ${storageLosses} 個月；宗門試煉參加過 ${Object.keys(state.trials).length} 人`);
 for (const l of warLines.slice(0, 30)) console.log(`  ${l}`);

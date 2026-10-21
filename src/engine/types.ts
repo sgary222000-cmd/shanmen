@@ -583,6 +583,8 @@ export interface GameState {
   integrations: Integration[];
   /** 宗門試煉：人物 ID → 上次參加的年份（每人每年一次，P2 批次 E） */
   trials: Record<string, number>;
+  /** 弟子修為圓滿時自動突破（0.9.1，沒有設定時視為開啟） */
+  autoBreakthrough?: boolean;
   /** 本月月中發生的事（接委託、探索結果、坊市買賣），月底寫進月報開頭。0.4.5 新增，舊存檔沒有。 */
   monthLog?: string[];
   /** 暫代掌門升任前的忠誠，改立時恢復（0.6.0 新增） */

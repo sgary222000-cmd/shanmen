@@ -11,6 +11,7 @@ import { balance } from '../../../content/balance';
 import { refreshBoard } from '../commissions/commissions';
 import { rollMarket } from '../economy/market';
 import { tickOuter } from '../characters/outer';
+import { autoBreakthroughEligible, autoBreakthroughOn, scheduleAutoBreakthroughs } from '../cultivation/autoBreakthrough';
 import { addXp, breakthroughOdds, monthlyXp, resolveBreakthrough, tickBody, tickTraining } from '../cultivation/cultivation';
 import { monthsUntilEmpty, planMonth, type MonthPlan } from '../economy/flows';
 import { maybeRecruitment } from '../events/recruitment';
@@ -55,6 +56,9 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
   const readyBefore = new Set(allCharacters(state).filter(atThreshold).map((c) => c.id));
   const tournamentBefore = state.tournament?.year ?? null;
   const auctionBefore = state.auction?.id ?? null;
+
+  // 0. 弟子自動突破（修為圓滿、條件齊全、成功率夠高且不會死）
+  scheduleAutoBreakthroughs(state, content, lines);
 
   // 1. 檢查行程合法性：條件不足的突破改為日常修煉
   const odds = new Map<string, ReturnType<typeof breakthroughOdds>>();
@@ -155,7 +159,8 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
 
   // 連續推進的停止條件
   for (const c of allCharacters(state)) {
-    if (atThreshold(c) && !readyBefore.has(c.id))
+    // 下個月會自動突破的弟子不必停下
+    if (atThreshold(c) && !readyBefore.has(c.id) && !(autoBreakthroughOn(state) && autoBreakthroughEligible(state, content, c)))
       stops.push({ kind: 'breakthrough', text: `${c.name}修為圓滿，可以嘗試突破${MAJOR_NAMES[nextMajor(c.realm.major) ?? 'deity']}` });
   }
   if (state.tournament?.status === 'open' && state.tournament.year !== tournamentBefore) stops.push({ kind: 'tournament', text: '三年大比開始報名' });
