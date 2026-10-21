@@ -533,7 +533,7 @@ export const buildings: BuildingDef[] = [
     unlockHall: 2,
     maxTotal: 1,
     onlyRegions: ['region.main'],
-    art: 'placeholder/ancestral.svg',
+    art: 'final/ancestral.webp',
     levels: [
       {
         level: 1,
@@ -562,7 +562,7 @@ export const buildings: BuildingDef[] = [
     unlockHall: 3,
     maxTotal: 1,
     onlyRegions: ['region.main', 'region.gate'],
-    art: 'placeholder/council.svg',
+    art: 'final/council.webp',
     levels: [
       {
         level: 1,
@@ -591,7 +591,7 @@ export const buildings: BuildingDef[] = [
     unlockHall: 3,
     maxTotal: 1,
     onlyRegions: ['region.main', 'region.gate'],
-    art: 'placeholder/grand_array.svg',
+    art: 'final/grand-array.webp',
     levels: [
       {
         level: 1,
@@ -629,7 +629,7 @@ export const buildings: BuildingDef[] = [
     unlockHall: 1,
     maxTotal: 1,
     onlyRegions: ['region.main', 'region.gate'],
-    art: 'placeholder/warehouse.svg',
+    art: 'final/warehouse.webp',
     levels: [
       {
         level: 1,

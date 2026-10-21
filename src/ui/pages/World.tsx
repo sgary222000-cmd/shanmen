@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { balance } from '../../content/balance';
 import { formatDate, monthIndex } from '../../engine';
 import { allCharacters, realmName } from '../../engine/systems/characters/characters';
@@ -40,6 +40,7 @@ import {
   warUnavailable,
 } from '../../engine/systems/world/war';
 import { nextTournamentYear, tournamentBlocked } from '../../engine/systems/world/tournament';
+import { artUrl } from '../art';
 import { Art } from '../components/Art';
 import { useTabs } from '../components/Layout';
 import { content, useGame, useUi } from '../store';
@@ -257,6 +258,46 @@ function ownerName(owner: string | null): string {
   return owner ? (content.sects.get(owner)?.name ?? '') : '無主';
 }
 
+// 勢力地圖上各地點的位置（圖片寬、高的百分比），依 assets/final/world-map.webp 量出。
+const MAP_SPOTS: Record<string, [number, number]> = {
+  [PLAYER]: [50, 47],
+  'sect.qingmu': [35, 22],
+  'sect.chixia': [77, 20],
+  'sect.luoyun': [46, 76],
+  'sect.tianyan': [55, 6],
+  'sect.tiejian': [14, 8],
+  'sect.wanbao': [91, 40],
+  'site.qingshi': [25, 41],
+  'site.yunwu': [42, 31],
+  'site.chitong': [66, 39],
+  'site.lingquan': [62, 57],
+  'site.gusong': [31, 59],
+  'site.hantan': [70, 68],
+};
+
+function WorldMap() {
+  const game = useGame();
+  const spot = (id: string, label: ReactNode, cls: string) => {
+    const pos = MAP_SPOTS[id];
+    if (!pos) return null;
+    return (
+      <span key={id} className={`map-spot ${cls}`} style={{ left: `${pos[0]}%`, top: `${pos[1]}%` }} data-testid={`map-${id}`}>
+        {label}
+      </span>
+    );
+  };
+  return (
+    <div className="world-map" data-testid="world-map">
+      <Art path="final/world-map.webp" alt="勢力地圖" />
+      {spot(PLAYER, game.sectName, 'mine')}
+      {game.sects.map((s) => spot(s.id, content.sects.get(s.id)?.name, 'sect'))}
+      {(game.sites ?? []).map((x) =>
+        spot(x.id, <>{x.name}<small>{ownerName(x.owner)}</small></>, `site${x.owner === PLAYER ? ' mine' : ''}`),
+      )}
+    </div>
+  );
+}
+
 function Sites() {
   const game = useGame();
   const dispatch = useUi((st) => st.dispatch);
@@ -268,6 +309,7 @@ function Sites() {
   return (
     <div className="panel" data-testid="sites">
       <h3>資源據點</h3>
+      <WorldMap />
       <p className="muted small">
         山門附近的礦脈、藥田、靈泉，佔有的宗門每月多一份收入（我宗佔有的算進產業頁的收入）。無主的花 {balance.sites.claimLingshi} 靈石就能佔下；鄰宗的要派人去搶，
         由最強的三人（{team.length ? team.map((c) => c.name).join('、') : '目前沒有能出戰的人'}）出手，對方守在自家地盤生命、防禦 +{balance.war.homeDefensePct}%。
@@ -280,6 +322,9 @@ function Sites() {
             const blocked = contestBlocked(game, content, x.id);
             return (
               <tr key={x.id} data-testid={`site-${x.id}`}>
+                <td className="site-thumb">
+                  {artUrl(`final/${x.id.replace('.', '-')}.webp`) && <Art path={`final/${x.id.replace('.', '-')}.webp`} alt="" />}
+                </td>
                 <td>{x.name}</td>
                 <td>{SITE_KIND_NAMES[x.kind]}</td>
                 <td>{x.owner === PLAYER ? <b>我宗</b> : ownerName(x.owner)}</td>
@@ -330,6 +375,9 @@ function WarCard({ war }: { war: War }) {
   };
   return (
     <div className="panel" data-testid={`war-${war.sectId}`} style={{ borderLeft: '3px solid var(--danger, #a8352a)' }}>
+      <div className="room-head">
+        <Art path="final/siege.webp" alt="山門戰" />
+      </div>
       <h3>
         {defending ? `${name}來犯` : `攻打${name}`}
         <span className="tag neg">{left > 1 ? `${left} 個月後開戰` : '本月底開戰'}</span>
