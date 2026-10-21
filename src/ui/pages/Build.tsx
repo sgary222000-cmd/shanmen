@@ -12,6 +12,7 @@ import {
 } from '../../engine/systems/buildings/buildings';
 import { workersByBuilding } from '../../engine/systems/economy/flows';
 import { openRegionBlocked, productionBonusPct, regionState } from '../../engine/systems/regions/regions';
+import { panoramaFor } from '../art';
 import { Art } from '../components/Art';
 import { ResList } from '../components/Res';
 import { content, useGame, useUi } from '../store';
@@ -145,7 +146,7 @@ function RegionView({ regionId }: { regionId: string }) {
     <div>
       <div className="panel region-panel">
         <div className="room-head region-head">
-          <Art path={region.art} alt={region.name} />
+          <Art path={region.art === 'final/panorama.webp' ? panoramaFor(hallLevel(game)) : region.art} alt={region.name} />
           <h3>{region.name}</h3>
         </div>
         <h3 className="region-meta">

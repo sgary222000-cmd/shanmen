@@ -5,6 +5,7 @@ import { isCraftSchedule } from '../../engine/systems/buildings/buildings';
 import { LOCKED_SCHEDULES, SCHEDULE_NAMES, seatOptions, seclusionInterruptCost, seclusionMax, selectableSchedules } from '../../engine/systems/characters/schedule';
 import { breakthroughOdds, monthlyXp } from '../../engine/systems/cultivation/cultivation';
 import { content, useGame, useUi } from '../store';
+import { artUrl, BREAKTHROUGH_PILL_ART } from '../art';
 import { insightGain, libraryResearch, techniqueOf, techniqueTier } from '../../engine/systems/talent/techniques';
 import { POSITION_NAMES, positionOf } from '../../engine/systems/talent/positions';
 import { BEAST_TASK_NAMES } from '../../engine/systems/beasts/beasts';
@@ -254,6 +255,7 @@ export function CharacterPanel({ c }: { c: Character }) {
       </label>
       {c.realm.stage === topStage(c.realm.major) && nextMajor(c.realm.major) && (
         <div className="panel" style={{ background: 'var(--paper-2)', marginTop: '.5rem' }} data-testid={`odds-${c.id}`}>
+          {BREAKTHROUGH_PILL_ART[odds.target] && <img className="pill-art" src={artUrl(BREAKTHROUGH_PILL_ART[odds.target]!)} alt="" />}
           <b>{TARGET_TITLES[odds.target]}</b>：成功率 {odds.bp / 100}%（{odds.factors.join('，')}）
           <br />
           <span className={`small ${odds.deathBp ? 'neg' : ''}`}>失敗代價：{odds.failure}</span>

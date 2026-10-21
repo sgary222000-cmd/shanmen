@@ -38,6 +38,7 @@ export const sects: SectDef[] = [
     scope: 'distant',
     description: '遠在中州的推演大宗，弟子潛心問道，很少過問外事；結交不易，但從不失信。',
     start: { lingshi: 2000, food: 1000, stone: 500, wood: 500, population: 70, buildings: 22, power: 150, favor: 20, trust: 20 },
+    art: 'final/sect-tianyan.webp',
   },
   {
     id: 'sect.tiejian',
@@ -47,6 +48,7 @@ export const sects: SectDef[] = [
     scope: 'distant',
     description: '北境劍修結成的盟會，一諾千金。看重信用遠勝禮物，背約者永不往來。',
     start: { lingshi: 1500, food: 1000, stone: 500, wood: 500, population: 75, buildings: 20, power: 170, favor: 25, trust: 30 },
+    art: 'final/sect-tiejian.webp',
   },
   {
     id: 'sect.wanbao',
@@ -56,5 +58,6 @@ export const sects: SectDef[] = [
     scope: 'distant',
     description: '遍布各州的商盟，奇珍異寶無所不賣。只要價錢談得攏，什麼都好商量。',
     start: { lingshi: 3000, food: 1200, stone: 400, wood: 400, population: 60, buildings: 20, power: 110, favor: 35, trust: 15 },
+    art: 'final/sect-wanbao.webp',
   },
 ];

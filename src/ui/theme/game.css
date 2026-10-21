@@ -593,3 +593,16 @@ h3.sec::after { content: ''; flex: 1; height: 1px; background: linear-gradient(9
   .title-logo h1 { font-size: 2.2rem; }
   .newgame { max-height: none; margin: 0; }
 }
+
+/* 勢力地圖（資源據點分頁） */
+.world-map { position: relative; margin: 0 0 .8rem; border: 1px solid var(--gold-line); overflow: hidden; }
+.world-map .art { border: none; border-radius: 0; }
+.world-map .art img { display: block; width: 100%; height: auto; }
+.map-spot { position: absolute; transform: translate(-50%, -50%); padding: .1rem .45rem; border-radius: 3px; background: rgba(250, 244, 230, .88); color: #2b2a26; font-size: .78rem; line-height: 1.25; text-align: center; white-space: nowrap; border: 1px solid rgba(120, 95, 50, .5); pointer-events: none; }
+.map-spot small { display: block; font-size: .68rem; color: #6b5a3a; }
+.map-spot.sect { font-weight: 600; }
+.map-spot.mine { background: rgba(255, 236, 190, .95); border-color: #b08a3a; font-weight: 600; }
+@media (max-width: 700px) { .map-spot { font-size: .62rem; padding: 0 .25rem; } .map-spot small { font-size: .55rem; } }
+.pill-art { float: right; width: 64px; height: 64px; margin: 0 0 .3rem .5rem; border-radius: 6px; border: 1px solid var(--gold-line); }
+.site-thumb { width: 72px; padding: 2px 6px 2px 0; }
+.site-thumb .art { width: 72px; }

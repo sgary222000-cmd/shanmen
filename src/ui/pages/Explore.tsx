@@ -397,6 +397,9 @@ function TrialPanel() {
         <b>宗門試煉</b>
         <span className="muted small">（大殿 {T.hall} 級起；弟子每人每年一次，失敗不受傷）</span>
       </summary>
+      <div className="room-head">
+        <Art path="final/realm-trial.webp" alt="宗門試煉" />
+      </div>
       <p className="small">
         讓內門弟子與試煉傀儡過招。傀儡依隊伍最強者的境界配置；通過的人得到下一階修為的一部分與功法領悟，沒通過只是生命降到一半、修為 +{T.loseXpPct}%。每人花費靈石 {T.lingshiPer}。
       </p>

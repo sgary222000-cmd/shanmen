@@ -149,7 +149,8 @@ function floorRealm(f: FloorSpec): SecretRealmDef {
     group: { name: '太虛古境', floor: k },
     repeatLootPct: 60,
     retreatLootPct: 50,
-    art: 'placeholder/realm-taixu.svg',
+    // 五層共用三張圖：入口（1）、迴廊（2–3）、核心（4–5）
+    art: `final/realm-taixu-${k === 1 ? 1 : k <= 3 ? 2 : 3}.webp`,
     dispatch: { months: 3, power: [2600, 3200, 4200, 5200, 6800][k - 1]!, lootPct: [30, 50] },
     firstClear: f.firstClear,
     nodes: [

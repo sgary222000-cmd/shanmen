@@ -1,3 +1,5 @@
+import type { MajorRealm } from '../engine/types';
+
 // 圖片載入：依內容資料中的路徑取得網址。臨時圖一律顯示「臨時素材」標記。
 const files = import.meta.glob('/assets/**/*.{svg,png,webp,jpg}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
@@ -18,11 +20,23 @@ export function disciplePortrait(c: { id: string; gender: 'male' | 'female' }): 
   return `final/disciple-${c.gender}-0${(h % DISCIPLE_PORTRAITS[c.gender]) + 1}.webp`;
 }
 
-/** 任何人物的肖像：掌門用主角立繪，內門弟子用肖像庫。 */
-export function portraitOf(c: { id: string; gender: 'male' | 'female'; role: string }): string {
-  if (c.role === 'protagonist' && c.id === 'c0') return c.gender === 'female' ? 'final/portrait-female.webp' : 'final/portrait-male.webp';
+// 開局主角的立繪隨大境界更換；煉氣、築基沿用年輕時的肖像。
+const REALM_PORTRAIT_SUFFIX: Partial<Record<MajorRealm, string>> = { core: '-golden', nascent: '-nascent', deity: '-deity' };
+
+/** 任何人物的肖像：開局掌門用主角立繪（依境界），其餘人物用肖像庫。 */
+export function portraitOf(c: { id: string; gender: 'male' | 'female'; role: string; realm?: { major: MajorRealm } }): string {
+  if (c.role === 'protagonist' && c.id === 'c0') {
+    const suffix = (c.realm && REALM_PORTRAIT_SUFFIX[c.realm.major]) ?? '';
+    return `final/portrait-${c.gender}${suffix}.webp`;
+  }
   return disciplePortrait(c);
 }
+
+/** 大突破所需丹藥的圖示（突破預覽用） */
+export const BREAKTHROUGH_PILL_ART: Partial<Record<MajorRealm, string>> = {
+  nascent: 'final/pill-nascent.webp',
+  deity: 'final/pill-deity.webp',
+};
 
 /**
  * 宗門全景依大殿等級分四個階段（P2 批次 E）：殘破（0–1 級）、重建（2 級）、興盛（3 級）、鼎盛（4 級以上）。
