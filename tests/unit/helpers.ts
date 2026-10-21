@@ -70,7 +70,7 @@ export function developed(seed = 1): GameState {
       seat: 'region.main',
       specialty: null,
       insight: 0,
-      equipment: null,
+      gear: {},
     });
   });
 }

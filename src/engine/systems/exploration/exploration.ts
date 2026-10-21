@@ -9,7 +9,9 @@ import type { BattleRecord, Character, ExplorationRun, GameState, Row } from '..
 import { findCharacter, isInjured } from '../characters/characters';
 import { ITEM_NAMES } from '../talent/items';
 import { runBattle, unitFromEnemy } from '../combat/combat';
-import { allyUnit, applyFormation, characterMaxHp, companions, healPctFor } from '../combat/party';
+import { allyUnit, applyFormation, battleKit, characterMaxHp, companions, healPctFor, spendKit } from '../combat/party';
+import { newGear } from '../talent/gear';
+import { rollRareDrops } from './rareDrops';
 
 export { companions } from '../combat/party';
 
@@ -132,8 +134,9 @@ function fight(state: GameState, content: ContentPack, realm: SecretRealmDef, no
   const enemies = (node.enemies ?? []).map((eid, i) => {
     const def = content.enemies.get(eid);
     ensure(def, `敵人資料錯誤：${eid}`);
-    return unitFromEnemy(def, i);
+    return unitFromEnemy(def, i, node.kind === 'boss' && i === 0);
   });
+  const kit = battleKit(state, content, allies);
   const r = rng(state, 'combat');
   const outcome = runBattle({
     allies,
@@ -141,10 +144,13 @@ function fight(state: GameState, content: ContentPack, realm: SecretRealmDef, no
     strategy: state.strategy,
     healPills: state.resources.pill_heal,
     talismans: { fire: state.resources.talisman_fire, guard: state.resources.talisman_guard },
+    control: kit.control,
+    controlExtraRounds: kit.extraRounds,
     healPct: healPctFor(state, content),
     randInt: (n) => r.int(n),
   });
   if (formation) outcome.highlights.unshift(formation);
+  spendKit(state, kit, outcome.controlUsed);
   state.resources.pill_heal -= outcome.pillsUsed;
   state.resources.talisman_fire -= outcome.talismansUsed.fire;
   state.resources.talisman_guard -= outcome.talismansUsed.guard;
@@ -192,6 +198,14 @@ export function moveTo(state: GameState, content: ContentPack, nextId: string): 
       finishRun(state, content, record.result === 'lose' ? 'defeated' : 'retreated');
       return;
     }
+    if (node.kind === 'boss') {
+      const drop = rollRareDrops(state, content, realm.id);
+      if (Object.keys(drop.loot).length) {
+        addInto(run.loot, drop.loot);
+        run.log.push(`首領掉落：${formatResources(drop.loot)}。`);
+      }
+      run.log.push(...drop.lines);
+    }
   }
   if (node.loot) {
     const got = scaleResources(node.loot, lootPct(state, realm));
@@ -226,7 +240,7 @@ export function chooseEvent(state: GameState, content: ContentPack, choiceId: st
     run.log.push(`機緣：${unique.text}${Object.keys(unique.resources).length ? `取得${formatResources(unique.resources)}（月底入庫，撤退或戰敗也不會失去）。` : ''}`);
     addInto(state.pendingLoot, unique.resources);
     for (const e of unique.equipment) {
-      state.armory.push(e);
+      state.armory.push(newGear(state, e, 'common'));
       run.log.push(`取得法器「${content.equipment.get(e)?.name ?? e}」（可在弟子頁裝備）。`);
     }
     if (unique.insight) {
@@ -274,7 +288,7 @@ function finishRun(state: GameState, content: ContentPack, status: 'completed' |
         run.log.push(`取得「${ITEM_NAMES[item] ?? item}」。`);
       }
       for (const e of realm.firstClear.equipment) {
-        state.armory.push(e);
+        state.armory.push(newGear(state, e, 'common'));
         run.log.push(`取得法器「${content.equipment.get(e)?.name ?? e}」（可在弟子頁裝備）。`);
       }
       const open = realm.firstClear.openRegion;

@@ -24,6 +24,23 @@ export const resourceIds = [
   'pill_life',
   'pill_nascent',
   'pill_deity',
+  'pill_swift',
+  'pill_keen',
+  'pill_phantom',
+  'pill_ape',
+  'pill_eye',
+  'pill_cloud',
+  'talisman_bind',
+  'talisman_break',
+  'talisman_slow',
+  'talisman_confuse',
+  'talisman_seal',
+  'mat_jade',
+  'mat_beastcore',
+  'mat_earthfire',
+  'mat_scroll',
+  'mat_thunder',
+  'mat_taixu',
 ] as const;
 
 export const stations = ['alchemy', 'forge', 'talisman'] as const;
@@ -123,6 +140,10 @@ export const recipeSchema = z.object({
   station: z.enum(stations).default('alchemy'),
   /** 坊市販售此配方的價格（靈石）；未填表示坊市不賣 */
   marketPrice: z.number().int().positive().optional(),
+  /** 煉成一件法器（0.11.0，有品質）；填了 outputs 應為空 */
+  gear: z.string().optional(),
+  /** 加入時可提高品質的稀有素材（依序取第一個有庫存的） */
+  boostMats: z.array(z.enum(resourceIds)).optional(),
 });
 
 export const enemySchema = z.object({
@@ -270,6 +291,8 @@ export const lineageSchema = z.object({
     arrayQiPct: z.number().int().default(0),
     /** 護衛類委託的靈石報酬加成（百分比） */
     guardRewardPct: z.number().int().default(0),
+    /** 控制符多持續的回合（0.11.0 符陣傳承） */
+    controlRounds: z.number().int().default(0),
   }),
   start: z.object({
     resources: resourceMap.default({}),
@@ -360,6 +383,11 @@ export const equipmentSchema = z.object({
   atk: z.number().int().nonnegative(),
   def: z.number().int().nonnegative(),
   hp: z.number().int().nonnegative(),
+  /** 裝備欄：兵器、護具、飾品（0.11.0） */
+  slot: z.enum(['weapon', 'armor', 'accessory']),
+  agi: z.number().int().nonnegative().default(0),
+  critPct: z.number().int().nonnegative().default(0),
+  dodgePct: z.number().int().nonnegative().default(0),
 });
 
 export const sectSchema = z.object({

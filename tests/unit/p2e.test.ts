@@ -27,7 +27,7 @@ function strong(): GameState {
     p.realm = { major: 'deity', stage: 4 };
     p.insight = 400;
     p.ageMonths = 100 * 12;
-    p.equipment = 'equip.common';
+    p.gear = { weapon: { id: 'g900', defId: 'equip.common', quality: 'common', subs: [] } };
   });
 }
 

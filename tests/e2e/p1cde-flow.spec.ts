@@ -66,7 +66,7 @@ test('職位、法器、分支、靈獸、大比、派遣、競標都能在介�
   } as never);
   s.disciples.push({ ...structuredClone(s.disciples[0]), id: 'c8', name: '陸行舟', gender: 'male', skills: { ...s.disciples[0]!.skills, talisman: 0 } } as never);
   s.items.push('item.beast_taming', 'item.scripture.any');
-  s.armory.push('equip.ore_blade');
+  s.armory.push({ id: 'g900', defId: 'equip.ore_blade', quality: 'common', subs: [] });
   s.realmClears['secret.abandoned_cave'] = 1;
   s.claimedRewards.push('reward.abandoned_cave.first_clear');
   s.recipes.push('recipe.foundation_pill');
@@ -98,11 +98,11 @@ test('職位、法器、分支、靈獸、大比、派遣、競標都能在介�
   await expect(page.getByTestId('positions')).toContainText('南宮婉');
   await page.getByTestId('tab-inner').click();
   await page.getByTestId('roster-c7').click();
-  await page.getByTestId('equip-c7').selectOption('equip.common');
-  await expect(page.getByTestId('equip-c7')).toHaveValue('equip.common');
+  await page.getByTestId('equip-c7-weapon').selectOption('equip.common');
+  await expect(page.getByTestId('gear-c7')).toContainText('凡品制式法器');
   await shot(page, '02-職位與法器');
   await nav(page, 'protagonist');
-  await page.getByTestId('equip-c0').selectOption('equip.ore_blade');
+  await page.getByTestId('equip-c0-weapon').selectOption('g900');
   await expect(page.getByTestId('char-c0')).toContainText('礦魄刀');
 
   // 傳承與功法：以萬用典籍開設符籙分支，由南宮婉主持

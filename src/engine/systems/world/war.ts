@@ -11,7 +11,7 @@ import { activeEffects, hallLevel, innerLimit, levelDef, outerCapacity } from '.
 import { characterFromCandidate, findCharacter, isInjured, powerLevel, rollCandidate } from '../characters/characters';
 import { passAway } from '../characters/lifespan';
 import { estimatePower, runBattle, unitFromCharacter, type Unit } from '../combat/combat';
-import { allyUnit, healPctFor } from '../combat/party';
+import { allyUnit, healPctFor, unitsPower } from '../combat/party';
 import { canJoinExpedition } from '../exploration/exploration';
 import { isDistant, trustOf } from './diplomacy';
 
@@ -77,7 +77,7 @@ export function fakeFighter(id: string, name: string, realm: Realm, combat: numb
     seat: '',
     specialty: null,
     insight: 0,
-    equipment: null,
+    gear: {},
   };
 }
 
@@ -282,6 +282,20 @@ export function contestOdds(state: GameState, content: ContentPack, siteId: stri
     if (fight(state, content, setup, r, { heal: state.resources.pill_heal }).win) wins++;
   }
   return Math.round((wins * 100) / W.previewRuns);
+}
+
+/** 戰力比較（0.11.0，出戰前顯示）：山門戰或據點爭奪我方與對方出戰者的戰力。 */
+export function warPowers(state: GameState, content: ContentPack, war: War): { ours: number; theirs: number } {
+  const setup = setupFor(state, content, war);
+  return { ours: unitsPower(ourUnits(state, content, setup)), theirs: unitsPower(setup.enemies) };
+}
+
+export function contestPowers(state: GameState, content: ContentPack, siteId: string): { ours: number; theirs: number } {
+  const site = state.sites.find((s) => s.id === siteId);
+  const owner = site?.owner ? state.sects.find((s) => s.id === site.owner) : undefined;
+  if (!owner) return { ours: 0, theirs: 0 };
+  const setup: RoundSetup = { team: warTeam(state, []), allyUnits: [], enemies: homeGuard(warFighters(state, content, owner)), defending: false };
+  return { ours: unitsPower(ourUnits(state, content, setup)), theirs: unitsPower(setup.enemies) };
 }
 
 export function contestSite(state: GameState, content: ContentPack, siteId: string): string {

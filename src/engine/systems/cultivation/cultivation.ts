@@ -97,7 +97,8 @@ export function monthlyXp(state: GameState, content: ContentPack, c: Character, 
     pct += regionPct;
     parts.push(`${region?.name ?? ''} +${regionPct}%`);
   }
-  const rootPct = balance.rootMultiplierPct[c.root.grade];
+  // 0.11.0：每多一種靈根修煉 +5%（天靈根單一但倍率最高）
+  const rootPct = balance.rootMultiplierPct[c.root.grade] + Math.max(0, c.root.elements.length - 1) * balance.roots.extraElementXpPct;
   const qiPct = qiEfficiencyPct(state, content, c.seat);
   parts.push(`靈根 ${rootPct}%`, `${region?.name ?? ''}靈氣 ${qiPct}%`);
   const base = balance.baseXpByMajor[c.realm.major];

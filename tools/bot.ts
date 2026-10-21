@@ -7,7 +7,8 @@ import { allByDef, benchCount, benchList, hallLevel, isCraftSchedule, qiCapacity
 import { commissionBlocked, idleOuter } from '../src/engine/systems/commissions/commissions';
 import { buyPrice, demandLeft, marketOpen, recipesForSale, stockLeft } from '../src/engine/systems/economy/market';
 import { balance } from '../src/content/balance';
-import type { ResourceId } from '../src/engine';
+import type { GearItem, ResourceId } from '../src/engine';
+import { gearStats } from '../src/engine/systems/talent/gear';
 import { isRegionOpen, openRegionBlocked } from '../src/engine/systems/regions/regions';
 import { jobCapacity } from '../src/engine/systems/characters/outer';
 import { seatOptions } from '../src/engine/systems/characters/schedule';
@@ -471,7 +472,7 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     const worker = cur?.alchemistId ? s.disciples.find((d) => d.id === cur.alchemistId) : free()[0];
     const fRecipe = s.recipes.includes('recipe.artifact_beast') && s.resources.beast_mat >= (guardianGoal?.beast_mat ?? 0) + 2 ? 'recipe.artifact_beast' : 'recipe.artifact_ore';
     if (worker && (cur?.recipeId !== fRecipe || cur?.alchemistId !== worker.id)) {
-      s = tryCmd(s, content, { type: 'setFurnace', station: 'forge', index: 0, alchemistId: worker.id, recipeId: fRecipe, repeat: true, keep: 0 });
+      s = tryCmd(s, content, { type: 'setFurnace', station: 'forge', index: 0, alchemistId: worker.id, recipeId: fRecipe, repeat: true, keep: 0, boost: true });
     }
   }
 
@@ -580,16 +581,45 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     if (pick && (pos === 'mentor' || s.disciples.length >= 3)) s = tryCmd(s, content, { type: 'setPosition', position: pos, characterId: pick.id });
   }
 
-  // 法器：獨特法器給主角，制式法器依序給沒有法器的人
-  for (const id of [...s.armory]) {
-    const def = content.equipment.get(id);
-    const cur = s.protagonist.equipment ? content.equipment.get(s.protagonist.equipment) : undefined;
-    const target = !cur || (def && def.atk + def.def > cur.atk + cur.def) ? s.protagonist : s.disciples.find((d) => !d.equipment || d.equipment === COMMON_EQUIPMENT);
-    if (target && !(s.exploration?.status === 'active')) s = tryCmd(s, content, { type: 'equip', characterId: target.id, itemId: id });
+  // 法器（0.11.0 三格、有品質）：庫房裡的法器給該格最弱的人（主角優先），用不到的拿去坊市賣
+  if (!(s.exploration?.status === 'active')) {
+    const score = (it: GearItem | undefined) => {
+      if (!it) return -1;
+      const g = gearStats(content, it);
+      return g.atk * 2 + g.def * 2 + g.hp / 4 + g.agi + g.critPct * 2 + g.dodgePct * 2 + g.hpPct * 3 + g.effects.length * 20;
+    };
+    const people = [s.protagonist, ...[...s.disciples].sort((a, b) => powerLevel(b.realm) - powerLevel(a.realm))];
+    for (const it of [...s.armory].sort((a, b) => score(b) - score(a))) {
+      const slot = content.equipment.get(it.defId)?.slot;
+      if (!slot) continue;
+      const target = people.find((c) => score(c.gear?.[slot]) < score(it));
+      if (target) s = tryCmd(s, content, { type: 'equip', characterId: target.id, itemId: it.id });
+    }
+    for (const c of [s.protagonist, ...s.disciples]) {
+      if (s.resources.artifact < 1) break;
+      if (!c.gear?.weapon) s = tryCmd(s, content, { type: 'equip', characterId: c.id, itemId: COMMON_EQUIPMENT });
+    }
+    if (marketOpen(s, content)) {
+      for (const it of [...s.armory]) {
+        if (demandLeft(s, content, 'artifact') < 1) break;
+        s = tryCmd(s, content, { type: 'sellGear', itemId: it.id });
+      }
+    }
   }
-  for (const c of [s.protagonist, ...s.disciples]) {
-    if (s.resources.artifact < 1) break;
-    if (!c.equipment) s = tryCmd(s, content, { type: 'equip', characterId: c.id, itemId: COMMON_EQUIPMENT });
+  // 永久屬性丹：有就吃（主角優先）
+  for (const pill of Object.keys(balance.attributes.permPills) as ResourceId[]) {
+    for (const c of [s.protagonist, ...s.disciples]) {
+      if (s.resources[pill] < 1) break;
+      if ((c.permPills?.[pill] ?? 0) < balance.attributes.permMax) s = tryCmd(s, content, { type: 'takePermPill', characterId: c.id, pill });
+    }
+  }
+  // 戰前用控制符、屬性丹：有庫存就開
+  {
+    const control = (Object.keys(balance.controlTalismans.rounds) as ResourceId[]).filter((id) => s.resources[id] > 0).slice(0, 2);
+    const buffs = Object.keys(balance.attributes.shortPills).some((id) => s.resources[id as ResourceId] > 0);
+    if (control.join() !== (s.strategy.control ?? []).join() || buffs !== !!s.strategy.useBuffPills) {
+      s = tryCmd(s, content, { type: 'setStrategy', useHealPill: s.strategy.useHealPill, focusLowest: s.strategy.focusLowest, useBuffPills: buffs, control });
+    }
   }
 
   // 靈獸：能孵就孵；沒有主人的去採集，沒有靈獸的人優先領養出戰

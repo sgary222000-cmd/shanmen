@@ -26,6 +26,7 @@ import {
   casusBelli,
   contestBlocked,
   contestOdds,
+  contestPowers,
   declareBlocked,
   evacuateBlocked,
   graceOver,
@@ -35,6 +36,7 @@ import {
   playerPower,
   vassalTribute,
   warOdds,
+  warPowers,
   warTeam,
   warThreatBp,
   warUnavailable,
@@ -305,6 +307,10 @@ function Sites() {
     () => Object.fromEntries((game.sites ?? []).map((x) => [x.id, x.owner && x.owner !== PLAYER ? contestOdds(game, content, x.id) : 100])),
     [game],
   );
+  const powers = useMemo(
+    () => Object.fromEntries((game.sites ?? []).map((x) => [x.id, x.owner && x.owner !== PLAYER ? contestPowers(game, content, x.id) : undefined])),
+    [game],
+  );
   const team = warTeam(game, []);
   return (
     <div className="panel" data-testid="sites">
@@ -344,6 +350,12 @@ function Sites() {
                       >
                         {x.owner ? `出兵爭奪（勝算約 ${odds[x.id]}%）` : `佔下（${balance.sites.claimLingshi} 靈石）`}
                       </button>
+                      {x.owner && (
+                        <span className="muted" data-testid={`contest-power-${x.id}`}>
+                          {' '}
+                          戰力 {powers[x.id]?.ours ?? 0} 對 {powers[x.id]?.theirs ?? 0}
+                        </span>
+                      )}
                       {blocked && <span className="muted"> {blocked}</span>}
                     </>
                   )}
@@ -361,6 +373,7 @@ function WarCard({ war }: { war: War }) {
   const game = useGame();
   const dispatch = useUi((st) => st.dispatch);
   const odds = useMemo(() => warOdds(game, content, war), [game, war]);
+  const power = useMemo(() => warPowers(game, content, war), [game, war]);
   const name = content.sects.get(war.sectId)?.name ?? '';
   const left = war.resolveAt - monthIndex(game.date);
   const defending = war.side === 'defend';
@@ -383,7 +396,11 @@ function WarCard({ war }: { war: War }) {
         <span className="tag neg">{left > 1 ? `${left} 個月後開戰` : '本月底開戰'}</span>
       </h3>
       <p className="small">
-        起因：{war.reason}。山門戰三場兩勝。預估勝算約 <b data-testid={`war-odds-${war.sectId}`}>{odds.winPct}%</b>；每場倒下的內門弟子有{' '}
+        起因：{war.reason}。山門戰三場兩勝。預估勝算約 <b data-testid={`war-odds-${war.sectId}`}>{odds.winPct}%</b>（戰力{' '}
+        <b data-testid={`war-power-${war.sectId}`}>
+          {power.ours} 對 {power.theirs}
+        </b>
+        ）；每場倒下的內門弟子有{' '}
         <b>{odds.deathPct}%</b> 會戰死（掌門不會死，只會重傷 {W.protagonistInjuryMonths} 個月）。
         {defending && arrayBonus(game, content).defensePct > 0 && `護山大陣：生命、防禦 +${arrayBonus(game, content).defensePct}%。`}
         {war.allies.length > 0 && `盟友${war.allies.map((id) => content.sects.get(id)?.name).join('、')}會各派一名高手相助。`}

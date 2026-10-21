@@ -4,6 +4,7 @@ import type { LineageDef } from '../schema';
 // 加成數值為暫定值（見 docs/P1規劃.md §3.2）。批次 C 加入主修功法、劍陣、丹火回春、靈獸採集與傳承分支。
 
 const none = {
+  controlRounds: 0,
   formationMin: 0,
   formationAtkPct: 0,
   healPillPct: 0,
@@ -83,7 +84,7 @@ export const lineages: LineageDef[] = [
     elements: ['fire', 'earth'],
     technique: 'technique.talisman',
     branchSkill: 'talisman',
-    bonuses: { ...none, combatDefPct: 15, arrayQiPct: 20, talismanBonusBp: 1000 },
+    bonuses: { ...none, combatDefPct: 15, arrayQiPct: 20, talismanBonusBp: 1000, controlRounds: 1 },
     start: { resources: { lingshi: 40, paper: 10 }, recipes: ['recipe.guard_talisman'], skills: { talisman: 4 } },
   },
 ];

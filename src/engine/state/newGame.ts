@@ -12,7 +12,7 @@ import { emptyPositions } from '../systems/talent/positions';
 import { initialSites } from '../systems/world/diplomacy';
 import { initialSects } from '../systems/world/sects';
 
-export const STATE_VERSION = 10;
+export const STATE_VERSION = 11;
 
 export interface NewGameOptions {
   sectName: string;
@@ -64,7 +64,7 @@ export function newGame(content: ContentPack, opts: NewGameOptions): GameState {
       seat: MAIN_REGION,
       specialty: null,
       insight: 0,
-      equipment: null,
+      gear: {},
       seclusion: null,
     },
     disciples: [],

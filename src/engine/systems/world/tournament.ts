@@ -62,7 +62,7 @@ export function sectFighters(state: GameState, content: ContentPack, sect: SectS
       seat: '',
       specialty: null,
       insight: 0,
-      equipment: null,
+      gear: {},
     };
     return unitFromCharacter(fake, 'front', lineage);
   });

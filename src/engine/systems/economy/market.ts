@@ -3,7 +3,8 @@ import type { ContentPack } from '../../../content/registry';
 import { ensure } from '../../errors';
 import { RESOURCE_IDS, RESOURCE_NAMES } from '../../resources';
 import { rng } from '../../rng';
-import type { GameState, MarketGood, MarketState, ResourceId } from '../../types';
+import type { GameState, GearItem, MarketGood, MarketState, ResourceId } from '../../types';
+import { gearName, gearScore, qualityDef } from '../talent/gear';
 import { effectsOf, isOperating, MARKET } from '../buildings/buildings';
 import { envoyDiscount } from '../talent/positions';
 import { storageRoom } from './storage';
@@ -106,6 +107,25 @@ export function marketSell(state: GameState, content: ContentPack, id: ResourceI
   state.resources.lingshi += value;
   good(state, id).sold += lots;
   return `在坊市賣出${RESOURCE_NAMES[id]} ${amount}，得靈石 ${value}。`;
+}
+
+/** 一件法器在坊市的賣價：制式法器的行情 × 品質倍率 × 法器強弱（0.11.0）。 */
+export function gearSellPrice(state: GameState, content: ContentPack, item: GearItem): number {
+  return Math.max(1, Math.floor((sellPrice(state, 'artifact') * qualityDef(item.quality).pricePct * gearScore(content.equipment.get(item.defId))) / 100));
+}
+
+/** 賣出庫房裡的一件法器（佔坊市法器的收購量）。 */
+export function sellGear(state: GameState, content: ContentPack, itemId: string): string {
+  ensure(marketOpen(state, content), '尚未建成坊市（山門區）');
+  const idx = state.armory.findIndex((x) => x.id === itemId);
+  const item = state.armory[idx];
+  ensure(item, '庫房裡沒有這件法器');
+  ensure(demandLeft(state, content, 'artifact') >= 1, '坊市本月不再收購法器');
+  const value = gearSellPrice(state, content, item);
+  state.armory.splice(idx, 1);
+  state.resources.lingshi += value;
+  good(state, 'artifact').sold += 1;
+  return `在坊市賣出${gearName(content, item)}，得靈石 ${value}。`;
 }
 
 /** 坊市販售、尚未習得的配方。 */

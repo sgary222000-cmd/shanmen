@@ -22,7 +22,24 @@ export type ResourceId =
   | 'pill_core' // 結丹靈液（P1 批次 D）
   | 'pill_life' // 延壽丹（P2 批次 A）
   | 'pill_nascent' // 凝嬰丹（P2 批次 B）
-  | 'pill_deity'; // 化神丹（P2 批次 B）
+  | 'pill_deity' // 化神丹（P2 批次 B）
+  | 'pill_swift' // 疾風丹（0.11.0 短效屬性丹）
+  | 'pill_keen' // 破妄丹
+  | 'pill_phantom' // 幻影丹
+  | 'pill_ape' // 靈猿丹（0.11.0 永久屬性丹）
+  | 'pill_eye' // 天眼丹
+  | 'pill_cloud' // 踏雲丹
+  | 'talisman_bind' // 定身符（0.11.0 控制符）
+  | 'talisman_break' // 破甲符
+  | 'talisman_slow' // 遲緩符
+  | 'talisman_confuse' // 亂神符
+  | 'talisman_seal' // 封靈符
+  | 'mat_jade' // 試煉玉髓（0.11.0 副本稀有素材）
+  | 'mat_beastcore' // 妖丹
+  | 'mat_earthfire' // 地火精
+  | 'mat_scroll' // 古修殘卷
+  | 'mat_thunder' // 雷擊木
+  | 'mat_taixu' // 太虛晶;
 
 export type Resources = Record<ResourceId, number>;
 
@@ -121,8 +138,10 @@ export interface Character {
   specialty: keyof Skills | null;
   /** 主修功法的領悟度（入門 0、小成 100、大成 300，見 balance.technique） */
   insight: number;
-  /** 裝備的法器 ID（content.equipment）；null 表示沒有 */
-  equipment: string | null;
+  /** 裝備欄三格：兵器、護具、飾品（0.11.0；原本單一欄位 equipment） */
+  gear: Partial<Record<GearSlot, GearItem>>;
+  /** 已服用的永久屬性丹（0.11.0） */
+  permPills?: Partial<Record<ResourceId, number>>;
   /** 延壽丹等額外增加的壽元（月）。0.5.0 新增，舊存檔沒有。 */
   lifeBonusMonths?: number;
   /** 已服用的延壽丹數（一生有上限） */
@@ -348,6 +367,21 @@ export interface Vein {
   until: number;
 }
 
+export type GearSlot = 'weapon' | 'armor' | 'accessory';
+export type GearQuality = 'common' | 'fine' | 'superior' | 'rare' | 'immortal';
+export type GearSub = 'agi' | 'crit' | 'dodge' | 'hp';
+/** 仙品特效：先機（第一回合先手）、護命（致命傷留 1 點生命一次）、吸血、破甲 */
+export type GearEffect = 'first' | 'guard' | 'drain' | 'pierce';
+
+/** 一件法器（0.11.0 起每件個別存放，有品質） */
+export interface GearItem {
+  id: string;
+  defId: string;
+  quality: GearQuality;
+  subs: { stat: GearSub; value: number }[];
+  effect?: GearEffect;
+}
+
 export interface Furnace {
   /** 負責人物 ID；null 表示閒置 */
   alchemistId: string | null;
@@ -356,6 +390,8 @@ export interface Furnace {
   repeat: boolean;
   /** 庫存保留量：做完後任何材料（靈石除外）會低於此數就停工；未設或 0 表示不保留 */
   keep?: number;
+  /** 煉器時加入一份稀有素材提高品質（0.11.0） */
+  boost?: boolean;
 }
 
 /** 工坊種類：煉丹房的丹爐、煉器坊的器爐、符陣閣的符案。 */
@@ -421,6 +457,10 @@ export interface CombatStrategy {
   useTalismans: boolean;
   /** 優先攻擊生命最低的敵人；關閉時依站位順序攻擊 */
   focusLowest: boolean;
+  /** 戰前每人服用短效屬性丹（0.11.0） */
+  useBuffPills?: boolean;
+  /** 戰前祭出的控制符種類（最多兩種，0.11.0） */
+  control?: ResourceId[];
 }
 
 export type Row = 'front' | 'back';
@@ -571,8 +611,8 @@ export interface GameState {
   strategy: CombatStrategy;
   /** 職位（P1 批次 C）：職位 → 人物 ID */
   positions: Record<PositionId, string | null>;
-  /** 庫房裡未裝備的獨特法器 ID（一般法器以資源 artifact 計數） */
-  armory: string[];
+  /** 庫房裡未裝備的法器（0.11.0 起每件個別存放；庫存「法器」是未鑑定的制式兵器） */
+  armory: GearItem[];
   /** 關鍵物品：傳承典籍、馴獸法等 */
   items: string[];
   branches: Branch[];

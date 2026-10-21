@@ -179,20 +179,21 @@ describe('靈獸', () => {
 });
 
 describe('法器', () => {
-  it('制式法器取自庫存，獨特法器取自庫房，換裝時舊的放回', () => {
+  it('制式法器取自庫存，獨特法器取自庫房，換裝時舊的放回庫房', () => {
     let s = edit(developed(), (x) => {
       x.resources.artifact = 1;
-      x.armory.push('equip.ore_blade');
+      x.armory.push({ id: 'g900', defId: 'equip.ore_blade', quality: 'common', subs: [] });
     });
     s = run(s, { type: 'equip', characterId: 'c50', itemId: 'equip.common' });
     expect(s.resources.artifact).toBe(0);
+    expect(s.disciples[0]?.gear.weapon?.defId).toBe('equip.common');
     expect(tryRun(s, { type: 'equip', characterId: 'c0', itemId: 'equip.common' }).ok).toBe(false);
-    s = run(s, { type: 'equip', characterId: 'c50', itemId: 'equip.ore_blade' });
-    expect(s.resources.artifact).toBe(1);
-    expect(s.armory).not.toContain('equip.ore_blade');
-    expect(tryRun(s, { type: 'equip', characterId: 'c0', itemId: 'equip.ore_blade' }).ok).toBe(false);
-    s = run(s, { type: 'equip', characterId: 'c50', itemId: null });
-    expect(s.armory).toContain('equip.ore_blade');
+    s = run(s, { type: 'equip', characterId: 'c50', itemId: 'g900' });
+    expect(s.disciples[0]?.gear.weapon?.id).toBe('g900');
+    expect(s.armory.map((i) => i.defId)).toEqual(['equip.common']);
+    expect(tryRun(s, { type: 'equip', characterId: 'c0', itemId: 'g900' }).ok).toBe(false);
+    s = run(s, { type: 'equip', characterId: 'c50', itemId: null, slot: 'weapon' });
+    expect(s.armory.map((i) => i.id)).toContain('g900');
   });
 });
 
@@ -246,7 +247,7 @@ describe('新秘境與派遣', () => {
     s = walk(s);
     expect(s.exploration?.status).toBe('completed');
     expect(s.regions['region.fire']?.status).toBe('open');
-    expect(s.armory).toContain('equip.ore_blade');
+    expect(s.armory.map((i) => i.defId)).toContain('equip.ore_blade');
   });
 
   it('沒通關不能派遣；派遣結果固定、不會給唯一獎勵', () => {
@@ -371,7 +372,7 @@ describe('存檔 v4 → v5', () => {
     expect(s.buildings).toEqual(v4.world.buildings);
     expect(s.disciples.map((d) => d.name)).toEqual(v4.world.disciples.map((d: { name: string }) => d.name));
     expect(s.protagonist.insight).toBe(0);
-    expect(s.protagonist.equipment).toBeNull();
+    expect(s.protagonist.gear).toEqual({});
     expect(s.beasts[0]).toMatchObject({ stage: 'young', task: 'follow', ownerId: v4.world.beasts[0].ownerId });
     expect(s.sects).toHaveLength(6);
     expect(Object.values(s.positions).every((v) => v === null)).toBe(true);

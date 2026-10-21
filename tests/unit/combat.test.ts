@@ -16,6 +16,8 @@ function randomUnit(r: () => number, side: 'ally' | 'enemy', i: number): Unit {
     spd: r() % 30,
     hit: r() % 20,
     res: r() % 20,
+    crit: r() % 40,
+    dodge: r() % 30,
     mp: r() % 50,
     skill: { name: '技', multiplierPct: 100 + (r() % 100), mpCost: 10, piercePct: r() % 50 },
     turns: 0,

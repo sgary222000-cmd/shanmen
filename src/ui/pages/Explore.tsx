@@ -12,6 +12,11 @@ import { AutoToggle } from '../components/AutoToggle';
 import { artUrl, portraitOf } from '../art';
 import { ResList } from '../components/Res';
 import { content, useGame, useUi } from '../store';
+import { BattlePrep } from '../components/BattlePrep';
+import { teamPower, unitsPower } from '../../engine/systems/combat/party';
+import { unitFromEnemy } from '../../engine/systems/combat/combat';
+import { trialFoes } from '../../engine/systems/exploration/trial';
+import type { SecretRealmDef } from '../../content/schema';
 
 // 戰報中有圖的敵人（同種只顯示一張）
 function EnemyArt({ units }: { units: BattleRecord['enemies'] }) {
@@ -24,6 +29,15 @@ function EnemyArt({ units }: { units: BattleRecord['enemies'] }) {
       {defs.map((d) => d && <Art key={d.id} path={d.art!} alt={d.name} />)}
     </div>
   );
+}
+
+function bossPower(realm: SecretRealmDef): number {
+  const boss = realm.nodes.find((n) => n.kind === 'boss');
+  const units = (boss?.enemies ?? []).flatMap((id, i) => {
+    const def = content.enemies.get(id);
+    return def ? [unitFromEnemy(def, i, i === 0)] : [];
+  });
+  return unitsPower(units);
 }
 
 export function BattleView({ b, open }: { b: BattleRecord; open?: boolean }) {
@@ -364,6 +378,12 @@ function Prepare() {
             每場戰鬥開始各用一張護身符、火符（庫存 {game.resources.talisman_guard}／{game.resources.talisman_fire}）
           </label>
         </div>
+        <BattlePrep />
+        {team.length > 0 && (
+          <p className="small" data-testid="explore-power">
+            我方戰力 <b>{teamPower(game, content, team)}</b>／首領戰力 <b>{bossPower(realm)}</b>
+          </p>
+        )}
         <button
           className="btn gold"
           style={{ marginTop: '.5rem' }}
@@ -426,6 +446,12 @@ function TrialPanel() {
           </label>
         ))}
       </div>
+      {picked.length > 0 && (
+        <p className="small" data-testid="trial-power">
+          我方戰力 <b>{teamPower(game, content, picked)}</b>／試煉傀儡戰力 <b>{unitsPower(trialFoes(game, content, picked, tier))}</b>
+          <span className="muted">（獲勝可得試煉玉髓：精進 1 份、登峰 2 份）</span>
+        </p>
+      )}
       <button className="btn" data-testid="trial-start" disabled={!!blocked} title={blocked} onClick={() => dispatch({ type: 'runTrial', teamIds: picked, tier })}>
         開始試煉
       </button>

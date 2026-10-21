@@ -112,7 +112,17 @@ export function rollRoot(state: GameState, bonusBp: number): SpiritRoot {
   const r = rng(state, 'recruit');
   const roll = r.int(10000) + bonusBp;
   const grade: RootGrade = roll >= 9700 ? 'heaven' : roll >= 8000 ? 'high' : roll >= 4000 ? 'mid' : 'low';
-  const count = grade === 'heaven' ? 1 : r.range(1, 3);
+  const weights = balance.roots.countWeights;
+  let pick = r.int(weights.reduce((a, b) => a + b, 0));
+  let count = 1;
+  for (let i = 0; i < weights.length; i++) {
+    pick -= weights[i] ?? 0;
+    if (pick < 0) {
+      count = i + 1;
+      break;
+    }
+  }
+  if (grade === 'heaven') count = 1;
   const pool = [...ELEMENTS];
   const elements: Element[] = [];
   for (let i = 0; i < count; i++) {
@@ -173,7 +183,7 @@ export function characterFromCandidate(state: GameState, cand: Candidate, stage:
     seat: MAIN_REGION,
     specialty: cand.specialty ?? null,
     insight: 0,
-    equipment: null,
+    gear: {},
   };
 }
 

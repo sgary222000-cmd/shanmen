@@ -1,5 +1,5 @@
 import { balance } from '../../../content/balance';
-import { COMMON_EQUIPMENT } from '../../../content/equipment';
+import { returnAllGear } from '../talent/equipment';
 import type { ContentPack } from '../../../content/registry';
 import { monthIndex } from '../../date';
 import { ensure } from '../../errors';
@@ -112,10 +112,7 @@ function releaseEverything(state: GameState, id: string): void {
 }
 
 function returnEquipment(state: GameState, c: Character): void {
-  if (!c.equipment) return;
-  if (c.equipment === COMMON_EQUIPMENT) state.resources.artifact += 1;
-  else state.armory.push(c.equipment);
-  c.equipment = null;
+  returnAllGear(state, c);
 }
 
 function asProtagonist(c: Character): Protagonist {

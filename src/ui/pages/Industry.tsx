@@ -7,6 +7,9 @@ import { allCharacters } from '../../engine/systems/characters/characters';
 import { jobCapacity, OUTER_JOB_NAMES, OUTER_JOBS } from '../../engine/systems/characters/outer';
 import { SCHEDULE_NAMES } from '../../engine/systems/characters/schedule';
 import { craftOdds } from '../../engine/systems/economy/flows';
+import { forgePreview } from '../../engine/systems/alchemy/alchemy';
+import { qualityDef } from '../../engine/systems/talent/gear';
+import type { GameState, GearQuality } from '../../engine/types';
 import { SKILL_NAMES } from '../components/CharacterPanel';
 import { ResList } from '../components/Res';
 import { Art } from '../components/Art';
@@ -177,8 +180,10 @@ function Workshop({ station }: { station: Station }) {
             recipeId: next.recipeId,
             repeat: next.repeat,
             keep: next.keep ?? 0,
+            boost: !!next.boost,
           });
         };
+        const recipe = f.recipeId ? content.recipes.get(f.recipeId) : undefined;
         const odds = f.recipeId && f.alchemistId ? craftOdds(game, content, station, f.recipeId, f.alchemistId, i) : null;
         return (
           <div key={i} className={`bench ${f.recipeId && f.alchemistId ? (fp && !fp.runs ? 'stopped' : 'running') : 'idle'}`}>
@@ -222,10 +227,23 @@ function Workshop({ station }: { station: Station }) {
                 onChange={(e) => set({ keep: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
               />
             </label>
+            {recipe?.boostMats?.length ? (
+              <label className="small" title={`加入稀有素材（${recipe.boostMats.map((id) => RESOURCE_NAMES[id]).join('或')}）品質加成 +${balance.gear.rareBonus}，不論成敗都會用掉一個`}>
+                <input type="checkbox" checked={!!f.boost} data-testid={`${prefix}-${i}-boost`} onChange={(e) => set({ boost: e.target.checked })} /> 加入稀有素材
+                <span className="muted">（{recipe.boostMats.map((id) => `${RESOURCE_NAMES[id]} ${game.resources[id]}`).join('、')}）</span>
+              </label>
+            ) : null}
             {f.recipeId && f.alchemistId && odds && (
               <span className="small">
                 {info.odds} {odds.bp / 100}%<span className="muted">（{odds.parts.join('・')}）</span>・材料{' '}
-                <ResList value={content.recipes.get(f.recipeId)?.inputs ?? {}} />→ <ResList value={content.recipes.get(f.recipeId)?.outputs ?? {}} />
+                <ResList value={recipe?.inputs ?? {}} />→{' '}
+                {recipe?.gear ? (
+                  <span data-testid={`${prefix}-${i}-quality`}>
+                    {content.equipment.get(recipe.gear)?.name} 一件（{qualityLine(game, station, i)}）
+                  </span>
+                ) : (
+                  <ResList value={recipe?.outputs ?? {}} />
+                )}
                 {fp && !fp.runs && <span className="neg">（{fp.reason}）</span>}
               </span>
             )}
@@ -240,6 +258,12 @@ function Workshop({ station }: { station: Station }) {
       </p>
     </div>
   );
+}
+
+/** 煉器品質機率，例如「凡品 47%・良品 32%…」。 */
+function qualityLine(game: GameState, station: Station, index: number): string {
+  const ch = forgePreview(game, station, index);
+  return (Object.keys(ch) as GearQuality[]).map((q) => `${qualityDef(q).name} ${Math.round(ch[q] * 10) / 10}%`).join('・');
 }
 
 const roomArt: Record<Station, string> = {
