@@ -41,6 +41,7 @@ export type Command =
   | { type: 'setSchedule'; characterId: string; schedule: ScheduleKind; months?: number }
   | { type: 'interruptSeclusion' }
   | { type: 'setTakePill'; characterId: string; value: boolean }
+  | { type: 'setAutoBreakthrough'; value: boolean }
   | {
       type: 'setFurnace';
       /** 未填為煉丹房 */
@@ -170,6 +171,9 @@ export function applyCommand(state: GameState, content: ContentPack, cmd: Comman
         break;
       case 'setTakePill':
         setTakePill(next, cmd.characterId, cmd.value);
+        break;
+      case 'setAutoBreakthrough':
+        next.autoBreakthrough = cmd.value;
         break;
       case 'setFurnace':
         setFurnace(next, content, cmd.index, cmd.alchemistId, cmd.recipeId, cmd.repeat, cmd.station ?? 'alchemy', cmd.keep);

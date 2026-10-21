@@ -157,6 +157,7 @@ export const worldSchema = z
     wars: z.array(z.object({ id: z.string(), sectId: z.string(), side: z.enum(['attack', 'defend']), resolveAt: int, hidden: nonneg }).passthrough()),
     integrations: z.array(z.object({ sectId: z.string(), lingshi: nonneg, until: int })),
     trials: z.record(z.string(), int),
+    autoBreakthrough: z.boolean().optional(),
   })
   .passthrough();
 

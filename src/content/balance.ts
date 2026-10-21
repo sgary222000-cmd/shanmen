@@ -61,14 +61,15 @@ export const balance = {
     cultivate: 100,
     seclusion: 150,
     teach: 40,
-    alchemy: 40,
-    forge: 40,
-    talisman: 40,
-    heal: 20,
+    // 0.9.1：外出歷練、工坊、研究也是修行，弟子不會因為被派出去就停滯
+    alchemy: 70,
+    forge: 70,
+    talisman: 70,
+    heal: 40,
     breakthrough: 0,
-    research: 30,
-    explore: 30,
-    dispatch: 30,
+    research: 60,
+    explore: 70,
+    dispatch: 70,
   },
   /** 閉關每連續一個月 +10%，最多 +30% */
   seclusionStreakPct: 10,
@@ -464,6 +465,12 @@ export const balance = {
     warnPct: 90,
   },
   /** 宗門試煉（P2 批次 E）：大殿 2 級起；每人每年一次；敵人依隊伍最強者的境界配置，失敗不受傷 */
+  /** 弟子自動突破與掌門護法（0.9.1，暫定）：成功率至少幾成才自動衝，失敗會死的突破不自動；
+   *  掌門境界高於弟子要突破的境界、人在宗門時，弟子突破成功率加成（萬分比）。 */
+  autoBreakthrough: {
+    minOddsPct: 40,
+    guardBp: 1500,
+  },
   trial: {
     hall: 2,
     maxTeam: 3,

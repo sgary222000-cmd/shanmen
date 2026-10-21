@@ -145,9 +145,13 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     }
   }
   if (hallLevel(s) >= 4 && s.resources.lingshi >= 2000 && !s.wars.length) {
-    const target = s.sects.find(
+    let target = s.sects.find(
       (x) => !declareBlocked(s, content, x.id) && (casusBelli(s, content, x) || route === 'commission') && playerPower(s, content) * 2 >= x.power * 3,
     );
+    // 實力估計只看最強三人；真正能出戰的人（閉關中的掌門不算）勝算要七成以上才打
+    const now = monthIndex(s.date);
+    const trial = target && { id: 'x', sectId: target.id, side: 'attack' as const, reason: '', declared: now, resolveAt: now, teamIds: [], hidden: 0, allies: [] };
+    if (trial && warOdds(s, content, trial).winPct < 70) target = undefined;
     if (target) {
       s = tryCmd(s, content, { type: 'declareWar', sectId: target.id });
       note(`宣戰：${target.id}`);
@@ -408,18 +412,29 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
   const anyFoundation = [p, ...s.disciples].some((c) => c.realm.major !== 'qi' && !(c.realm.stage === 4 && c.xp >= xpToNext(c.realm)));
   const needCore =
     s.recipes.includes('recipe.core_liquid') && p.realm.major === 'foundation' && p.realm.stage >= 3 && s.resources.pill_core < 1;
-  // 主角結丹後，替煉氣圓滿的內門弟子備築基丹
+  // 主角結丹後（之後也一樣），替煉氣圓滿的內門弟子備築基丹
   const discipleFoundation =
-    p.realm.major === 'core' &&
+    p.realm.major !== 'qi' &&
+    p.realm.major !== 'foundation' &&
     s.recipes.includes('recipe.foundation_pill') &&
     s.resources.pill_foundation < 1 &&
     s.disciples.some((d) => readyForFoundation(d));
+  // 主角過了築基後，替築基圓滿的內門弟子備結丹靈液（弟子自動突破）
+  const discipleCore =
+    p.realm.major !== 'qi' &&
+    p.realm.major !== 'foundation' &&
+    s.recipes.includes('recipe.core_liquid') &&
+    s.resources.pill_core < 1 &&
+    // 只用多出來的靈藥、靈礦，不和主角的凝嬰丹、化神丹搶材料
+    s.resources.spirit_herb >= 20 &&
+    s.resources.ore >= 10 &&
+    s.disciples.some((d) => d.realm.major === 'foundation' && d.realm.stage === 4 && d.xp >= xpToNext(d.realm));
   const lateRecipe = late && canAfford(s.resources, late) ? late.recipe : undefined;
   const recipeId = lateRecipe
     ? lateRecipe
     : needFoundation || (discipleFoundation && s.resources.herb >= 10)
     ? 'recipe.foundation_pill'
-    : needCore && s.resources.spirit_herb >= 10 && s.resources.ore >= 5 && s.resources.lingshi >= 100
+    : (needCore || discipleCore) && s.resources.spirit_herb >= 10 && s.resources.ore >= 5 && s.resources.lingshi >= 100
       ? 'recipe.core_liquid'
     : s.resources.pill_heal < 4
       ? 'recipe.heal_pill'
@@ -468,7 +483,7 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
   }
 
   // 突破（有人要來攻山門時先不衝，失敗受傷就不能出戰）
-  if (!s.wars.some((w) => w.side === 'defend') && !breakthroughOdds(s, content, s.protagonist).blocked) {
+  if (!s.wars.length && !breakthroughOdds(s, content, s.protagonist).blocked) {
     if (s.protagonist.seclusion) s = tryCmd(s, content, { type: 'interruptSeclusion' });
     s = tryCmd(s, content, { type: 'setSchedule', characterId: p.id, schedule: 'breakthrough' });
     note('主角嘗試突破');
@@ -535,8 +550,8 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
 
   // 派遣：閒置內門組隊去最難、成功率夠高的已通關秘境
   const idle = s.disciples.filter((d) => d.schedule === 'cultivate' && !d.injuryMonths && !Object.values(s.positions).includes(d.id));
-  // 有人要來攻山門時不派人出去
-  const underAttack = s.wars.some((w) => w.side === 'defend');
+  // 有戰事時不派人出去（攻守都一樣，要留人出戰）
+  const underAttack = s.wars.length > 0;
   if (idle.length >= 2 && !underAttack) {
     for (const [realmId] of [...REALM_PLAN].reverse()) {
       const teamIds = idle.slice(0, 3).map((d) => d.id);
@@ -629,7 +644,10 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
   } else if (!wantResearch && me.schedule === 'research') {
     s = tryCmd(s, content, { type: 'setSchedule', characterId: me.id, schedule: 'cultivate' });
   }
-  if (s.protagonist.schedule === 'cultivate' && !s.protagonist.injuryMonths) {
+  // 開戰前一個月出關，閉關中的掌門不能出戰
+  const warSoon = s.wars.some((w) => w.resolveAt - monthIndex(s.date) <= 1);
+  if (warSoon && s.protagonist.seclusion) s = tryCmd(s, content, { type: 'interruptSeclusion' });
+  else if (!warSoon && s.protagonist.schedule === 'cultivate' && !s.protagonist.injuryMonths) {
     s = tryCmd(s, content, { type: 'setSchedule', characterId: s.protagonist.id, schedule: 'seclusion', months: 6 });
   }
   return s;

@@ -148,6 +148,15 @@ export function DisciplesPage() {
                 <option value="injured">受傷</option>
               </select>
             </div>
+            <label className="small row" title={`修為圓滿、條件與丹藥齊全，成功率 ${balance.autoBreakthrough.minOddsPct}% 以上且失敗不會死時，月初自動突破`}>
+              <input
+                type="checkbox"
+                data-testid="auto-breakthrough"
+                checked={game.autoBreakthrough ?? true}
+                onChange={(e) => dispatch({ type: 'setAutoBreakthrough', value: e.target.checked })}
+              />
+              弟子自動突破（成功率 {balance.autoBreakthrough.minOddsPct}% 以上、不會死時）
+            </label>
             {!game.disciples.length && <p className="muted">尚無內門弟子。到「外門」分頁選拔。</p>}
             {list.map((d) => (
               <button key={d.id} className={`roster-item ${cur?.id === d.id ? 'on' : ''}`} onClick={() => setPicked(d.id)} data-testid={`roster-${d.id}`}>

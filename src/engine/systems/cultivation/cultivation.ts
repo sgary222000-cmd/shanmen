@@ -12,6 +12,7 @@ import {
   BREAKTHROUGH_PILL,
   type BreakthroughTarget,
   MAJOR_NAMES,
+  MAJOR_ORDER,
   nextMajor,
   qiDemandOf,
   realmName,
@@ -164,6 +165,8 @@ function rulesOf(target: BreakthroughTarget) {
   return target === 'nascent' ? balance.nascentBreakthrough : balance.deityBreakthrough;
 }
 
+const AWAY: Character['schedule'][] = ['explore', 'dispatch', 'breakthrough'];
+
 /** 大突破成功率與條件（築基、結丹、凝嬰、化神）。事前全部列出給玩家看。 */
 export function breakthroughOdds(state: GameState, content: ContentPack, c: Character): BreakthroughOdds {
   const target = (nextMajor(c.realm.major) ?? 'deity') as BreakthroughTarget;
@@ -202,6 +205,12 @@ export function breakthroughOdds(state: GameState, content: ContentPack, c: Char
       bp += b.masteryBp;
       factors.push(`功法${balance.technique.tiers[masteryTier]?.name ?? ''} +${b.masteryBp / 100}%`);
     }
+  }
+  // 掌門護法（0.9.1）：掌門境界高於弟子要突破的境界、人在宗門時，替弟子護法
+  const p = state.protagonist;
+  if (c.role !== 'protagonist' && MAJOR_ORDER.indexOf(p.realm.major) > MAJOR_ORDER.indexOf(target) && !AWAY.includes(p.schedule)) {
+    bp += balance.autoBreakthrough.guardBp;
+    factors.push(`掌門護法 +${balance.autoBreakthrough.guardBp / 100}%`);
   }
   if (c.health < b.lowHealthThreshold) {
     bp += b.lowHealthBp;
