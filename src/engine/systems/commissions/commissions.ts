@@ -9,7 +9,8 @@ import { rng } from '../../rng';
 import type { Commission, GameState, Resources, Row } from '../../types';
 import { hallLevel } from '../buildings/buildings';
 import { findCharacter, outerCultivating } from '../characters/characters';
-import { runBattle, unitFromEnemy } from '../combat/combat';
+import { runBattle, unitFromEnemy, type Unit } from '../combat/combat';
+import { localRng } from '../world/war';
 import { allyUnit, applyFormation, companions, healPctFor } from '../combat/party';
 import { canJoinExpedition } from '../exploration/exploration';
 import { envoyRewardPct } from '../talent/positions';
@@ -123,6 +124,45 @@ export interface AcceptOptions {
   rows?: Record<string, Row>;
 }
 
+function escortSetup(state: GameState, content: ContentPack, c: Commission, teamIds: string[], rows?: Record<string, Row>) {
+  const members = teamIds.map((id) => findCharacter(state, id)).filter((m): m is NonNullable<typeof m> => !!m);
+  const allies = members.map((m, i) => allyUnit(state, content, m, rows?.[m.id] ?? (i === 0 ? 'front' : 'back')));
+  allies.push(...companions(state, content, teamIds));
+  const formation = applyFormation(state, content, allies);
+  const enemies = (c.enemies ?? []).map((eid, i) => {
+    const def = content.enemies.get(eid);
+    ensure(def, `敵人資料錯誤：${eid}`);
+    return unitFromEnemy(def, i);
+  });
+  return { allies, enemies, formation };
+}
+
+function escortBattle(state: GameState, content: ContentPack, allies: Unit[], enemies: Unit[], randInt: (n: number) => number) {
+  return runBattle({
+    allies,
+    enemies,
+    strategy: state.strategy,
+    healPills: state.resources.pill_heal,
+    talismans: { fire: state.resources.talisman_fire, guard: state.resources.talisman_guard },
+    healPct: healPctFor(state, content),
+    randInt,
+  });
+}
+
+/** 護衛委託的預估勝率（不消耗遊戲亂數），給自動出征判斷用。 */
+export function escortOdds(state: GameState, content: ContentPack, id: string, teamIds: string[]): number {
+  const c = state.commissions.find((x) => x.id === id);
+  if (!c || c.kind !== 'escort' || !teamIds.length) return 0;
+  const runs = 20;
+  let wins = 0;
+  for (let i = 0; i < runs; i++) {
+    const { allies, enemies } = escortSetup(state, content, c, teamIds);
+    const r = localRng(monthIndex(state.date) * 4099 + i * 131 + id.length);
+    if (escortBattle(state, content, allies, enemies, (n) => r.int(n)).result === 'win') wins++;
+  }
+  return Math.round((wins * 100) / runs);
+}
+
 export function acceptCommission(state: GameState, content: ContentPack, id: string, opts: AcceptOptions = {}): string {
   const c = state.commissions.find((x) => x.id === id);
   ensure(c, '委託榜上沒有這件委託');
@@ -162,24 +202,9 @@ export function acceptCommission(state: GameState, content: ContentPack, id: str
     ensure(!reason, reason?.replace('本月已探索過', '本月已外出') ?? '');
     return m;
   });
-  const allies = members.map((m, i) => allyUnit(state, content, m, opts.rows?.[m.id] ?? (i === 0 ? 'front' : 'back')));
-  allies.push(...companions(state, content, teamIds));
-  const formation = applyFormation(state, content, allies);
-  const enemies = (c.enemies ?? []).map((eid, i) => {
-    const def = content.enemies.get(eid);
-    ensure(def, `敵人資料錯誤：${eid}`);
-    return unitFromEnemy(def, i);
-  });
+  const { allies, enemies, formation } = escortSetup(state, content, c, teamIds, opts.rows);
   const r = rng(state, 'combat');
-  const outcome = runBattle({
-    allies,
-    enemies,
-    strategy: state.strategy,
-    healPills: state.resources.pill_heal,
-    talismans: { fire: state.resources.talisman_fire, guard: state.resources.talisman_guard },
-    healPct: healPctFor(state, content),
-    randInt: (n) => r.int(n),
-  });
+  const outcome = escortBattle(state, content, allies, enemies, (n) => r.int(n));
   if (formation) outcome.highlights.unshift(formation);
   state.resources.pill_heal -= outcome.pillsUsed;
   state.resources.talisman_fire -= outcome.talismansUsed.fire;

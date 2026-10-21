@@ -118,13 +118,13 @@ export const recipes: RecipeDef[] = [
   {
     id: 'recipe.nascent_pill',
     name: '凝嬰丹',
-    description: '金丹圓滿碎丹成嬰時服用。材料極貴，丹方可在坊市以重金購得。',
+    description: '金丹圓滿碎丹成嬰時服用。材料極貴，丹方可在坊市購得。',
     inputs: { spirit_herb: 30, ore: 20, beast_mat: 12, lingshi: 300 },
     outputs: { pill_nascent: 1 },
     baseSuccessBp: 3500,
     knownAtStart: false,
     station: 'alchemy',
-    marketPrice: 1500,
+    marketPrice: 800,
   },
   {
     id: 'recipe.deity_pill',

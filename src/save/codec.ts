@@ -4,7 +4,7 @@ import { realmName } from '../engine/systems/characters/characters';
 import { migrate } from './migrations';
 import { envelopeSchema, FORMAT_VERSION, SAVE_FORMAT, worldSchema, type SaveEnvelope, type SaveSummary } from './schema';
 
-export const GAME_VERSION = '0.9.1';
+export const GAME_VERSION = '0.10.0';
 
 /** FNV-1a 32 位元雜湊，用於偵測存檔損壞（不是防作弊）。 */
 export function checksum(text: string): string {

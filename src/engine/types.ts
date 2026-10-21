@@ -273,6 +273,14 @@ export interface SectState {
 }
 
 /** 宣戰後的戰事（P2 批次 D）：準備期結束時打山門戰。 */
+/** 自動出征名單（0.10.0）：每一種最多 3 人。 */
+export interface AutoAssign {
+  trial?: { ids: string[]; tier: string };
+  dispatch?: { ids: string[]; realmId: string };
+  /** minOdds：預估勝率達到這個百分比才接 */
+  escort?: { ids: string[]; minOdds: number };
+}
+
 export interface War {
   id: string;
   sectId: string;
@@ -583,6 +591,8 @@ export interface GameState {
   integrations: Integration[];
   /** 宗門試煉：人物 ID → 上次參加的年份（每人每年一次，P2 批次 E） */
   trials: Record<string, number>;
+  /** 自動出征名單（0.10.0） */
+  auto?: AutoAssign;
   /** 弟子修為圓滿時自動突破（0.9.1，沒有設定時視為開啟） */
   autoBreakthrough?: boolean;
   /** 本月月中發生的事（接委託、探索結果、坊市買賣），月底寫進月報開頭。0.4.5 新增，舊存檔沒有。 */

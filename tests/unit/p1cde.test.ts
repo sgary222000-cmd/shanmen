@@ -279,7 +279,7 @@ describe('電腦宗門', () => {
           expect(v).toBeGreaterThanOrEqual(0);
           expect(v).toBeLessThanOrEqual(balance.sects.resourceCap[k as keyof typeof x.resources]);
         }
-        expect(x.power).toBeLessThanOrEqual(Math.max(balance.sects.maxPower, balance.sects.distantMaxPower));
+        expect(x.power).toBeLessThanOrEqual(Math.max(balance.sects.lateMaxPower, balance.sects.distantLateMaxPower));
         expect(x.buildings).toBeLessThanOrEqual(balance.sects.maxBuildings);
       }
     }

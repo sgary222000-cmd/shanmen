@@ -3,7 +3,7 @@ import { balance } from '../../content/balance';
 import { monthIndex, type Commission, type ResourceId } from '../../engine';
 import { RESOURCE_NAMES } from '../../engine/resources';
 import { allCharacters } from '../../engine/systems/characters/characters';
-import { commissionBlocked, commissionReward, idleOuter, reputationRecruitBonus } from '../../engine/systems/commissions/commissions';
+import { commissionBlocked, commissionReward, escortOdds, idleOuter, reputationRecruitBonus } from '../../engine/systems/commissions/commissions';
 import {
   buyPrice,
   demandLeft,
@@ -16,6 +16,7 @@ import {
 } from '../../engine/systems/economy/market';
 import { priceText, SELLABLE, sellCap, type Sellable } from '../../engine/systems/economy/trade';
 import { canJoinExpedition } from '../../engine/systems/exploration/exploration';
+import { AutoToggle } from '../components/AutoToggle';
 import { ResList } from '../components/Res';
 import { useTabs } from '../components/Layout';
 import { content, useGame, useUi } from '../store';
@@ -111,6 +112,9 @@ function CommissionCard({ c }: { c: Commission }) {
         {c.kind === 'escort' ? '出發' : '接下'}
       </button>
       {blocked && <span className="muted small"> {blocked}</span>}
+      {c.kind === 'escort' && team.length > 0 && !blocked && (
+        <span className="small" data-testid={`escort-odds-${c.templateId}`}> 預估勝率 {escortOdds(game, content, c.id, team)}%</span>
+      )}
     </div>
   );
 }
@@ -132,6 +136,46 @@ function Board() {
         ))}
       </div>
       {game.commissions.length === 0 && <p className="muted">本月委託都接完了，下個月會有新委託。</p>}
+      <AutoEscort />
+    </div>
+  );
+}
+
+/** 護衛委託自動出征：勾選名單與最低勝率。 */
+function AutoEscort() {
+  const game = useGame();
+  const cur = game.auto?.escort;
+  const [ids, setIds] = useState<string[]>(cur?.ids ?? []);
+  const [minOdds, setMinOdds] = useState(cur?.minOdds ?? 70);
+  return (
+    <div className="panel" data-testid="auto-escort-panel">
+      <h3>護衛委託自動出征</h3>
+      <div className="row small" style={{ flexWrap: 'wrap' }}>
+        {game.disciples.map((d) => (
+          <label key={d.id}>
+            <input
+              type="checkbox"
+              data-testid={`auto-escort-member-${d.id}`}
+              checked={ids.includes(d.id)}
+              onChange={(e) => setIds(e.target.checked ? [...ids, d.id].slice(0, 3) : ids.filter((x) => x !== d.id))}
+            />
+            {d.name}
+          </label>
+        ))}
+        {!game.disciples.length && <span className="muted">還沒有內門弟子。</span>}
+      </div>
+      <div className="row small">
+        預估勝率達到
+        <select value={minOdds} onChange={(e) => setMinOdds(Number(e.target.value))} aria-label="最低勝率">
+          {[50, 60, 70, 80, 90].map((v) => (
+            <option key={v} value={v}>
+              {v}%
+            </option>
+          ))}
+        </select>
+        才接
+      </div>
+      <AutoToggle kind="escort" config={{ ids, minOdds }} label="每月月初，榜上有護衛委託而且名單隊伍的預估勝率夠高時自動接一件（算在每月件數內）。" />
     </div>
   );
 }

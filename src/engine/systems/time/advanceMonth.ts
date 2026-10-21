@@ -11,6 +11,7 @@ import { balance } from '../../../content/balance';
 import { refreshBoard } from '../commissions/commissions';
 import { rollMarket } from '../economy/market';
 import { tickOuter } from '../characters/outer';
+import { runAutoAssignments } from '../exploration/autoAssign';
 import { autoBreakthroughEligible, autoBreakthroughOn, scheduleAutoBreakthroughs } from '../cultivation/autoBreakthrough';
 import { addXp, breakthroughOdds, monthlyXp, resolveBreakthrough, tickBody, tickTraining } from '../cultivation/cultivation';
 import { monthsUntilEmpty, planMonth, type MonthPlan } from '../economy/flows';
@@ -59,6 +60,8 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
 
   // 0. 弟子自動突破（修為圓滿、條件齊全、成功率夠高且不會死）
   scheduleAutoBreakthroughs(state, content, lines);
+  // 0b. 自動出征（試煉、派遣、護衛委託）
+  runAutoAssignments(state, content, lines);
 
   // 1. 檢查行程合法性：條件不足的突破改為日常修煉
   const odds = new Map<string, ReturnType<typeof breakthroughOdds>>();

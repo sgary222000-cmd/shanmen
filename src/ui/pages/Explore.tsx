@@ -8,6 +8,7 @@ import { scaleResources } from '../../engine/resources';
 import { trialBlocked, trialOdds, trialUnavailable } from '../../engine/systems/exploration/trial';
 import { balance } from '../../content/balance';
 import { Art } from '../components/Art';
+import { AutoToggle } from '../components/AutoToggle';
 import { artUrl, portraitOf } from '../art';
 import { ResList } from '../components/Res';
 import { content, useGame, useUi } from '../store';
@@ -229,6 +230,7 @@ function DispatchPanel({ realmId, team }: { realmId: string; team: string[] }) {
       </button>
       {blocked && team.length > 0 && <span className="small neg"> {blocked}</span>}
       <p className="muted small">派遣用上面同一份勾選名單；派遣不算本月的探索，同月還能親自探索別的秘境。</p>
+      <AutoToggle kind="dispatch" config={{ ids: team, realmId }} label={`小隊回來、養好傷後，自動再派往${realm.name}。`} />
     </div>
   );
 }
@@ -428,6 +430,7 @@ function TrialPanel() {
         開始試煉
       </button>
       {blocked && picked.length > 0 && <span className="small neg"> {blocked}</span>}
+      <AutoToggle kind="trial" config={{ ids: team, tier }} label={`每年一月用這份名單與「${T.tiers.find((t) => t.id === tier)?.name ?? ''}」難度自動舉辦。`} />
       {game.battles[0]?.title.startsWith('宗門試煉') && game.battles[0].date.year === game.date.year && game.battles[0].date.month === game.date.month && (
         <BattleView b={game.battles[0]} />
       )}
