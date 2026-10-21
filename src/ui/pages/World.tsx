@@ -509,6 +509,9 @@ function Tournament() {
   const blocked = tournamentBlocked(game, team);
   return (
     <div className="panel" data-testid="tournament">
+      <div className="room-head">
+        <Art path="final/tournament.webp" alt="三年大比" />
+      </div>
       <h3>三年大比</h3>
       <p className="small">
         每 {T.intervalYears} 年 {T.month} 月舉行，下一屆：第 {nextTournamentYear(game)} 年。需聲望 {T.minReputation}（目前 {game.reputation}）。派最多{' '}
