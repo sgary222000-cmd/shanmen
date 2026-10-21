@@ -1,3 +1,4 @@
+import { emptyBazaar } from '../systems/economy/bazaar';
 import { balance } from '../../content/balance';
 import type { ContentPack } from '../../content/registry';
 import { ensure } from '../errors';
@@ -12,7 +13,7 @@ import { emptyPositions } from '../systems/talent/positions';
 import { initialSites } from '../systems/world/diplomacy';
 import { initialSects } from '../systems/world/sects';
 
-export const STATE_VERSION = 11;
+export const STATE_VERSION = 12;
 
 export interface NewGameOptions {
   sectName: string;
@@ -122,6 +123,7 @@ export function newGame(content: ContentPack, opts: NewGameOptions): GameState {
     tournament: null,
     auction: null,
     veins: [],
+    bazaar: emptyBazaar(),
     stats: { commands: 0, monthsAdvanced: 0, explorations: 0 },
   };
   rollMarket(state);

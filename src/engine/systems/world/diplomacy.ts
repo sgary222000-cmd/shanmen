@@ -82,7 +82,7 @@ export function addTrust(content: ContentPack, sect: SectState, delta: number): 
   return d;
 }
 
-function addFavor(sect: SectState, delta: number): void {
+export function addFavor(sect: SectState, delta: number): void {
   sect.favor = Math.max(0, Math.min(D.maxFavor, sect.favor + delta));
 }
 

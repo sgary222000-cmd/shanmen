@@ -14,6 +14,7 @@ import { localRng } from '../world/war';
 import { allyUnit, applyFormation, battleKit, companions, healPctFor, spendKit, type BattleKit } from '../combat/party';
 import { canJoinExpedition } from '../exploration/exploration';
 import { envoyRewardPct } from '../talent/positions';
+import { affairWeight, applyAffairs, maxEscortOnBoard, onCommissionDone } from '../economy/bazaar';
 
 // 委託榜（企畫書 §8）：每月月底補到 3–5 件，榜上一定有一件勞務委託，只要有外門就能接。
 // 三種委託：勞務（派外門幫工）、交付（交出物資）、護衛（主角或內門出戰）。
@@ -49,7 +50,7 @@ export function commissionBlocked(state: GameState, c: Commission): string | und
   return undefined;
 }
 
-function instantiate(state: GameState, def: CommissionDef): Commission {
+function instantiate(state: GameState, content: ContentPack, def: CommissionDef): Commission {
   const r = rng(state, 'commission');
   const pct = r.range(balance.commissions.rollMinPct, balance.commissions.rollMaxPct);
   const scale = (m: Partial<Resources> | undefined, up: boolean) => {
@@ -77,16 +78,19 @@ function instantiate(state: GameState, def: CommissionDef): Commission {
     c.enemies = [...def.enemies];
     c.maxTeam = def.maxTeam ?? 3;
   }
+  applyAffairs(state, content, def, c);
   return c;
 }
 
 function pickTemplate(state: GameState, pool: CommissionDef[]): CommissionDef | undefined {
-  const total = pool.reduce((n, d) => n + d.weight, 0);
+  // 時事期間相關委託權重 ×3；時事委託只在時事期間出現（0.12.0）
+  const w = (d: CommissionDef) => d.weight * affairWeight(state, d);
+  const total = pool.reduce((n, d) => n + w(d), 0);
   if (!total) return undefined;
   let roll = rng(state, 'commission').int(total);
   for (const d of pool) {
-    if (roll < d.weight) return d;
-    roll -= d.weight;
+    if (roll < w(d)) return d;
+    roll -= w(d);
   }
   return pool[pool.length - 1];
 }
@@ -102,17 +106,18 @@ export function refreshBoard(state: GameState, content: ContentPack): void {
         d.minHall <= hall &&
         (!d.requiresClear || (state.realmClears[d.requiresClear] ?? 0) > 0) &&
         !state.commissions.some((c) => c.templateId === d.id) &&
-        (d.kind !== 'escort' || state.commissions.filter((c) => c.kind === 'escort').length < balance.commissions.maxEscortOnBoard),
+        affairWeight(state, d) > 0 &&
+        (d.kind !== 'escort' || state.commissions.filter((c) => c.kind === 'escort').length < maxEscortOnBoard(state)),
     );
   if (!state.commissions.some((c) => c.kind === 'labor')) {
     const def = pickTemplate(state, available().filter((d) => d.kind === 'labor'));
-    if (def) state.commissions.push(instantiate(state, def));
+    if (def) state.commissions.push(instantiate(state, content, def));
   }
   const target = rng(state, 'commission').range(balance.commissions.minBoard, balance.commissions.maxBoard);
   while (state.commissions.length < target) {
     const def = pickTemplate(state, available());
     if (!def) break;
-    state.commissions.push(instantiate(state, def));
+    state.commissions.push(instantiate(state, content, def));
   }
 }
 
@@ -176,7 +181,8 @@ export function acceptCommission(state: GameState, content: ContentPack, id: str
     state.reputation += c.reputation;
     state.commissionsTaken = (state.commissionsTaken ?? 0) + 1;
     state.commissions = state.commissions.filter((x) => x.id !== id);
-    return `${text}得到 ${formatResources(reward)}，聲望 +${c.reputation}。`;
+    const extra = onCommissionDone(state, content, c);
+    return `${text}得到 ${formatResources(reward)}，聲望 +${c.reputation}。${extra}`;
   };
 
   if (c.kind === 'labor') {

@@ -1,5 +1,6 @@
 import { balance } from '../../../content/balance';
 import type { ContentPack } from '../../../content/registry';
+import { monthIndex } from '../../date';
 import { ensure } from '../../errors';
 import { RESOURCE_IDS, RESOURCE_NAMES } from '../../resources';
 import { rng } from '../../rng';
@@ -55,12 +56,24 @@ function good(state: GameState, id: ResourceId): MarketGood {
   return g;
 }
 
+/** 時事對行情的影響（百分點，0.12.0）：例如歉收時糧價 +30。 */
+export function affairPricePct(state: GameState, id: ResourceId): number {
+  const now = monthIndex(state.date);
+  let pct = 0;
+  for (const a of state.bazaar?.affairs ?? []) if (a.until >= now) pct += balance.bazaar.affairs.list[a.id]?.price?.[id] ?? 0;
+  return pct;
+}
+
+function pctOf(state: GameState, id: ResourceId): number {
+  return Math.max(1, good(state, id).pct + affairPricePct(state, id));
+}
+
 export function sellPrice(state: GameState, id: ResourceId): number {
-  return sellPriceAt(goodDef(id).base, good(state, id).pct);
+  return sellPriceAt(goodDef(id).base, pctOf(state, id));
 }
 
 export function buyPrice(state: GameState, id: ResourceId): number {
-  return buyPriceAt(goodDef(id).base, good(state, id).pct, discountPct(state));
+  return buyPriceAt(goodDef(id).base, pctOf(state, id), discountPct(state));
 }
 
 /** 本月還能買幾批。 */

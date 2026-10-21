@@ -171,6 +171,17 @@ export const worldSchema = z
     wars: z.array(z.object({ id: z.string(), sectId: z.string(), side: z.enum(['attack', 'defend']), resolveAt: int, hidden: nonneg }).passthrough()),
     integrations: z.array(z.object({ sectId: z.string(), lingshi: nonneg, until: int })),
     trials: z.record(z.string(), int),
+    bazaar: z
+      .object({
+        repSpent: nonneg,
+        repBest: nonneg,
+        affairs: z.array(z.object({ id: z.string(), until: int, realmId: z.string().optional() })),
+        exchange: z.object({ year: int, used: z.record(z.string(), nonneg), deityYear: int.optional() }),
+        treasury: z.object({ year: int, goods: z.array(z.object({ id: z.string(), price: nonneg, sold: z.boolean() }).passthrough()) }),
+        grandAuction: z.object({ id: z.string(), deadline: int, lots: z.array(z.object({ id: z.string(), reserve: nonneg, playerBid: nonneg }).passthrough()) }).nullable(),
+        buyOrder: z.object({ id: z.string(), sectId: z.string(), amount: nonneg, lingshi: nonneg, expires: int }).passthrough().nullable(),
+      })
+      .passthrough(),
     autoBreakthrough: z.boolean().optional(),
     auto: z
       .object({
