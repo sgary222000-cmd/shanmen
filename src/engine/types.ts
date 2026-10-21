@@ -439,6 +439,10 @@ export interface Commission {
   guard: boolean;
   /** 最後一個可接的月份（monthIndex） */
   expires: number;
+  /** 0.12.0 時事委託：委託的宗門（完成時好感增加） */
+  sectId?: string;
+  /** 0.12.0：完成時有機率多得的物資 [資源, 百分比] */
+  bonus?: [ResourceId, number];
 }
 
 export interface CombatUnitSnapshot {
@@ -563,6 +567,68 @@ export interface TutorialState {
   done: string[];
 }
 
+/** 0.12.0 時事：每年一月擲出，持續 12 個月 */
+export interface Affair {
+  id: string;
+  /** 最後一個有效的月份（monthIndex） */
+  until: number;
+  /** 秘境異動：哪一處秘境 */
+  realmId?: string;
+}
+
+/** 珍寶閣的一件貨 */
+export interface TreasureGood {
+  id: string;
+  price: number;
+  sold: boolean;
+  resource?: ResourceId;
+  amount?: number;
+  gear?: GearItem;
+}
+
+/** 拍賣會的一件拍品 */
+export interface AuctionLot {
+  id: string;
+  kind: 'gear' | 'recipe' | 'mats';
+  reserve: number;
+  playerBid: number;
+  gear?: GearItem;
+  recipeId?: string;
+  mats?: Partial<Resources>;
+}
+
+export interface GrandAuction {
+  id: string;
+  /** 開標的月份（monthIndex） */
+  deadline: number;
+  lots: AuctionLot[];
+}
+
+/** 鄰宗收購單 */
+export interface BuyOrder {
+  id: string;
+  sectId: string;
+  resource?: ResourceId;
+  slot?: 'weapon' | 'armor';
+  amount: number;
+  lingshi: number;
+  expires: number;
+}
+
+/** 0.12.0 中期擴充批次三：聲望兌換、時事、珍寶閣、拍賣會、收購單 */
+export interface BazaarState {
+  /** 兌換花掉的聲望；可用聲望 = 聲望 − 已花 */
+  repSpent: number;
+  /** 歷代最高聲望（飛升前紀錄） */
+  repBest: number;
+  affairs: Affair[];
+  /** 今年的兌換次數（一月歸零）；化神丹另記上次兌換的年份 */
+  exchange: { year: number; used: Record<string, number>; deityYear?: number };
+  treasury: { year: number; goods: TreasureGood[] };
+  grandAuction: GrandAuction | null;
+  buyOrder: BuyOrder | null;
+}
+
 export interface GameState {
   /** 世界狀態格式版本，與存檔格式版本一致 */
   version: number;
@@ -584,7 +650,7 @@ export interface GameState {
   market: MarketState;
   /** 委託榜 */
   commissions: Commission[];
-  /** 聲望：進度指標，不能花用；影響招生與坊市折扣 */
+  /** 聲望：進度指標；影響招生與坊市折扣。兌換只扣 bazaar.repSpent（可用聲望 = 聲望 − 已花） */
   reputation: number;
   /** 已學會的配方 */
   recipes: string[];
@@ -652,6 +718,8 @@ export interface GameState {
   tournament: TournamentState | null;
   auction: AuctionState | null;
   veins: Vein[];
+  /** 0.12.0 */
+  bazaar: BazaarState;
   /** 統計，用於驗收與平衡紀錄 */
   stats: { commands: number; monthsAdvanced: number; explorations: number };
 }

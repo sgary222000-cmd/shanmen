@@ -23,6 +23,8 @@ import { AutoToggle } from '../components/AutoToggle';
 import { ResList } from '../components/Res';
 import { useTabs } from '../components/Layout';
 import { content, useGame, useUi } from '../store';
+import { AffairsBanner, BuyOrderTab, ExchangeTab, GrandAuctionTab, TreasuryTab } from './Bazaar';
+import { availableRep } from '../../engine/systems/economy/bazaar';
 
 const KIND_NAMES = { labor: '勞務', deliver: '交付', escort: '護衛' } as const;
 
@@ -43,6 +45,11 @@ function CommissionCard({ c }: { c: Commission }) {
       <h3>{c.title}</h3>
       <span className={`due ${left <= 1 ? 'soon' : ''}`}>{left <= 1 ? '本月截止' : `剩 ${left} 個月`}</span>
       <p className="small">{c.text}</p>
+      {c.sectId && (
+        <p className="small">
+          <span className="tag gold">時事</span> 委託人：{content.sects.get(c.sectId)?.name}（完成後好感增加）
+        </p>
+      )}
       {c.kind === 'labor' && (
         <p className="small">
           最多派 {c.workers} 名閒置外門（目前閒置 {idleOuter(game)} 人）。每人報酬：<ResList value={c.reward} />
@@ -61,6 +68,7 @@ function CommissionCard({ c }: { c: Commission }) {
       <p className="small">
         報酬：<ResList value={reward} />
         {c.kind === 'labor' && n > 1 && `（${n} 人）`}・聲望 +{c.reputation}
+        {c.bonus && `・${c.bonus[1]}% 機率另得${RESOURCE_NAMES[c.bonus[0]]} 1`}
         {c.guard && (content.lineages.get(game.lineage)?.bonuses.guardRewardPct ?? 0) > 0 && <span className="tag gold">劍修護衛加成</span>}
       </p>
       {c.kind === 'labor' && (
@@ -136,6 +144,7 @@ function Board() {
         每月月底更新，榜上至少有一件勞務委託（只要有閒置的外門就能接）。接下即當場結算，報酬立即入庫。
         <span className="tag provisional">數值暫定</span>
       </p>
+      <AffairsBanner />
       <p className="small" data-testid="commissions-taken">
         本月已接 <b>{game.commissionsTaken ?? 0}</b> / {balance.commissions.maxPerMonth} 件委託。
       </p>
@@ -350,6 +359,10 @@ export function MarketPage() {
     { id: 'board', label: <>委託榜 <small>{game.commissions.length}</small></> },
     { id: 'market', label: '坊市' },
     { id: 'caravan', label: '山下商隊' },
+    { id: 'exchange', label: '聲望兌換' },
+    { id: 'treasury', label: '珍寶閣' },
+    { id: 'auction', label: <>拍賣會{game.bazaar?.grandAuction ? <small>開拍</small> : null}</> },
+    { id: 'orders', label: <>收購單{game.bazaar?.buyOrder ? <small>1</small> : null}</> },
   ]);
   return (
     <div>
@@ -358,6 +371,7 @@ export function MarketPage() {
         <div className="stat hl">
           <div className="k">聲望</div>
           <div className="v">{game.reputation}</div>
+          <div className="s">可用 {availableRep(game)}（兌換扣這個）</div>
         </div>
         <div className="stat">
           <div className="k">招生外門</div>
@@ -374,6 +388,10 @@ export function MarketPage() {
       {tab === 'board' && <Board />}
       {tab === 'market' && <MarketTable />}
       {tab === 'caravan' && <Caravan />}
+      {tab === 'exchange' && <ExchangeTab />}
+      {tab === 'treasury' && <TreasuryTab />}
+      {tab === 'auction' && <GrandAuctionTab />}
+      {tab === 'orders' && <BuyOrderTab />}
     </div>
   );
 }

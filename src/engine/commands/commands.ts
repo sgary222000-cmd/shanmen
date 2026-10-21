@@ -24,6 +24,7 @@ import { chooseEvent, closeExploration, moveTo, retreat, startExploration } from
 import { buyFood, sell, type Sellable } from '../systems/economy/trade';
 import { buyRecipe, marketBuy, marketSell, sellGear } from '../systems/economy/market';
 import { acceptCommission } from '../systems/commissions/commissions';
+import { bidGrandAuction, buyTreasure, doExchange, fulfillOrder } from '../systems/economy/bazaar';
 import { advanceMonth } from '../systems/time/advanceMonth';
 import { resolveSuccession, setHeir, takeLongevityPill } from '../systems/characters/lifespan';
 import { updateTutorial } from '../systems/tutorial';
@@ -88,6 +89,10 @@ export type Command =
   | { type: 'equip'; characterId: string; itemId: string | null; slot?: GearSlot }
   | { type: 'takePermPill'; characterId: string; pill: ResourceId }
   | { type: 'sellGear'; itemId: string }
+  | { type: 'exchange'; offerId: string }
+  | { type: 'buyTreasure'; goodId: string }
+  | { type: 'bidGrandAuction'; lotId: string; amount: number }
+  | { type: 'fulfillOrder' }
   | { type: 'openBranch'; lineageId: string; hostId: string }
   | { type: 'buyScripture'; lineageId: string }
   | { type: 'hatchBeast' }
@@ -291,6 +296,18 @@ export function applyCommand(state: GameState, content: ContentPack, cmd: Comman
         break;
       case 'sellGear':
         message = sellGear(next, content, cmd.itemId);
+        break;
+      case 'exchange':
+        message = doExchange(next, content, cmd.offerId);
+        break;
+      case 'buyTreasure':
+        message = buyTreasure(next, content, cmd.goodId);
+        break;
+      case 'bidGrandAuction':
+        message = bidGrandAuction(next, cmd.lotId, cmd.amount);
+        break;
+      case 'fulfillOrder':
+        message = fulfillOrder(next, content);
         break;
       case 'takePermPill':
         message = takePermPill(next, cmd.characterId, cmd.pill);

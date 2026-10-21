@@ -435,6 +435,10 @@ export const commissionSchema = z.object({
   reward: resourceMap,
   reputation: z.number().int().nonnegative(),
   guard: z.boolean().default(false),
+  /** 0.12.0：只在這件時事期間出現 */
+  affair: z.string().optional(),
+  /** 0.12.0：完成時有機率多得的物資 [資源, 百分比] */
+  bonus: z.tuple([z.enum(resourceIds), z.number().int().positive()]).optional(),
 });
 
 export type BuildingDef = z.infer<typeof buildingSchema>;

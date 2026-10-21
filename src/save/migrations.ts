@@ -1,6 +1,7 @@
 // 存檔升版遷移。每次世界狀態格式改變：STATE_VERSION +1，並在這裡加入一支「舊版 → 新版」函式。
 // 讀到舊存檔時依序執行；遷移前原檔會另存為升版前備份（見 storage.ts）。
 
+import { emptyBazaar } from '../engine/systems/economy/bazaar';
 import { content } from '../content/registry';
 import { balance } from '../content/balance';
 import type { GameDate, GameState } from '../engine';
@@ -161,6 +162,8 @@ export const migrations: Record<number, (w: World) => World> = {
     const armory = ((w.armory as unknown[]) ?? []).filter((x): x is string => typeof x === 'string' && content.equipment.has(x)).map(item);
     return { ...w, version: 11, resources, protagonist, disciples, armory, nextId: next };
   },
+  // 0.11.x → 0.12.0（中期擴充批次三）：聲望兌換、時事、珍寶閣、拍賣會、收購單；可用聲望從目前的聲望開始
+  11: (w) => ({ ...w, version: 12, bazaar: { ...emptyBazaar(), repBest: (w.reputation as number) ?? 0 } }),
 };
 
 export function migrate(world: World, from: number, to: number): World {

@@ -26,6 +26,7 @@ import { tickDiplomacy } from '../world/diplomacy';
 import { tickWar } from '../world/war';
 import { applyStorage } from '../economy/storage';
 import { maybeStartAuction, resolveAuction } from '../world/auction';
+import { settleBazaar, tickBazaar } from '../economy/bazaar';
 import { closeTournament, maybeOpenTournament } from '../world/tournament';
 
 const REPORT_KEEP = 36;
@@ -144,12 +145,14 @@ export function advanceMonth(state: GameState, content: ContentPack, expectMonth
   tickDiplomacy(state, content, lines, stops);
   tickWar(state, content, lines, stops);
   resolveAuction(state, content, lines);
+  settleBazaar(state, content, lines);
   closeTournament(state, lines);
 
   // 7. 推進日期、產生事件、寫入月報
   const settled = { ...state.date };
   state.date = nextMonth(state.date);
   maybeRecruitment(state, content, lines);
+  tickBazaar(state, content, lines, stops);
   refreshBoard(state, content);
   maybeOpenTournament(state, lines);
   maybeStartAuction(state, lines);

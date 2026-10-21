@@ -6,6 +6,9 @@ import { annexBlocked, casusBelli, contestBlocked, contestOdds, declareBlocked, 
 import { allByDef, benchCount, benchList, hallLevel, isCraftSchedule, qiCapacity, innerLimit, newBuildOptions, upgradeOption } from '../src/engine/systems/buildings/buildings';
 import { commissionBlocked, idleOuter } from '../src/engine/systems/commissions/commissions';
 import { buyPrice, demandLeft, marketOpen, recipesForSale, stockLeft } from '../src/engine/systems/economy/market';
+import { exchangeOffers, orderBlocked } from '../src/engine/systems/economy/bazaar';
+
+const EXCHANGE_PRIORITY = ['recipe:recipe.nascent_pill', 'recipe:recipe.deity_pill', 'ex.nascent', 'ex.deity', 'ex.foundation', 'ex.core', 'ex.ape', 'ex.eye', 'ex.cloud'];
 import { balance } from '../src/content/balance';
 import type { GearItem, ResourceId } from '../src/engine';
 import { gearStats } from '../src/engine/systems/talent/gear';
@@ -234,6 +237,36 @@ export function botTurn(state: GameState, content: ContentPack, log: BotLog[], r
     for (const [res, low] of [['food', 60], ['herb', 15]] as const) {
       if (s.resources[res] >= low || stockLeft(s, content, res) < 1 || s.resources.lingshi < buyPrice(s, res) + 40) continue;
       s = tryCmd(s, content, { type: 'marketBuy', resource: res, lots: 1 });
+    }
+    // 0.12.0：聲望兌換（凝嬰、化神丹方與丹藥優先，其次築基丹、結丹靈液、永久丹、稀有素材）
+    for (const id of EXCHANGE_PRIORITY) {
+      const offer = exchangeOffers(s, content).find((o) => o.id === id);
+      if (offer && !offer.blocked) {
+        s = tryCmd(s, content, { type: 'exchange', offerId: id });
+        note(`聲望兌換：${offer.name}`);
+      }
+    }
+    // 收購單：庫存多出需求量 2 以上、或庫房有符合的法器就交貨
+    const order = s.bazaar?.buyOrder;
+    if (order && !orderBlocked(s, content) && (!order.resource || s.resources[order.resource] >= order.amount + 2)) {
+      s = tryCmd(s, content, { type: 'fulfillOrder' });
+      note(`交收購單：${order.lingshi} 靈石`);
+    }
+    // 珍寶閣：靈石遠超所需時買凝嬰丹、延壽丹、永久丹
+    for (const g of s.bazaar?.treasury.goods ?? []) {
+      if (g.sold || !g.resource || !['pill_nascent', 'pill_life', 'pill_ape', 'pill_eye', 'pill_cloud'].includes(g.resource)) continue;
+      if (s.resources.lingshi >= g.price * 3 + lateSave) {
+        s = tryCmd(s, content, { type: 'buyTreasure', goodId: g.id });
+        note(`珍寶閣：${g.resource} ${g.price}`);
+      }
+    }
+    // 拍賣會：靈石是底價 4 倍以上時，出底價的 1.3 倍
+    for (const lot of s.bazaar?.grandAuction?.lots ?? []) {
+      const bid = Math.ceil((lot.reserve * 13) / 10);
+      if (!lot.playerBid && s.resources.lingshi >= lot.reserve * 4 + lateSave) {
+        s = tryCmd(s, content, { type: 'bidGrandAuction', lotId: lot.id, amount: bid });
+        note(`拍賣會出價：${lot.kind} ${bid}`);
+      }
     }
     // 有餘裕時買配方
     for (const r of recipesForSale(s, content)) {

@@ -676,6 +676,112 @@ export const balance = {
     hitDownBp: 2000,
     rounds: { talisman_bind: 1, talisman_break: 2, talisman_slow: 2, talisman_confuse: 2, talisman_seal: 3 } as Partial<Record<ResourceId, number>>,
   },
+  /** 0.12.0 中期擴充批次三：時事委託、聲望兌換、拍賣會、珍寶閣、收購單（使用者 2026-10-21「照建議」） */
+  bazaar: {
+    affairs: {
+      /** 每年一月擲時事：1 件，另有此機率多 1 件；各持續 12 個月 */
+      secondChancePct: 25,
+      months: 12,
+      /** 時事相關委託出現權重倍率 */
+      weightMult: 3,
+      /** 時事委託完成時委託宗門好感 */
+      favor: 3,
+      list: {
+        beast_tide: { name: '獸潮', desc: '山中獸潮湧動，剿獸委託增加；獸材充斥，坊市獸材收購價下跌', weight: 1, boost: ['commission.beast_tide'], price: { beast_mat: -20 } },
+        famine: { name: '歉收', desc: '山下歉收，交付糧食的報酬加倍；坊市糧價上漲', weight: 1, boost: ['commission.food'], rewardPct: { 'commission.food': 200 }, price: { food: 30 } },
+        plague: { name: '疫病', desc: '疫病流行，交付回春丹的報酬加倍、需要的數量多一半', weight: 1, boost: ['commission.pill_heal'], rewardPct: { 'commission.pill_heal': 200 }, deliverPct: { 'commission.pill_heal': 150 } },
+        war_prep: { name: '鄰宗備戰', desc: '鄰宗厲兵秣馬，委託代製符籙；坊市火符、法器收購價上漲', weight: 1, boost: ['commission.war_fire', 'commission.war_guard'], rewardPct: { 'commission.war_fire': 150, 'commission.war_guard': 150 }, favor: 5, price: { talisman_fire: 30, artifact: 30 }, warWeight: 2 },
+        trade: { name: '商路大開', desc: '商隊往來頻繁，護衛委託報酬多一半，榜上可同時有兩件護衛委託', weight: 1, escortRewardPct: 150, maxEscort: 2, needsMarket: true },
+        realm_shift: { name: '秘境異動', desc: '某處秘境靈氣翻湧，派遣時拿到稀有素材的機率不再減半', weight: 1, needsClear: true },
+      } as Record<
+        string,
+        {
+          name: string;
+          desc: string;
+          weight: number;
+          boost?: string[];
+          rewardPct?: Record<string, number>;
+          deliverPct?: Record<string, number>;
+          price?: Partial<Record<ResourceId, number>>;
+          favor?: number;
+          escortRewardPct?: number;
+          maxEscort?: number;
+          warWeight?: number;
+          needsMarket?: boolean;
+          needsClear?: boolean;
+        }
+      >,
+    },
+    exchange: {
+      tiers: {
+        early: { name: '前期', rep: 200, hall: 2 },
+        mid: { name: '中期', rep: 1000, hall: 3 },
+        late: { name: '後期', rep: 3000, hall: 4 },
+      },
+      /** 坊市配方換算：原價 ÷ 2 */
+      recipeDivisor: 2,
+      items: [
+        { id: 'ex.foundation', tier: 'early', cost: 120, perYear: 2, give: { pill_foundation: 1 } },
+        { id: 'ex.heal', tier: 'early', cost: 40, perYear: 4, give: { pill_heal: 5 } },
+        { id: 'ex.earthfire', tier: 'mid', cost: 80, perYear: 2, give: { mat_earthfire: 1 } },
+        { id: 'ex.beastcore', tier: 'mid', cost: 80, perYear: 2, give: { mat_beastcore: 1 } },
+        { id: 'ex.scroll', tier: 'mid', cost: 80, perYear: 2, give: { mat_scroll: 1 } },
+        { id: 'ex.ape', tier: 'mid', cost: 300, perYear: 1, group: 'perm', give: { pill_ape: 1 } },
+        { id: 'ex.eye', tier: 'mid', cost: 300, perYear: 1, group: 'perm', give: { pill_eye: 1 } },
+        { id: 'ex.cloud', tier: 'mid', cost: 300, perYear: 1, group: 'perm', give: { pill_cloud: 1 } },
+        { id: 'ex.gear_superior', tier: 'mid', cost: 400, perYear: 1, gear: 'superior' },
+        { id: 'ex.core', tier: 'mid', cost: 250, perYear: 1, give: { pill_core: 1 } },
+        { id: 'ex.taixu', tier: 'late', cost: 150, perYear: 3, give: { mat_taixu: 1 } },
+        { id: 'ex.life', tier: 'late', cost: 600, perYear: 1, give: { pill_life: 1 } },
+        { id: 'ex.nascent', tier: 'late', cost: 800, perYear: 1, give: { pill_nascent: 1 } },
+        { id: 'ex.deity', tier: 'late', cost: 2000, perYear: 1, everyYears: 5, give: { pill_deity: 1 } },
+        { id: 'ex.gear_rare', tier: 'late', cost: 1200, perYear: 1, gear: 'rare' },
+      ] as { id: string; tier: 'early' | 'mid' | 'late'; cost: number; perYear: number; group?: string; everyYears?: number; give?: Partial<Resources>; gear?: 'superior' | 'rare' }[],
+    },
+    treasury: {
+      marketLevel: 2,
+      slots: 4,
+      pool: [
+        { kind: 'perm', price: 1500, weight: 3 },
+        { kind: 'mat', price: 300, weight: 4 },
+        { kind: 'gear_superior', price: 2000, weight: 3 },
+        { kind: 'gear_rare', price: 6000, weight: 1 },
+        { kind: 'life', price: 3000, weight: 1 },
+        { kind: 'nascent', price: 4000, weight: 1 },
+      ] as { kind: 'perm' | 'mat' | 'gear_superior' | 'gear_rare' | 'life' | 'nascent'; price: number; weight: number }[],
+    },
+    grandAuction: {
+      marketLevel: 2,
+      hall: 3,
+      /** 大比隔年的這個月開拍，下個月開標 */
+      month: 9,
+      months: 2,
+      reserve: { gear: 2000, recipe: 3000, mats: 1000 },
+      mats: [3, 5] as [number, number],
+      /** 參與競價的電腦宗門數 */
+      bidders: 3,
+      /** 電腦宗門出價：底價的百分比範圍，再乘性格倍率，最多出到自己靈石的一半 */
+      bidPct: [70, 190] as [number, number],
+      recipes: ['recipe.deity_pill', 'recipe.nascent_pill', 'recipe.crystal_robe', 'recipe.fire_blade', 'recipe.seal_talisman', 'recipe.bind_talisman', 'recipe.cloud_pill', 'recipe.eye_pill', 'recipe.ape_pill'],
+    },
+    buyOrders: {
+      /** 每季第一個月（1、4、7、10 月）沒有收購單時開一張 */
+      months: 3,
+      pricePct: [150, 200] as [number, number],
+      favor: 5,
+      pool: [
+        { resource: 'pill_heal', amount: 10 },
+        { resource: 'pill_qi', amount: 10 },
+        { resource: 'pill_peiyuan', amount: 6 },
+        { resource: 'talisman_fire', amount: 8 },
+        { resource: 'talisman_guard', amount: 8 },
+        { slot: 'weapon', amount: 2 },
+        { slot: 'armor', amount: 1 },
+      ] as ({ resource: ResourceId; amount: number } | { slot: 'weapon' | 'armor'; amount: number })[],
+      /** 法器收購單：良品以上 */
+      gearQuality: 'fine',
+    },
+  },
 };
 
 export interface StatBonus {
