@@ -6,7 +6,7 @@ import { LOCKED_SCHEDULES, SCHEDULE_NAMES, seatOptions, seclusionInterruptCost, 
 import { breakthroughOdds, monthlyXp } from '../../engine/systems/cultivation/cultivation';
 import { content, useGame, useUi } from '../store';
 import { artUrl, BREAKTHROUGH_PILL_ART } from '../art';
-import { insightGain, libraryResearch, techniqueOf, techniqueTier } from '../../engine/systems/talent/techniques';
+import { insightGain, libraryResearch, techniqueOf, techniqueStats, techniqueStatsText, techniqueTier } from '../../engine/systems/talent/techniques';
 import { POSITION_NAMES, positionOf } from '../../engine/systems/talent/positions';
 import { BEAST_TASK_NAMES } from '../../engine/systems/beasts/beasts';
 import { COMMON_EQUIPMENT } from '../../content/equipment';
@@ -93,8 +93,8 @@ function TechniqueLine({ c }: { c: Character }) {
   const gain = insightGain(game, content, c);
   return (
     <p className="small" data-testid={`insight-${c.id}`}>
-      功法《{tech?.name}》：<b>{tier.name}</b>（領悟 {c.insight}
-      {tier.next !== null ? ` / ${tier.next}` : ''}）{tier.pct ? `・修煉與戰鬥 +${tier.pct}%` : ''}・本月領悟 +{gain.total}
+      功法《{tech?.name}》：<b>{tier.name}</b>（第 {tier.level} 層，領悟 {c.insight}
+      {tier.next !== null ? ` / ${tier.next}` : ''}）・修煉 +{tier.pct}%・{techniqueStatsText(techniqueStats(game, content, c)) || '尚無屬性加成'}・本月領悟 +{gain.total}
       {gain.parts.length > 0 && <span className="muted">（{gain.parts.join('・')}）</span>}
     </p>
   );

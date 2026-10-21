@@ -20,7 +20,7 @@ import {
   xpToNext,
 } from '../characters/characters';
 import { RESOURCE_NAMES } from '../../resources';
-import { techniqueOf, techniqueTier } from '../talent/techniques';
+import { levelNameAt, techniqueOf, techniqueTier } from '../talent/techniques';
 import { mentorPct, positionOf, POSITION_NAMES } from '../talent/positions';
 import { guardianBonus } from '../beasts/beasts';
 import { ancestorPct, blessingReady } from '../characters/lifespan';
@@ -84,7 +84,7 @@ export function monthlyXp(state: GameState, content: ContentPack, c: Character, 
   const tier = techniqueTier(c);
   if (tier.pct) {
     pct += tier.pct;
-    parts.push(`功法${tier.name} +${tier.pct}%`);
+    parts.push(`功法${tier.stage} +${tier.pct}%`);
   }
   const pos = positionOf(state, c.id);
   if (pos && pct > 0) {
@@ -200,11 +200,11 @@ export function breakthroughOdds(state: GameState, content: ContentPack, c: Char
       bp += caveBp;
       factors.push(`洞府 +${caveBp / 100}%`);
     }
-    // 結丹看功法大成，凝嬰看功法圓滿
-    const masteryTier = target === 'core' ? 2 : 3;
-    if (b.masteryBp && techniqueTier(c).index >= masteryTier) {
+    // 結丹看功法大成（第 9 層），凝嬰看功法圓滿（第 13 層）
+    const masteryLevel = target === 'core' ? 9 : 13;
+    if (b.masteryBp && techniqueTier(c).level >= masteryLevel) {
       bp += b.masteryBp;
-      factors.push(`功法${balance.technique.tiers[masteryTier]?.name ?? ''} +${b.masteryBp / 100}%`);
+      factors.push(`功法${balance.technique.stages[(masteryLevel - 1) / 4] ?? ''} +${b.masteryBp / 100}%`);
     }
   }
   // 掌門護法（0.9.1）：掌門境界高於弟子要突破的境界、人在宗門時，替弟子護法
@@ -230,8 +230,7 @@ export function breakthroughOdds(state: GameState, content: ContentPack, c: Char
   else if (c.xp < xpToNext(c.realm)) blocked = `修為還沒圓滿（${c.xp} / ${xpToNext(c.realm)}）`;
   else if (isInjured(c)) blocked = '受傷中不能突破';
   else if (c.insight < b.requiredInsight) {
-    const tier = balance.technique.tiers.find((t) => t.insight === b.requiredInsight)?.name ?? '';
-    blocked = `需要《${tech?.name ?? '主修功法'}》領悟${tier}（${c.insight} / ${b.requiredInsight}，可在藏經閣研究）`;
+    blocked = `需要《${tech?.name ?? '主修功法'}》領悟到${levelNameAt(b.requiredInsight)}（${c.insight} / ${b.requiredInsight}，可在藏經閣研究）`;
   } else if (qiCapacity(state, content, c.seat) < b.requiredQiCapacity)
     blocked = `修煉地點（${where}）靈氣容量需達 ${b.requiredQiCapacity}（${
       target === 'foundation' ? '建造聚靈陣' : target === 'core' ? '聚靈陣 2 級加洞府' : '聚靈陣 3 級加洞府 3 級'

@@ -4,7 +4,7 @@ import { allCharacters } from '../../engine/systems/characters/characters';
 import { SCHEDULE_NAMES } from '../../engine/systems/characters/schedule';
 import { branchBlocked, scriptureBlocked } from '../../engine/systems/talent/branches';
 import { ITEM_NAMES, scriptureItem } from '../../engine/systems/talent/items';
-import { insightGain, libraryResearch, techniqueOf, techniqueTier } from '../../engine/systems/talent/techniques';
+import { insightGain, libraryResearch, techniqueOf, techniqueStats, techniqueStatsText, techniqueTier } from '../../engine/systems/talent/techniques';
 import { SKILL_NAMES } from '../components/CharacterPanel';
 import { useTabs } from '../components/Layout';
 import { content, useGame, useUi } from '../store';
@@ -100,7 +100,9 @@ export function LineagePage() {
   const lineage = content.lineages.get(game.lineage);
   const tech = techniqueOf(game, content);
   const lib = libraryResearch(game, content);
-  const tiers = balance.technique.tiers;
+  const T = balance.technique;
+  const sp = tech ? T.specialty[tech.id] : undefined;
+  const me = techniqueTier(game.protagonist);
   const { tab, bar } = useTabs([
     { id: 'tech', label: '主修功法' },
     { id: 'branches', label: '傳承分支' },
@@ -116,22 +118,31 @@ export function LineagePage() {
           {lineage?.name}傳承・主修功法《{tech?.name}》
         </h3>
         <p className="small">{tech?.description}</p>
-        <ol className="tier-track">
-          {tiers.map((t, i) => (
-            <li key={t.name} className={game.protagonist.insight >= t.insight ? 'got' : ''}>
-              <b>{t.name}</b>
-              <span className="need">領悟 {t.insight}</span>
-              <span className="small">{tech?.tierText[i]}</span>
+        <ol className="tier-track" data-testid="technique-stages">
+          {T.stages.map((stage, i) => (
+            <li key={stage} className={me.index >= i ? 'got' : ''}>
+              <b>{stage}</b>
+              <span className="need">
+                第 {i * 4 + 1}–{i * 4 + 4} 層・領悟 {T.levels[i * 4]}–{T.levels[i * 4 + 3]}
+              </span>
+              <span className="small">
+                {tech?.tierText[i]}・修煉 +{(i + 1) * T.xpPctPerStage}%
+              </span>
             </li>
           ))}
         </ol>
+        <p className="small" data-testid="technique-per-level">
+          每升一層：攻擊 +{T.perLevel.atkPct}%、生命 +{T.perLevel.hpPct}%、防禦 +{T.perLevel.defPct}%
+          {sp && `；傳承專長 ${techniqueStatsText({ atkPct: sp.atkPct ?? 0, hpPct: sp.hpPct ?? 0, defPct: sp.defPct ?? 0, critPct: sp.critPct ?? 0, dodgePct: sp.dodgePct ?? 0, agi: sp.agi ?? 0, beastAtkPct: sp.beastAtkPct ?? 0 })}（小數取整）`}
+          。掌門目前{me.name}（第 {me.level} 層）：{techniqueStatsText(techniqueStats(game, content, game.protagonist)) || '尚無加成'}。
+        </p>
         <p className="small">
           領悟來源：平時修煉每月 +{balance.technique.passive.qi}（築基 +{balance.technique.passive.foundation}、金丹 +
           {balance.technique.passive.core}），閉關再 +{balance.technique.seclusionPassive}；在藏經閣「研究功法」每月 +
           {lib === null
             ? `${balance.technique.researchBase} 再加藏經閣加成（目前沒有運作中的藏經閣，不能研究）`
             : `${balance.technique.researchBase + lib}（基礎 ${balance.technique.researchBase} + 藏經閣 ${lib}）`}
-          。結丹需要小成。
+          。結丹要第 5 層（小成），凝嬰要第 9 層（大成），化神要第 13 層（圓滿）。
         </p>
         <table>
           <thead>

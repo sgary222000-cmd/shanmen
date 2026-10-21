@@ -252,15 +252,23 @@ export const balance = {
     /** 失敗時身死道消的機率（萬分比，佔失敗的比例） */
     failDeathBp: 2500,
   },
-  /** 主修功法領悟度（批次 C） */
+  /** 主修功法領悟度（批次 C；0.13.0 起 20 層，每 4 層一個名稱，每層加屬性） */
   technique: {
-    tiers: [
-      { name: '入門', insight: 0, pct: 0 },
-      { name: '小成', insight: 100, pct: 10 },
-      { name: '大成', insight: 300, pct: 20 },
-      { name: '圓滿', insight: 400, pct: 25 },
-    ],
-    maxInsight: 400,
+    stages: ['入門', '小成', '大成', '圓滿', '化境'],
+    /** 第 1–20 層的累計領悟度門檻；第 5、9、13 層對齊舊的小成、大成、圓滿 */
+    levels: [0, 20, 45, 70, 100, 140, 185, 240, 300, 330, 360, 380, 400, 500, 620, 760, 920, 1100, 1300, 1500],
+    maxInsight: 1500,
+    /** 每進入一個名稱（入門、小成…化境）修煉 +5%，最多 +25% */
+    xpPctPerStage: 5,
+    /** 每層共通屬性（百分比） */
+    perLevel: { atkPct: 2, hpPct: 2, defPct: 1 },
+    /** 各傳承專長：每層再加（可為小數，取整） */
+    specialty: {
+      'technique.sword': { critPct: 0.5 },
+      'technique.alchemy': { defPct: 1, hpPct: 1 },
+      'technique.beast': { agi: 0.5, beastAtkPct: 1 },
+      'technique.talisman': { dodgePct: 0.5 },
+    } as Record<string, Partial<Record<'atkPct' | 'hpPct' | 'defPct' | 'critPct' | 'dodgePct' | 'agi' | 'beastAtkPct', number>>>,
     /** 研究行程的基礎領悟（另加藏經閣） */
     researchBase: 8,
     /** 平時修煉自然領悟：每月依大境界 */

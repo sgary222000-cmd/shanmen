@@ -372,8 +372,8 @@ export const techniqueSchema = z.object({
   name: z.string(),
   lineage: z.string(),
   description: z.string(),
-  /** 入門、小成、大成的說明 */
-  tierText: z.tuple([z.string(), z.string(), z.string()]),
+  /** 入門、小成、大成、圓滿、化境的說明（0.13.0 起五段，數值另由 balance.technique 計算） */
+  tierText: z.tuple([z.string(), z.string(), z.string(), z.string(), z.string()]),
 });
 
 export const equipmentSchema = z.object({

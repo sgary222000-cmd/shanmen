@@ -91,8 +91,8 @@ describe('功法領悟', () => {
       x.protagonist.insight = 100;
       x.disciples[0]!.insight = 300;
     });
-    expect(techniqueTier(s.protagonist).name).toBe('小成');
-    expect(techniqueTier(s.disciples[0]!).name).toBe('大成');
+    expect(techniqueTier(s.protagonist).stage).toBe('小成');
+    expect(techniqueTier(s.disciples[0]!).stage).toBe('大成');
   });
 });
 

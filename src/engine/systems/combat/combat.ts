@@ -66,10 +66,20 @@ export interface BattleOutcome {
   controlUsed: ResourceId[];
 }
 
-/** 人物戰力的額外來源：三格法器、功法領悟（百分比）、短效屬性丹。靈根與永久丹由人物本身計算。 */
+/** 功法層數給的屬性（0.13.0）。 */
+export interface TechniqueMods {
+  atkPct: number;
+  hpPct: number;
+  defPct: number;
+  critPct: number;
+  dodgePct: number;
+  agi: number;
+}
+
+/** 人物戰力的額外來源：三格法器、功法層數、短效屬性丹。靈根與永久丹由人物本身計算。 */
 export interface UnitMods {
   gear?: GearStats;
-  techniquePct?: number;
+  technique?: TechniqueMods;
   /** 護宗神獸加成 */
   guardianAtkPct?: number;
   guardianHpPct?: number;
@@ -81,7 +91,9 @@ const CORE_SKILL_BONUS_PCT = 30;
 export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, hp?: number, mods: UnitMods = {}): Unit {
   const L = powerLevel(c.realm);
   const cs = c.skills.combat;
-  const tech = 100 + (mods.techniquePct ?? 0);
+  const tm = mods.technique;
+  const tech = 100 + (tm?.hpPct ?? 0);
+  const techAtk = 100 + (tm?.atkPct ?? 0);
   const g = mods.gear ?? emptyStats();
   const inn = innateBonus(c);
   const A = balance.attributes;
@@ -100,13 +112,13 @@ export function unitFromCharacter(c: Character, row: Row, lineage: LineageDef, h
     maxHp,
     atk:
       Math.round(
-        ((10 + 3 * L + cs) * (100 + lineage.bonuses.combatAtkPct) * tech * (100 + (mods.guardianAtkPct ?? 0)) * (100 + inn.atkPct)) /
+        ((10 + 3 * L + cs) * (100 + lineage.bonuses.combatAtkPct) * techAtk * (100 + (mods.guardianAtkPct ?? 0)) * (100 + inn.atkPct)) /
           100000000,
       ) + g.atk,
-    def: Math.round(((3 + L) * (100 + lineage.bonuses.combatDefPct) * (100 + inn.defPct)) / 10000) + g.def,
-    spd: 9 + Math.floor(L / 2) + Math.floor(cs / 2) + inn.agi + g.agi,
-    crit: A.baseCritPct + inn.critPct + g.critPct,
-    dodge: A.baseDodgePct + inn.dodgePct + g.dodgePct,
+    def: Math.round(((3 + L) * (100 + lineage.bonuses.combatDefPct) * (100 + inn.defPct + (tm?.defPct ?? 0))) / 10000) + g.def,
+    spd: 9 + Math.floor(L / 2) + Math.floor(cs / 2) + inn.agi + g.agi + (tm?.agi ?? 0),
+    crit: A.baseCritPct + inn.critPct + g.critPct + (tm?.critPct ?? 0),
+    dodge: A.baseDodgePct + inn.dodgePct + g.dodgePct + (tm?.dodgePct ?? 0),
     ...(g.effects.length ? { effects: [...g.effects] } : {}),
     hit: 8 + L,
     res: 4 + Math.floor(L / 2),
