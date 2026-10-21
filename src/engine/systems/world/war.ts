@@ -693,6 +693,14 @@ export function warThreatBp(state: GameState, content: ContentPack, sect: SectSt
   // 恃強：好戰又在擴張的宗門，實力明顯比我宗強時，好感普通也可能興兵
   if (def.temperament === 'warlike' && sect.goal === 'expand' && sect.favor < W.causeFavor + 10 && sect.power * 100 >= ours * W.bullyPowerPct)
     return W.bullyBp;
+  // 爭雄：中後期鄰宗不甘屈居人下，實力有我宗一半就可能來犯
+  if (
+    state.date.year >= W.rivalFromYear &&
+    (def.temperament === 'warlike' || sect.goal === 'expand') &&
+    sect.favor < W.causeFavor + 10 &&
+    sect.power * 100 >= ours * W.rivalPowerPct
+  )
+    return W.rivalBp;
   return 0;
 }
 
@@ -730,7 +738,7 @@ export function tickWar(state: GameState, content: ContentPack, lines: string[],
       const prep = r.range(W.prepMin, W.prepMax);
       const name = nameOf(content, sect.id);
       // 月結算中宣戰：準備期從下個月算起
-      const war = startWar(state, content, sect, 'defend', sect.favor < W.declareFavor ? `${name}對我宗積怨已深` : `${name}恃強擴張`, prep + 1);
+      const war = startWar(state, content, sect, 'defend', sect.favor < W.declareFavor ? `${name}對我宗積怨已深` : sect.power * 100 >= playerPower(state, content) * W.bullyPowerPct ? `${name}恃強擴張` : `${name}欲與我宗爭雄`, prep + 1);
       const allyNames = war.allies.map((id) => nameOf(content, id));
       lines.push(
         `⚔ ${name}向我宗宣戰，${prep} 個月後攻打山門！可以在「往來 → 戰事」求和、撤離資產或指定出戰弟子。` +

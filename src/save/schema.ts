@@ -158,6 +158,13 @@ export const worldSchema = z
     integrations: z.array(z.object({ sectId: z.string(), lingshi: nonneg, until: int })),
     trials: z.record(z.string(), int),
     autoBreakthrough: z.boolean().optional(),
+    auto: z
+      .object({
+        trial: z.object({ ids: z.array(z.string()), tier: z.string() }).optional(),
+        dispatch: z.object({ ids: z.array(z.string()), realmId: z.string() }).optional(),
+        escort: z.object({ ids: z.array(z.string()), minOdds: int }).optional(),
+      })
+      .optional(),
   })
   .passthrough();
 

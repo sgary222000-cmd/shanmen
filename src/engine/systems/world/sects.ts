@@ -54,12 +54,13 @@ export function initialSects(content: ContentPack): SectState[] {
   }));
 }
 
-/** 本年的實力上限：開局實力 + 每年放寬，最多 maxPower。 */
+/** 本年的實力上限：開局實力 + 每年放寬；最多 lateMaxPower。 */
 export function sectPowerCap(state: GameState, content: ContentPack, sect: SectState): number {
   const def = content.sects.get(sect.id);
   const start = def?.start.power ?? 0;
-  const max = def?.scope === 'distant' ? S.distantMaxPower : S.maxPower;
-  return Math.min(max, Math.max(start, start + S.powerPerYear * (state.date.year - 1)));
+  const distant = def?.scope === 'distant';
+  const late = distant ? S.distantLateMaxPower : S.lateMaxPower;
+  return Math.min(late, Math.max(start, start + S.powerPerYear * (state.date.year - 1)));
 }
 
 export function sectDef(content: ContentPack, id: string): SectDef {

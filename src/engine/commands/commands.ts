@@ -1,6 +1,6 @@
 import type { ContentPack } from '../../content/registry';
 import { RuleError } from '../errors';
-import type { BeastTask, GameState, MonthReport, OuterDisciples, PositionId, ResourceId, Row, ScheduleKind, Station, TreatyKind } from '../types';
+import type { AutoAssign, BeastTask, GameState, MonthReport, OuterDisciples, PositionId, ResourceId, Row, ScheduleKind, Station, TreatyKind } from '../types';
 import { breakTreaty, resolveAid, signTreaty, type AidChoice } from '../systems/world/diplomacy';
 import { contestSite, declareWar, evacuate, makePeace, repairBuilding, resolveVictory, setWarTeam, type VictoryChoice } from '../systems/world/war';
 import { setPosition } from '../systems/talent/positions';
@@ -9,6 +9,7 @@ import { buyScripture, openBranch } from '../systems/talent/branches';
 import { ascendGuardian, hatchBeast, raiseGuardian, setBeast } from '../systems/beasts/beasts';
 import { startDispatch } from '../systems/exploration/dispatch';
 import { runTrial } from '../systems/exploration/trial';
+import { setAuto, type AutoKind } from '../systems/exploration/autoAssign';
 import { giftSect, sectTrade } from '../systems/world/sects';
 import { enterTournament } from '../systems/world/tournament';
 import { bidAuction } from '../systems/world/auction';
@@ -42,6 +43,7 @@ export type Command =
   | { type: 'interruptSeclusion' }
   | { type: 'setTakePill'; characterId: string; value: boolean }
   | { type: 'setAutoBreakthrough'; value: boolean }
+  | { type: 'setAuto'; kind: AutoKind; config: AutoAssign[AutoKind] | null }
   | {
       type: 'setFurnace';
       /** 未填為煉丹房 */
@@ -171,6 +173,9 @@ export function applyCommand(state: GameState, content: ContentPack, cmd: Comman
         break;
       case 'setTakePill':
         setTakePill(next, cmd.characterId, cmd.value);
+        break;
+      case 'setAuto':
+        message = setAuto(next, content, cmd.kind, cmd.config);
         break;
       case 'setAutoBreakthrough':
         next.autoBreakthrough = cmd.value;

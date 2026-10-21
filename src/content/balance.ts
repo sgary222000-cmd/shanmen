@@ -133,21 +133,22 @@ export const balance = {
     /** 每 20 聲望買價 −1%，最多 −5% */
     repPerDiscount: 20,
     maxDiscount: 5,
+    // 0.10.0：製品（丹藥、符籙、法器）基準價 +25%，每月可買批數 +50%
     goods: {
-      food: { lot: 25, base: 10, stock: 6, demand: 6 },
-      stone: { lot: 25, base: 10, stock: 4, demand: 6 },
-      wood: { lot: 20, base: 10, stock: 4, demand: 6 },
-      herb: { lot: 10, base: 8, stock: 4, demand: 4 },
-      spirit_herb: { lot: 4, base: 12, stock: 3, demand: 3 },
-      ore: { lot: 5, base: 10, stock: 3, demand: 3 },
-      paper: { lot: 10, base: 10, stock: 3, demand: 3 },
-      beast_mat: { lot: 4, base: 12, stock: 2, demand: 3 },
-      pill_qi: { lot: 3, base: 12, stock: 3, demand: 3 },
-      pill_heal: { lot: 4, base: 12, stock: 3, demand: 3 },
-      pill_peiyuan: { lot: 1, base: 18, stock: 2, demand: 2 },
-      talisman_fire: { lot: 3, base: 12, stock: 2, demand: 3 },
-      talisman_guard: { lot: 3, base: 12, stock: 2, demand: 3 },
-      artifact: { lot: 1, base: 22, stock: 1, demand: 2 },
+      food: { lot: 25, base: 10, stock: 9, demand: 6 },
+      stone: { lot: 25, base: 10, stock: 6, demand: 6 },
+      wood: { lot: 20, base: 10, stock: 6, demand: 6 },
+      herb: { lot: 10, base: 8, stock: 6, demand: 4 },
+      spirit_herb: { lot: 4, base: 12, stock: 5, demand: 3 },
+      ore: { lot: 5, base: 10, stock: 5, demand: 3 },
+      paper: { lot: 10, base: 10, stock: 5, demand: 3 },
+      beast_mat: { lot: 4, base: 12, stock: 3, demand: 3 },
+      pill_qi: { lot: 3, base: 15, stock: 5, demand: 3 },
+      pill_heal: { lot: 4, base: 15, stock: 5, demand: 3 },
+      pill_peiyuan: { lot: 1, base: 23, stock: 3, demand: 2 },
+      talisman_fire: { lot: 3, base: 15, stock: 3, demand: 3 },
+      talisman_guard: { lot: 3, base: 15, stock: 3, demand: 3 },
+      artifact: { lot: 1, base: 28, stock: 2, demand: 2 },
     } as Partial<Record<keyof Resources, { lot: number; base: number; stock: number; demand: number }>>,
     rivals: ['青木宗', '赤霞門', '落雲谷', '玄水宮'],
   },
@@ -309,13 +310,12 @@ export const balance = {
     buildCost: { stone: 40, wood: 30, lingshi: 60 },
     recruitCost: { food: 40, lingshi: 20 },
     trainCost: 40,
-    /** 實力上限 210（約等於初入金丹的弟子出戰；原本 150 時第 50 年後就不再變強）；擴建 +1、招收 +1、操練 +1–2。
-     *  另有隨年份放寬的上限：開局實力 + 每年 2，約第 50 年到 150、第 80 年到 210，免得前期大比就遇上築基圓滿 */
-    maxPower: 210,
+    /** 擴建 +1、招收 +1、操練 +1–2。實力上限隨年份放寬：開局實力 + 每年 2，約第 50 年到 150、第 80 年到 210，
+     *  免得前期大比就遇上築基圓滿。0.10.0 起不再停在 210（遠方勢力 260），鄰宗約第 175 年到 400、遠方勢力 450（化神前期的對手） */
     powerPerYear: 2,
+    lateMaxPower: 400,
+    distantLateMaxPower: 450,
     maxPopulation: 80,
-    /** 遠方勢力實力上限（簡化結算，每年 +1–3） */
-    distantMaxPower: 260,
     /** 建築總級數上限與資源存量上限，避免百年後帳本無限膨脹 */
     maxBuildings: 30,
     resourceCap: { lingshi: 3000, food: 1500, stone: 1000, wood: 1000 },
@@ -395,10 +395,14 @@ export const balance = {
     /** 電腦宗門對我宗宣戰：好感低於 20、沒有條約與停戰、好戰或正在擴張、實力不輸我宗的八成；每月機率（萬分比） */
     declareFavor: 20,
     declarePowerPct: 80,
-    declareBp: 150,
+    declareBp: 250,
     /** 好戰又在擴張、實力達我宗 120% 的宗門，好感 40 以下也可能宣戰（每月萬分比） */
     bullyPowerPct: 120,
     bullyBp: 60,
+    /** 0.10.0 爭雄：第 80 年起，好戰或正在擴張、好感 40 以下、實力達我宗一半的鄰宗也會興兵（每月萬分比） */
+    rivalFromYear: 80,
+    rivalPowerPct: 50,
+    rivalBp: 100,
     /** 山門戰：三場兩勝；每場倒下的內門弟子有 15% 戰死（主角不會死，只受傷） */
     rounds: 3,
     deathBp: 1500,
@@ -416,7 +420,7 @@ export const balance = {
     /** 撤離資產：最多把一半靈石藏進後山密庫 */
     evacuatePct: 50,
     /** 戰後停戰 10 年 */
-    truceYears: 10,
+    truceYears: 8,
     /** 守住山門：對方實力 −15%、賠償 100 + 實力 × 2 靈石、聲望 +20 */
     defendWinPowerPct: 15,
     reparationBase: 100,
