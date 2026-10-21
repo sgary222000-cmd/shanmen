@@ -1,0 +1,11 @@
+{
+  "source": "docs/插圖ChatGPT指令.md I1-I2",
+  "sourceCommit": "cdcc42f089835e202bde1c3b185720a2f022b866",
+  "tool": "built-in image_gen",
+  "size": "1536x1024",
+  "files": [
+    "scene-grand-auction.png",
+    "scene-treasury.png"
+  ],
+  "status": "Ready for Claude integration"
+}
