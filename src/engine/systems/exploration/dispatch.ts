@@ -10,6 +10,7 @@ import { findCharacter } from '../characters/characters';
 import { estimatePower } from '../combat/combat';
 import { allyUnit, companions } from '../combat/party';
 import { canJoinExpedition, realmDef } from './exploration';
+import { rollRareDrops } from './rareDrops';
 import { returnAidTeam } from '../world/diplomacy';
 
 // 秘境派遣（企畫書 §12）：已通關的秘境，可派小隊花 1–2 個月自動結算。
@@ -97,6 +98,9 @@ export function resolveDispatches(state: GameState, content: ContentPack, produc
     let pct = r.range(realm.dispatch.lootPct[0], realm.dispatch.lootPct[1]);
     if (!ok) pct = Math.floor((pct * D.failLootPct) / 100);
     const loot = scaleResources(realmNodeLoot(state, content, d.realmId), pct);
+    // 稀有素材（0.11.0）：派遣成功才有，機率減半
+    const drop = ok ? rollRareDrops(state, content, d.realmId, balance.rareDrops.dispatchPct) : { loot: {}, lines: [] };
+    addInto(loot, drop.loot);
     gain(state.resources, loot);
     addInto(produced, loot);
     const names: string[] = [];
@@ -112,6 +116,7 @@ export function resolveDispatches(state: GameState, content: ContentPack, produc
         ? `派遣${realm.name}的小隊（${names.join('、')}）平安歸來，帶回 ${formatResources(loot)}。`
         : `派遣${realm.name}的小隊（${names.join('、')}）遭遇強敵、負傷撤回，只帶回 ${formatResources(loot)}。`,
     );
+    lines.push(...drop.lines);
   }
   state.dispatches = remaining;
 }

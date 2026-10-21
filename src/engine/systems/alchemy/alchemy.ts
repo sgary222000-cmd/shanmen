@@ -3,8 +3,9 @@ import type { ContentPack } from '../../../content/registry';
 import { ensure } from '../../errors';
 import { gain, RESOURCE_IDS, RESOURCE_NAMES } from '../../resources';
 import { rng } from '../../rng';
-import type { GameState, Resources, Station } from '../../types';
-import { benchCount, benchList, isCraftSchedule, STATION_INFO, STATIONS } from '../buildings/buildings';
+import type { GameState, GearQuality, Resources, Station } from '../../types';
+import { benchCount, benchList, isCraftSchedule, STATION_INFO, STATIONS, stationRooms } from '../buildings/buildings';
+import { forgeQualityBonus, gearDesc, gearName, newGear, qualityChances } from '../talent/gear';
 import { findCharacter } from '../characters/characters';
 import type { FurnacePlan } from '../economy/flows';
 
@@ -21,6 +22,7 @@ export function setFurnace(
   repeat: boolean,
   station: Station = 'alchemy',
   keep?: number,
+  boost?: boolean,
 ): void {
   const info = STATION_INFO[station];
   ensure(index >= 0 && index < benchCount(state, content, station), `沒有這個${info.bench}（${info.room}未建成或未運作）`);
@@ -63,6 +65,10 @@ export function setFurnace(
     if (keep > 0) furnace.keep = keep;
     else delete furnace.keep;
   }
+  if (boost !== undefined) {
+    if (boost) furnace.boost = true;
+    else delete furnace.boost;
+  }
 }
 
 /** 人物離開工坊行程時，從所有爐位上移除。 */
@@ -91,6 +97,18 @@ export function tidyBenches(state: GameState, lines?: string[]): void {
 
 export { isCraftSchedule };
 
+/** 工坊最高等級（煉器品質加成用）。 */
+export function forgeLevel(state: GameState, station: Station = 'forge'): number {
+  return Math.max(0, ...stationRooms(state, station).map((b) => b.level));
+}
+
+/** 預覽：這個爐位煉出各品質的機率。 */
+export function forgePreview(state: GameState, station: Station, index: number): Record<GearQuality, number> {
+  const f = benchList(state, station)[index];
+  const worker = f?.alchemistId ? findCharacter(state, f.alchemistId) : undefined;
+  return qualityChances(forgeQualityBonus(forgeLevel(state, station), worker, !!f?.boost));
+}
+
 /** 月結算第 3 步：結算各爐位。材料已在第 2 步扣除。 */
 export function resolveFurnaces(
   state: GameState,
@@ -107,7 +125,18 @@ export function resolveFurnaces(
     const worker = findCharacter(state, plan.alchemistId);
     if (!recipe || !furnace || !worker) continue;
     const info = STATION_INFO[plan.station];
-    if (r.chance(plan.successBp)) {
+    // 煉器（0.11.0）：煉出一件有品質的法器；加入稀有素材可提高品質（不論成敗都會用掉）
+    if (recipe.gear) {
+      const mat = furnace.boost ? recipe.boostMats?.find((id) => state.resources[id] > 0) : undefined;
+      if (mat) state.resources[mat] -= 1;
+      if (r.chance(plan.successBp)) {
+        const item = newGear(state, recipe.gear, undefined, forgeQualityBonus(forgeLevel(state, plan.station), worker, !!mat));
+        state.armory.push(item);
+        lines.push(`${worker.name}${info.verb}${gearName(content, item)}${mat ? `（加入${RESOURCE_NAMES[mat]}）` : ''}：${gearDesc(content, item)}。`);
+      } else {
+        lines.push(`${worker.name}煉製${recipe.name}失敗，材料損耗。`);
+      }
+    } else if (r.chance(plan.successBp)) {
       const out: Partial<Resources> = { ...recipe.outputs };
       gain(state.resources, out);
       for (const id of RESOURCE_IDS) if (out[id]) produced[id] = (produced[id] ?? 0) + (out[id] ?? 0);

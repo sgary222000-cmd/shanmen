@@ -1,3 +1,6 @@
+import { BattlePrep } from '../components/BattlePrep';
+import { teamPower, unitsPower } from '../../engine/systems/combat/party';
+import { unitFromEnemy } from '../../engine/systems/combat/combat';
 import { useState } from 'react';
 import { balance } from '../../content/balance';
 import { monthIndex, type Commission, type ResourceId } from '../../engine';
@@ -113,7 +116,13 @@ function CommissionCard({ c }: { c: Commission }) {
       </button>
       {blocked && <span className="muted small"> {blocked}</span>}
       {c.kind === 'escort' && team.length > 0 && !blocked && (
-        <span className="small" data-testid={`escort-odds-${c.templateId}`}> 預估勝率 {escortOdds(game, content, c.id, team)}%</span>
+        <span className="small" data-testid={`escort-odds-${c.templateId}`}>
+          {' '}
+          我方戰力 {teamPower(game, content, team)}／敵方戰力 {unitsPower((c.enemies ?? []).flatMap((id, i) => {
+            const d = content.enemies.get(id);
+            return d ? [unitFromEnemy(d, i)] : [];
+          }))}・預估勝率 {escortOdds(game, content, c.id, team)}%
+        </span>
       )}
     </div>
   );
@@ -130,6 +139,10 @@ function Board() {
       <p className="small" data-testid="commissions-taken">
         本月已接 <b>{game.commissionsTaken ?? 0}</b> / {balance.commissions.maxPerMonth} 件委託。
       </p>
+      <details className="small">
+        <summary>護衛戰鬥的戰前準備（屬性丹、控制符）</summary>
+        <BattlePrep />
+      </details>
       <div className="grid three fill">
         {game.commissions.map((c) => (
           <CommissionCard key={c.id} c={c} />

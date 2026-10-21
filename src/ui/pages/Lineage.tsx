@@ -8,6 +8,10 @@ import { insightGain, libraryResearch, techniqueOf, techniqueTier } from '../../
 import { SKILL_NAMES } from '../components/CharacterPanel';
 import { useTabs } from '../components/Layout';
 import { content, useGame, useUi } from '../store';
+import type { ResourceId } from '../../engine';
+import { RESOURCE_NAMES } from '../../engine/resources';
+import { demandLeft, gearSellPrice, marketOpen } from '../../engine/systems/economy/market';
+import { gearDesc, gearName } from '../../engine/systems/talent/gear';
 
 // 傳承與功法：主修功法領悟、藏經閣研究、傳承分支、典籍與庫房法器。
 
@@ -88,8 +92,11 @@ function Branches() {
   );
 }
 
+const RARE_MATS: ResourceId[] = ['mat_jade', 'mat_beastcore', 'mat_earthfire', 'mat_scroll', 'mat_thunder', 'mat_taixu'];
+
 export function LineagePage() {
   const game = useGame();
+  const dispatch = useUi((s) => s.dispatch);
   const lineage = content.lineages.get(game.lineage);
   const tech = techniqueOf(game, content);
   const lib = libraryResearch(game, content);
@@ -164,10 +171,42 @@ export function LineagePage() {
         <p className="small">
           關鍵物品：{game.items.length ? game.items.map((i) => ITEM_NAMES[i] ?? i).join('、') : <span className="muted">無</span>}
         </p>
-        <p className="small">
-          庫房法器：
-          {game.armory.length ? game.armory.map((e, i) => <span key={i} className="tag">{content.equipment.get(e)?.name}</span>) : <span className="muted">無</span>}
-          ・制式法器 {game.resources.artifact} 件（在「弟子」或「主角」頁裝備）
+        <div className="small" data-testid="armory">
+          庫房法器（在「弟子」或「主角」頁裝備）：
+          {game.armory.length ? (
+            <ul>
+              {game.armory.map((it) => (
+                <li key={it.id} data-testid={`armory-${it.id}`}>
+                  <span className={`tag q-${it.quality}`}>{gearName(content, it)}</span> {gearDesc(content, it)}
+                  {marketOpen(game, content) && (
+                    <button
+                      className="btn small secondary"
+                      data-testid={`sell-gear-${it.id}`}
+                      disabled={demandLeft(game, content, 'artifact') < 1}
+                      onClick={() => dispatch({ type: 'sellGear', itemId: it.id })}
+                    >
+                      賣給坊市（{gearSellPrice(game, content, it)} 靈石）
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <span className="muted">無</span>
+          )}
+          <div>未鑑定的制式法器 {game.resources.artifact} 件（裝備時算凡品兵器）</div>
+        </div>
+        <p className="small" data-testid="rare-mats">
+          副本稀有素材：
+          {RARE_MATS.some((id) => game.resources[id] > 0) ? (
+            RARE_MATS.filter((id) => game.resources[id] > 0).map((id) => (
+              <span key={id} className="tag">
+                {RESOURCE_NAMES[id]} {game.resources[id]}
+              </span>
+            ))
+          ) : (
+            <span className="muted">還沒有（秘境首領與宗門試煉會掉落）</span>
+          )}
         </p>
       </div>
       )}

@@ -1,4 +1,4 @@
-import type { Resources, RootGrade } from '../engine/types';
+import type { Element, ResourceId, Resources, RootGrade } from '../engine/types';
 
 // 暫定平衡數值。全部未經使用者確認，集中在此方便調整；修改時記錄於 docs/暫定數值與決策.md。
 
@@ -26,6 +26,23 @@ export const balance = {
       pill_life: 0,
       pill_nascent: 0,
       pill_deity: 0,
+      pill_swift: 0,
+      pill_keen: 0,
+      pill_phantom: 0,
+      pill_ape: 0,
+      pill_eye: 0,
+      pill_cloud: 0,
+      talisman_bind: 0,
+      talisman_break: 0,
+      talisman_slow: 0,
+      talisman_confuse: 0,
+      talisman_seal: 0,
+      mat_jade: 0,
+      mat_beastcore: 0,
+      mat_earthfire: 0,
+      mat_scroll: 0,
+      mat_thunder: 0,
+      mat_taixu: 0,
     } satisfies Resources,
     outerCount: 12,
     protagonistAgeMonths: 18 * 12,
@@ -149,6 +166,13 @@ export const balance = {
       talisman_fire: { lot: 3, base: 15, stock: 3, demand: 3 },
       talisman_guard: { lot: 3, base: 15, stock: 3, demand: 3 },
       artifact: { lot: 1, base: 28, stock: 2, demand: 2 },
+      // 0.11.0：短效屬性丹、三種常見控制符（稀有素材與永久丹不在坊市買賣）
+      pill_swift: { lot: 2, base: 20, stock: 2, demand: 2 },
+      pill_keen: { lot: 2, base: 20, stock: 2, demand: 2 },
+      pill_phantom: { lot: 2, base: 20, stock: 2, demand: 2 },
+      talisman_break: { lot: 2, base: 18, stock: 2, demand: 2 },
+      talisman_slow: { lot: 2, base: 18, stock: 2, demand: 2 },
+      talisman_confuse: { lot: 2, base: 18, stock: 2, demand: 2 },
     } as Partial<Record<keyof Resources, { lot: number; base: number; stock: number; demand: number }>>,
     rivals: ['青木宗', '赤霞門', '落雲谷', '玄水宮'],
   },
@@ -556,4 +580,109 @@ export const balance = {
     koInjuryMonths: 3,
     hurtInjuryMonths: 1,
   },
+  /** 0.11.0 戰鬥屬性（暫定）：敏捷沿用原本的速度；暴擊傷害 1.5 倍；閃避在命中後再判定一次 */
+  attributes: {
+    baseCritPct: 5,
+    critDamagePct: 150,
+    maxCritPct: 50,
+    baseDodgePct: 3,
+    maxDodgePct: 40,
+    /** 比對方敏捷每高 1 點，閃避 +0.5%（萬分比 50） */
+    agiDodgeBp: 50,
+    enemyCritPct: 5,
+    enemyDodgePct: 3,
+    bossCritPct: 10,
+    bossDodgePct: 5,
+    /** 戰力換算：暴擊每 1% 算攻擊 × 0.02，閃避每 1% 算生命 × 0.01 */
+    powerCritBp: 200,
+    powerDodgeBp: 100,
+    /** 屬性丹：短效只對下一場戰鬥有效；永久每人每種最多 permMax 顆 */
+    shortPills: {
+      pill_swift: { agi: 6 },
+      pill_keen: { critPct: 10 },
+      pill_phantom: { dodgePct: 8 },
+    } as Partial<Record<ResourceId, StatBonus>>,
+    permPills: {
+      pill_ape: { agi: 3 },
+      pill_eye: { critPct: 3 },
+      pill_cloud: { dodgePct: 2 },
+    } as Partial<Record<ResourceId, StatBonus>>,
+    permMax: 3,
+  },
+  /** 0.11.0 靈根影響戰力與修煉：品級加成（生命、攻擊、防禦）、每種靈根一項屬性 × 品級倍率；靈根越多修煉越快 */
+  roots: {
+    gradePct: { low: 0, mid: 5, high: 10, heaven: 25 } satisfies Record<RootGrade, number>,
+    gradeMultPct: { low: 100, mid: 150, high: 200, heaven: 400 } satisfies Record<RootGrade, number>,
+    element: {
+      metal: { atkPct: 5 },
+      wood: { hpPct: 8 },
+      water: { dodgePct: 2 },
+      fire: { critPct: 3 },
+      earth: { defPct: 8 },
+    } satisfies Record<Element, StatBonus>,
+    /** 招收時靈根數量 1–5 種的權重（天靈根固定單一） */
+    countWeights: [30, 35, 25, 8, 2],
+    /** 每多一種靈根，修煉速度 +5% */
+    extraElementXpPct: 5,
+  },
+  /** 0.11.0 法器品質（暫定）：凡品、良品、上品、極品、仙品 */
+  gear: {
+    qualities: [
+      { id: 'common', name: '凡品', chancePct: 55, statPct: 100, subs: 0, effect: false, pricePct: 100, shareOfBonus: 0 },
+      { id: 'fine', name: '良品', chancePct: 28, statPct: 120, subs: 0, effect: false, pricePct: 130, shareOfBonus: 50 },
+      { id: 'superior', name: '上品', chancePct: 12, statPct: 145, subs: 1, effect: false, pricePct: 200, shareOfBonus: 30 },
+      { id: 'rare', name: '極品', chancePct: 4, statPct: 175, subs: 2, effect: false, pricePct: 400, shareOfBonus: 15 },
+      { id: 'immortal', name: '仙品', chancePct: 1, statPct: 220, subs: 2, effect: true, pricePct: 1000, shareOfBonus: 5 },
+    ],
+    /** 凡品機率最低到 20% */
+    minCommonPct: 20,
+    /** 品質加成：煉器技藝每 5 點 +1、煉器坊每升一級 +2、加入稀有素材 +8 */
+    skillPerPoint: 5,
+    perForgeLevel: 2,
+    rareBonus: 8,
+    /** 副屬性範圍（生命為百分比） */
+    subRanges: { agi: [2, 4], crit: [3, 6], dodge: [2, 4], hp: [5, 10] },
+    /** 仙品特效：吸血 10%、破甲無視 20% 防禦 */
+    drainPct: 10,
+    piercePct: 20,
+  },
+  /**
+   * 0.11.0 副本稀有素材：秘境首領每次被打倒都可能掉（只能從副本取得，坊市不賣也不收）。
+   * mats：[素材, 機率%, 最少, 最多]；recipes／gear：[ID, 機率%]，丹方學會後不再掉，法器品質隨機。
+   * 秘境派遣帶回的機率減半；宗門試煉獲勝給試煉玉髓。
+   */
+  rareDrops: {
+    realms: {
+      'secret.underground_mine': { mats: [['mat_earthfire', 60, 1, 1]], recipes: [], gear: [] },
+      'secret.beast_valley': { mats: [['mat_beastcore', 60, 1, 1]], recipes: [['recipe.ape_pill', 30]], gear: [] },
+      'secret.ancient_ruins': { mats: [['mat_scroll', 70, 1, 1]], recipes: [['recipe.seal_talisman', 30]], gear: [['equip.ancient_pendant', 10]] },
+      'secret.taixu_1': { mats: [['mat_taixu', 100, 1, 2]], recipes: [], gear: [['equip.cloud_boots', 10]] },
+      'secret.taixu_2': { mats: [['mat_taixu', 100, 1, 2], ['mat_thunder', 70, 1, 1]], recipes: [], gear: [] },
+      'secret.taixu_3': { mats: [['mat_taixu', 100, 1, 2]], recipes: [], gear: [] },
+      'secret.taixu_4': { mats: [['mat_taixu', 100, 1, 2], ['mat_thunder', 70, 1, 1]], recipes: [], gear: [['equip.thunder_ring', 10]] },
+      'secret.taixu_5': { mats: [['mat_taixu', 100, 2, 3]], recipes: [], gear: [] },
+    } as Record<string, { mats: [ResourceId, number, number, number][]; recipes: [string, number][]; gear: [string, number][] }>,
+    dispatchPct: 50,
+    trialJade: { easy: 0, normal: 1, hard: 2 } as Record<string, number>,
+    /** 試煉「登峰」第一次獲勝學會天眼丹方 */
+    trialHardRecipe: 'recipe.eye_pill',
+  },
+  /** 0.11.0 控制、削弱符籙：戰前最多祭出兩種，各一張；符陣傳承持續回合 +1 */
+  controlTalismans: {
+    maxKinds: 2,
+    bossResistPct: 50,
+    defDownPct: 30,
+    slowPct: 30,
+    hitDownBp: 2000,
+    rounds: { talisman_bind: 1, talisman_break: 2, talisman_slow: 2, talisman_confuse: 2, talisman_seal: 3 } as Partial<Record<ResourceId, number>>,
+  },
 };
+
+export interface StatBonus {
+  agi?: number;
+  critPct?: number;
+  dodgePct?: number;
+  atkPct?: number;
+  hpPct?: number;
+  defPct?: number;
+}

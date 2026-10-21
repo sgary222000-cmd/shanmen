@@ -148,3 +148,9 @@ select { padding: .2rem .3rem; }
 .disciple-card .panel { margin-bottom: 0; }
 .enemy-art { display: flex; gap: .5rem; flex-wrap: wrap; margin: .35rem 0; }
 .enemy-art .art { width: 180px; }
+/* 法器品質（0.11.0）：凡品灰、良品綠、上品藍、極品紫、仙品金 */
+.tag.q-common { color: #5d5a55; border-color: #a9a39a; }
+.tag.q-fine { color: #2f6b3a; border-color: #5f9a63; background: #eaf3e6; }
+.tag.q-superior { color: #24507f; border-color: #5a86b8; background: #e6eef7; }
+.tag.q-rare { color: #5b2d82; border-color: #8f62b5; background: #f0e8f6; }
+.tag.q-immortal { color: #6b4a08; border-color: var(--gold); background: linear-gradient(180deg, #f6e7b8, var(--gold-soft)); }

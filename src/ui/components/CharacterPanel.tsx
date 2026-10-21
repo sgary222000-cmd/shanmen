@@ -10,6 +10,12 @@ import { insightGain, libraryResearch, techniqueOf, techniqueTier } from '../../
 import { POSITION_NAMES, positionOf } from '../../engine/systems/talent/positions';
 import { BEAST_TASK_NAMES } from '../../engine/systems/beasts/beasts';
 import { COMMON_EQUIPMENT } from '../../content/equipment';
+import { balance } from '../../content/balance';
+import { RESOURCE_NAMES } from '../../engine/resources';
+import type { ResourceId } from '../../engine';
+import { allyUnit } from '../../engine/systems/combat/party';
+import { estimatePower } from '../../engine/systems/combat/combat';
+import { GEAR_SLOTS, gearDesc, gearName, innateBonus, qualityDef, SLOT_NAMES } from '../../engine/systems/talent/gear';
 import { lifespanText, longevityBlocked, longevityGain, remainingLifePct } from '../../engine/systems/characters/lifespan';
 
 function LifeLine({ c }: { c: Character }) {
@@ -97,32 +103,87 @@ function TechniqueLine({ c }: { c: Character }) {
 function EquipLine({ c }: { c: Character }) {
   const game = useGame();
   const dispatch = useUi((s) => s.dispatch);
-  const options = new Set<string>();
-  if (c.equipment) options.add(c.equipment);
-  if (game.resources.artifact > 0) options.add(COMMON_EQUIPMENT);
-  for (const id of game.armory) options.add(id);
-  const cur = c.equipment ? content.equipment.get(c.equipment) : undefined;
-  if (!options.size) return <p className="small muted">法器：無（煉器坊製作或秘境取得後可裝備）</p>;
   return (
-    <label className="small row">
-      法器：
-      <select
-        value={c.equipment ?? ''}
-        data-testid={`equip-${c.id}`}
-        onChange={(e) => dispatch({ type: 'equip', characterId: c.id, itemId: e.target.value || null })}
-      >
-        <option value="">（不裝備）</option>
-        {[...options].map((id) => {
-          const d = content.equipment.get(id);
-          return (
-            <option key={id} value={id}>
-              {d?.name}（攻 +{d?.atk}、防 +{d?.def}、生命 +{d?.hp}）{id === COMMON_EQUIPMENT && id !== c.equipment ? `・庫存 ${game.resources.artifact}` : ''}
-            </option>
-          );
-        })}
-      </select>
-      {cur && <span className="muted">{cur.description}</span>}
-    </label>
+    <div className="small" data-testid={`gear-${c.id}`}>
+      {GEAR_SLOTS.map((slot) => {
+        const cur = c.gear?.[slot];
+        const options = game.armory.filter((it) => content.equipment.get(it.defId)?.slot === slot);
+        const canCommon = slot === 'weapon' && game.resources.artifact > 0;
+        return (
+          <label key={slot} className="row">
+            {SLOT_NAMES[slot]}：
+            <select
+              value={cur?.id ?? ''}
+              data-testid={`equip-${c.id}-${slot}`}
+              onChange={(e) => dispatch({ type: 'equip', characterId: c.id, itemId: e.target.value || null, slot })}
+            >
+              <option value="">（不裝備）</option>
+              {cur && (
+                <option value={cur.id}>
+                  {gearName(content, cur)}（{gearDesc(content, cur)}）
+                </option>
+              )}
+              {options.map((it) => (
+                <option key={it.id} value={it.id}>
+                  {gearName(content, it)}（{gearDesc(content, it)}）
+                </option>
+              ))}
+              {canCommon && <option value={COMMON_EQUIPMENT}>制式法器（未鑑定，算凡品・庫存 {game.resources.artifact}）</option>}
+            </select>
+            {cur && <span className={`tag q-${cur.quality}`}>{qualityDef(cur.quality).name}</span>}
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+/** 戰鬥屬性、戰力與靈根加成（0.11.0）。 */
+function StatsLine({ c }: { c: Character }) {
+  const game = useGame();
+  const u = allyUnit(game, content, c, 'front');
+  const inn = innateBonus(c);
+  const rootParts = [
+    inn.atkPct && `攻擊 +${inn.atkPct}%`,
+    inn.hpPct && `生命 +${inn.hpPct}%`,
+    inn.defPct && `防禦 +${inn.defPct}%`,
+    inn.agi && `敏捷 +${inn.agi}`,
+    inn.critPct && `暴擊 +${inn.critPct}%`,
+    inn.dodgePct && `閃避 +${inn.dodgePct}%`,
+  ].filter(Boolean);
+  return (
+    <p className="small" data-testid={`stats-${c.id}`}>
+      戰力 <b data-testid={`power-${c.id}`}>{estimatePower(u)}</b>・生命 {u.maxHp}・攻擊 {u.atk}・防禦 {u.def}・敏捷 {u.spd}・暴擊 {u.crit}%・閃避 {u.dodge}%
+      {rootParts.length > 0 && <span className="muted">（靈根與丹藥：{rootParts.join('、')}）</span>}
+    </p>
+  );
+}
+
+/** 永久屬性丹（每人每種最多 3 顆）。 */
+function PermPillLine({ c }: { c: Character }) {
+  const game = useGame();
+  const dispatch = useUi((s) => s.dispatch);
+  const pills = Object.keys(balance.attributes.permPills) as ResourceId[];
+  if (!pills.some((id) => game.resources[id] > 0 || (c.permPills?.[id] ?? 0) > 0)) return null;
+  return (
+    <div className="small row">
+      永久屬性丹：
+      {pills.map((id) => {
+        const taken = c.permPills?.[id] ?? 0;
+        const full = taken >= balance.attributes.permMax;
+        return (
+          <button
+            key={id}
+            className="btn small secondary"
+            data-testid={`perm-${c.id}-${id}`}
+            disabled={full || game.resources[id] < 1}
+            onClick={() => dispatch({ type: 'takePermPill', characterId: c.id, pill: id })}
+          >
+            服{RESOURCE_NAMES[id]}（{taken}/{balance.attributes.permMax}，庫存 {game.resources[id]}）
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -171,7 +232,9 @@ export function CharacterPanel({ c }: { c: Character }) {
         ))}
       <LifeLine c={c} />
       <TechniqueLine c={c} />
+      <StatsLine c={c} />
       <EquipLine c={c} />
+      <PermPillLine c={c} />
       {seatOptions(game, content).length > 1 && (
         <label className="small row">
           修煉地點：

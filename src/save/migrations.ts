@@ -144,6 +144,23 @@ export const migrations: Record<number, (w: World) => World> = {
     const sects = (w.sects as Record<string, unknown>[]).map((s) => (s.vassal && s.vassalUntil === undefined ? { ...s, vassalUntil: until } : s));
     return { ...w, version: 10, sects, trials: {} };
   },
+  // 0.10.x → 0.11.0（中期擴充批次二）：新資源（屬性丹、控制符、稀有素材）；裝備改成三格、法器每件個別存放（舊的都算凡品）
+  10: (w) => {
+    let next = (w.nextId as number) ?? 1;
+    const item = (defId: string) => ({ id: `g${next++}`, defId, quality: 'common', subs: [] });
+    const slotOf = (defId: string) => content.equipment.get(defId)?.slot ?? 'weapon';
+    const person = (c: Record<string, unknown>) => {
+      const { equipment, ...rest } = c;
+      const gear: Record<string, unknown> = {};
+      if (typeof equipment === 'string' && content.equipment.has(equipment)) gear[slotOf(equipment)] = item(equipment);
+      return { ...rest, gear };
+    };
+    const resources = Object.fromEntries(RESOURCE_IDS.map((id) => [id, (w.resources as Record<string, number>)[id] ?? 0]));
+    const protagonist = person(w.protagonist as Record<string, unknown>);
+    const disciples = (w.disciples as Record<string, unknown>[]).map(person);
+    const armory = ((w.armory as unknown[]) ?? []).filter((x): x is string => typeof x === 'string' && content.equipment.has(x)).map(item);
+    return { ...w, version: 11, resources, protagonist, disciples, armory, nextId: next };
+  },
 };
 
 export function migrate(world: World, from: number, to: number): World {

@@ -193,7 +193,7 @@ export const taixuFloors: SecretRealmDef[] = [
     loot: 10,
     firstClear: {
       rewardId: 'reward.taixu_1.first_clear',
-      recipes: [],
+      recipes: ['recipe.cloud_pill'],
       resources: { pill_nascent: 1, lingshi: 800 },
       text: '石將倒下後，底座裡封著一顆凝嬰丹與一袋靈石。',
       items: [],
@@ -250,7 +250,7 @@ export const taixuFloors: SecretRealmDef[] = [
     loot: 25,
     firstClear: {
       rewardId: 'reward.taixu_4.first_clear',
-      recipes: [],
+      recipes: ['recipe.bind_talisman'],
       resources: { pill_life: 1, lingshi: 3000 },
       text: '蛟龍的龍珠化為一顆延壽丹與大量靈石。',
       items: [],

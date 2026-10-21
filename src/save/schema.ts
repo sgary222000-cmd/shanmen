@@ -25,7 +25,14 @@ const schedule = z.enum([
   'dispatch',
 ]);
 const skillKey = z.enum(['alchemy', 'farming', 'combat', 'forging', 'talisman', 'beast', 'affairs']);
-const furnace = z.object({ alchemistId: z.string().nullable(), recipeId: z.string().nullable(), repeat: z.boolean(), keep: nonneg.optional() });
+const furnace = z.object({ alchemistId: z.string().nullable(), recipeId: z.string().nullable(), repeat: z.boolean(), keep: nonneg.optional(), boost: z.boolean().optional() });
+const gearItem = z.object({
+  id: z.string(),
+  defId: z.string(),
+  quality: z.enum(['common', 'fine', 'superior', 'rare', 'immortal']),
+  subs: z.array(z.object({ stat: z.enum(['agi', 'crit', 'dodge', 'hp']), value: int })),
+  effect: z.enum(['first', 'guard', 'drain', 'pierce']).optional(),
+});
 const marketGood = z.object({ pct: int.min(1), stock: nonneg, demand: nonneg, bought: nonneg, sold: nonneg });
 const character = z.object({
   id: z.string(),
@@ -53,7 +60,8 @@ const character = z.object({
   seat: z.string(),
   specialty: skillKey.nullable(),
   insight: nonneg,
-  equipment: z.string().nullable(),
+  gear: z.object({ weapon: gearItem.optional(), armor: gearItem.optional(), accessory: gearItem.optional() }),
+  permPills: z.record(z.enum(resourceIds), nonneg).optional(),
 });
 
 /** 世界狀態的主要欄位驗證（未列出的欄位保留原樣）。 */
@@ -123,7 +131,13 @@ export const worldSchema = z
     nextId: nonneg,
     tutorial: z.object({ skipped: z.boolean(), viewedLedger: z.boolean(), done: z.array(z.string()) }),
     trade: z.object({ soldLingshi: nonneg, boughtFood: nonneg }),
-    strategy: z.object({ useHealPill: z.boolean(), useTalismans: z.boolean(), focusLowest: z.boolean() }),
+    strategy: z.object({
+      useHealPill: z.boolean(),
+      useTalismans: z.boolean(),
+      focusLowest: z.boolean(),
+      useBuffPills: z.boolean().optional(),
+      control: z.array(z.enum(resourceIds)).optional(),
+    }),
     stats: z.object({ commands: nonneg, monthsAdvanced: nonneg, explorations: nonneg }),
     positions: z.object({
       mentor: z.string().nullable(),
@@ -132,7 +146,7 @@ export const worldSchema = z
       steward: z.string().nullable(),
       envoy: z.string().nullable(),
     }),
-    armory: z.array(z.string()),
+    armory: z.array(gearItem),
     items: z.array(z.string()),
     branches: z.array(z.object({ lineageId: z.string(), hostId: z.string() })),
     dispatches: z.array(z.object({ id: z.string(), realmId: z.string(), teamIds: z.array(z.string()), monthsLeft: nonneg, aidSectId: z.string().optional() })),

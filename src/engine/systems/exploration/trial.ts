@@ -128,8 +128,22 @@ export function runTrial(state: GameState, content: ContentPack, teamIds: string
   const names = team(state, teamIds)
     .map((c) => c.name)
     .join('、');
+  let extra = '';
+  if (win) {
+    // 0.11.0：試煉玉髓；「登峰」第一次獲勝學會天眼丹方
+    const jade = balance.rareDrops.trialJade[tier.id] ?? 0;
+    if (jade) {
+      state.resources.mat_jade += jade;
+      extra += `得到試煉玉髓 ${jade}。`;
+    }
+    const recipe = balance.rareDrops.trialHardRecipe;
+    if (tier.id === 'hard' && !state.recipes.includes(recipe)) {
+      state.recipes.push(recipe);
+      extra += `首次登峰，學會「${content.recipes.get(recipe)?.name ?? recipe}」的丹方。`;
+    }
+  }
   const text = win
-    ? `宗門試煉（${tier.name}）：${names}通過，修為 +${tier.xpPct}%、功法領悟 +${tier.insight}。`
+    ? `宗門試煉（${tier.name}）：${names}通過，修為 +${tier.xpPct}%、功法領悟 +${tier.insight}。${extra}`
     : `宗門試煉（${tier.name}）：${names}未能通過，修為 +${T.loseXpPct}%，沒有受傷。`;
   if (lines.length) (state.monthLog ??= []).push(...lines);
   return text;

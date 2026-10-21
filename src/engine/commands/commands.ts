@@ -1,10 +1,11 @@
+import { balance } from '../../content/balance';
 import type { ContentPack } from '../../content/registry';
 import { RuleError } from '../errors';
-import type { AutoAssign, BeastTask, GameState, MonthReport, OuterDisciples, PositionId, ResourceId, Row, ScheduleKind, Station, TreatyKind } from '../types';
+import type { AutoAssign, BeastTask, GearSlot, GameState, MonthReport, OuterDisciples, PositionId, ResourceId, Row, ScheduleKind, Station, TreatyKind } from '../types';
 import { breakTreaty, resolveAid, signTreaty, type AidChoice } from '../systems/world/diplomacy';
 import { contestSite, declareWar, evacuate, makePeace, repairBuilding, resolveVictory, setWarTeam, type VictoryChoice } from '../systems/world/war';
 import { setPosition } from '../systems/talent/positions';
-import { equipItem } from '../systems/talent/equipment';
+import { equipItem, takePermPill } from '../systems/talent/equipment';
 import { buyScripture, openBranch } from '../systems/talent/branches';
 import { ascendGuardian, hatchBeast, raiseGuardian, setBeast } from '../systems/beasts/beasts';
 import { startDispatch } from '../systems/exploration/dispatch';
@@ -21,7 +22,7 @@ import { interruptSeclusion, setSchedule, setSeat, setTakePill } from '../system
 import { promoteOuter, resolveRecruitment } from '../systems/events/recruitment';
 import { chooseEvent, closeExploration, moveTo, retreat, startExploration } from '../systems/exploration/exploration';
 import { buyFood, sell, type Sellable } from '../systems/economy/trade';
-import { buyRecipe, marketBuy, marketSell } from '../systems/economy/market';
+import { buyRecipe, marketBuy, marketSell, sellGear } from '../systems/economy/market';
 import { acceptCommission } from '../systems/commissions/commissions';
 import { advanceMonth } from '../systems/time/advanceMonth';
 import { resolveSuccession, setHeir, takeLongevityPill } from '../systems/characters/lifespan';
@@ -54,6 +55,8 @@ export type Command =
       repeat: boolean;
       /** 庫存保留量；未填表示不變 */
       keep?: number;
+      /** 煉器時加入稀有素材提高品質；未填表示不變 */
+      boost?: boolean;
     }
   | { type: 'promoteOuter' }
   | { type: 'resolveRecruitment'; eventId: string; candidateId: string | null }
@@ -80,9 +83,11 @@ export type Command =
   | { type: 'marketSell'; resource: ResourceId; lots: number }
   | { type: 'buyRecipe'; recipeId: string }
   | { type: 'acceptCommission'; commissionId: string; workers?: number; teamIds?: string[]; rows?: Record<string, Row> }
-  | { type: 'setStrategy'; useHealPill: boolean; focusLowest: boolean; useTalismans?: boolean }
+  | { type: 'setStrategy'; useHealPill: boolean; focusLowest: boolean; useTalismans?: boolean; useBuffPills?: boolean; control?: ResourceId[] }
   | { type: 'setPosition'; position: PositionId; characterId: string | null }
-  | { type: 'equip'; characterId: string; itemId: string | null }
+  | { type: 'equip'; characterId: string; itemId: string | null; slot?: GearSlot }
+  | { type: 'takePermPill'; characterId: string; pill: ResourceId }
+  | { type: 'sellGear'; itemId: string }
   | { type: 'openBranch'; lineageId: string; hostId: string }
   | { type: 'buyScripture'; lineageId: string }
   | { type: 'hatchBeast' }
@@ -181,7 +186,7 @@ export function applyCommand(state: GameState, content: ContentPack, cmd: Comman
         next.autoBreakthrough = cmd.value;
         break;
       case 'setFurnace':
-        setFurnace(next, content, cmd.index, cmd.alchemistId, cmd.recipeId, cmd.repeat, cmd.station ?? 'alchemy', cmd.keep);
+        setFurnace(next, content, cmd.index, cmd.alchemistId, cmd.recipeId, cmd.repeat, cmd.station ?? 'alchemy', cmd.keep, cmd.boost);
         break;
       case 'promoteOuter':
         message = promoteOuter(next, content);
@@ -272,13 +277,23 @@ export function applyCommand(state: GameState, content: ContentPack, cmd: Comman
           useHealPill: cmd.useHealPill,
           useTalismans: cmd.useTalismans ?? next.strategy.useTalismans,
           focusLowest: cmd.focusLowest,
+          useBuffPills: cmd.useBuffPills ?? next.strategy.useBuffPills ?? false,
+          control: [...new Set(cmd.control ?? next.strategy.control ?? [])]
+            .filter((id) => (balance.controlTalismans.rounds[id] ?? 0) > 0)
+            .slice(0, balance.controlTalismans.maxKinds),
         };
         break;
       case 'setPosition':
         message = setPosition(next, cmd.position, cmd.characterId);
         break;
       case 'equip':
-        message = equipItem(next, content, cmd.characterId, cmd.itemId);
+        message = equipItem(next, content, cmd.characterId, cmd.itemId, cmd.slot);
+        break;
+      case 'sellGear':
+        message = sellGear(next, content, cmd.itemId);
+        break;
+      case 'takePermPill':
+        message = takePermPill(next, cmd.characterId, cmd.pill);
         break;
       case 'openBranch':
         message = openBranch(next, content, cmd.lineageId, cmd.hostId);
