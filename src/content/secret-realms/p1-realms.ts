@@ -154,7 +154,7 @@ export const ancientRuins: SecretRealmDef = {
   eventPool: [],
   repeatLootPct: 50,
   retreatLootPct: 50,
-  art: 'placeholder/realm-ruins.svg',
+  art: 'final/realm-ruins.webp',
   dispatch: { months: 2, power: 650, lootPct: [30, 50] },
   firstClear: {
     rewardId: 'reward.ancient_ruins.first_clear',
