@@ -11,6 +11,7 @@ import { ITEM_NAMES } from '../talent/items';
 import { runBattle, unitFromEnemy } from '../combat/combat';
 import { allyUnit, applyFormation, battleKit, characterMaxHp, companions, healPctFor, spendKit } from '../combat/party';
 import { newGear } from '../talent/gear';
+import { minorStats } from '../talent/minorTechniques';
 import { rollRareDrops } from './rareDrops';
 
 export { companions } from '../combat/party';
@@ -155,6 +156,12 @@ function fight(state: GameState, content: ContentPack, realm: SecretRealmDef, no
   state.resources.talisman_fire -= outcome.talismansUsed.fire;
   state.resources.talisman_guard -= outcome.talismansUsed.guard;
   for (const u of outcome.allies) run.hp[u.key] = u.hp;
+  // 輔修功法《回春訣》：戰後回復生命
+  for (const u of outcome.allies) {
+    const c = u.companion ? undefined : findCharacter(state, u.key);
+    const heal = c ? minorStats(c).healPct : 0;
+    if (heal && u.hp > 0) run.hp[u.key] = Math.min(u.maxHp, u.hp + Math.floor((u.maxHp * heal) / 100));
+  }
   const record: BattleRecord = {
     id: newId(state, 'battle'),
     date: { ...state.date },

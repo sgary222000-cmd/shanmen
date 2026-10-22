@@ -108,10 +108,16 @@ export function libraryResearch(state: GameState, content: ContentPack): number 
   return lib ? effectsOf(content, lib)?.researchPerMonth ?? 0 : null;
 }
 
-/** 本月可增加的領悟度；預覽與結算共用。 */
+/** 本月可增加的領悟度；預覽與結算共用。撰寫輔修功法的作者這段時間不增加主修領悟。 */
 export function insightGain(state: GameState, content: ContentPack, c: Character): { total: number; parts: string[] } {
+  if (c.insight >= balance.technique.maxInsight) return { total: 0, parts: ['已達最高層'] };
+  if (state.composing?.authorId === c.id && c.schedule === 'research') return { total: 0, parts: ['撰寫輔修功法中'] };
+  return rawInsightGain(state, content, c);
+}
+
+/** 不計上限的領悟度（輔修領悟依此換算）。 */
+export function rawInsightGain(state: GameState, content: ContentPack, c: Character): { total: number; parts: string[] } {
   const t = balance.technique;
-  if (c.insight >= t.maxInsight) return { total: 0, parts: ['已達本階段上限'] };
   if (c.schedule === 'research') {
     const lib = libraryResearch(state, content) ?? 0;
     return { total: t.researchBase + lib, parts: [`研究 ${t.researchBase}`, ...(lib ? [`藏經閣 +${lib}`] : [])] };

@@ -146,6 +146,8 @@ export interface Character {
   lifeBonusMonths?: number;
   /** 已服用的延壽丹數（一生有上限） */
   longevityPills?: number;
+  /** 輔修功法與輔修領悟度（0.14.0） */
+  minor?: { id: string; insight: number };
 }
 
 export interface Protagonist extends Character {
@@ -616,6 +618,13 @@ export interface BuyOrder {
 }
 
 /** 0.12.0 中期擴充批次三：聲望兌換、時事、珍寶閣、拍賣會、收購單 */
+/** 撰寫中的輔修功法（0.14.0）：作者每研究一個月進度 +1。 */
+export interface Composing {
+  authorId: string;
+  techId: string;
+  months: number;
+}
+
 export interface BazaarState {
   /** 兌換花掉的聲望；可用聲望 = 聲望 − 已花 */
   repSpent: number;
@@ -720,6 +729,10 @@ export interface GameState {
   veins: Vein[];
   /** 0.12.0 */
   bazaar: BazaarState;
+  /** 宗門已寫成的輔修功法（0.14.0） */
+  minorTechs: string[];
+  /** 藏經閣正在撰寫的輔修功法 */
+  composing: Composing | null;
   /** 統計，用於驗收與平衡紀錄 */
   stats: { commands: number; monthsAdvanced: number; explorations: number };
 }

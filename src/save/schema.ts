@@ -62,6 +62,7 @@ const character = z.object({
   insight: nonneg,
   gear: z.object({ weapon: gearItem.optional(), armor: gearItem.optional(), accessory: gearItem.optional() }),
   permPills: z.record(z.enum(resourceIds), nonneg).optional(),
+  minor: z.object({ id: z.string(), insight: nonneg }).optional(),
 });
 
 /** 世界狀態的主要欄位驗證（未列出的欄位保留原樣）。 */
@@ -182,6 +183,8 @@ export const worldSchema = z
         buyOrder: z.object({ id: z.string(), sectId: z.string(), amount: nonneg, lingshi: nonneg, expires: int }).passthrough().nullable(),
       })
       .passthrough(),
+    minorTechs: z.array(z.string()),
+    composing: z.object({ authorId: z.string(), techId: z.string(), months: nonneg }).nullable(),
     autoBreakthrough: z.boolean().optional(),
     auto: z
       .object({

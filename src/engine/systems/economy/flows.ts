@@ -22,6 +22,7 @@ import { allCharacters, BREAKTHROUGH_PILL, findCharacter, nextMajor } from '../c
 import { RESOURCE_NAMES } from '../../resources';
 import { craftPositionBp, stewardPct } from '../talent/positions';
 import { beastFood, beastGather, guardianBonus } from '../beasts/beasts';
+import { minorDef, minorStats } from '../talent/minorTechniques';
 import { monthIndex } from '../../date';
 
 // 每月收支計畫。預覽與實際結算共用同一份計算，確保「預覽等於結算」。
@@ -125,6 +126,11 @@ export function craftOdds(
   if (posBp) {
     bp += posBp;
     parts.push(`${station === 'alchemy' ? '煉丹' : '煉器'}執事 +${posBp / 100}%`);
+  }
+  const crafts = minorStats(worker).craftBp;
+  if (crafts) {
+    bp += crafts;
+    parts.push(`《${minorDef(worker.minor?.id ?? '')?.name ?? ''}》 +${crafts / 100}%`);
   }
   const guard = guardianBonus(state, content);
   if (guard.craftBp) {

@@ -164,6 +164,8 @@ export const migrations: Record<number, (w: World) => World> = {
   },
   // 0.11.x → 0.12.0（中期擴充批次三）：聲望兌換、時事、珍寶閣、拍賣會、收購單；可用聲望從目前的聲望開始
   11: (w) => ({ ...w, version: 12, bazaar: { ...emptyBazaar(), repBest: (w.reputation as number) ?? 0 } }),
+  // 0.13.x → 0.14.0：輔修功法（宗門已寫成的功法、撰寫中的工作）
+  12: (w) => ({ ...w, version: 13, minorTechs: [], composing: null }),
 };
 
 export function migrate(world: World, from: number, to: number): World {

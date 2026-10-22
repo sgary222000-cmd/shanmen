@@ -3,6 +3,7 @@ import { balance, type StatBonus } from '../../../content/balance';
 import { ensure } from '../../errors';
 import type { Character, GameState, ResourceId, Resources, Row } from '../../types';
 import { findCharacter } from '../characters/characters';
+import { minorStats } from '../talent/minorTechniques';
 import { techniqueStats } from '../talent/techniques';
 import { guardianBonus } from '../beasts/beasts';
 import { characterGear } from '../talent/gear';
@@ -15,9 +16,18 @@ export function allyUnit(state: GameState, content: ContentPack, c: Character, r
   const lineage = content.lineages.get(state.lineage);
   ensure(lineage, '傳承資料錯誤');
   const guard = guardianBonus(state, content);
+  const ts = techniqueStats(state, content, c);
+  const ms = minorStats(c);
   return unitFromCharacter(c, row, lineage, hp, {
     gear: characterGear(content, c),
-    technique: techniqueStats(state, content, c),
+    technique: {
+      atkPct: ts.atkPct + ms.atkPct,
+      hpPct: ts.hpPct + ms.hpPct,
+      defPct: ts.defPct + ms.defPct,
+      critPct: ts.critPct + ms.critPct,
+      dodgePct: ts.dodgePct + ms.dodgePct,
+      agi: ts.agi + ms.agi,
+    },
     guardianAtkPct: guard.atkPct,
     guardianHpPct: guard.hpPct,
   });
